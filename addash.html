@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة الإدارة | Preventa Plus</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; } 
+    body { margin: 0; font-family: Cairo, sans-serif; color: #17212b; background: #edf5f1; overflow: hidden; /* لمنع التمرير أثناء التحميل */ } 
+    main { width: min(100% - 32px, 1050px); margin: 48px auto; } 
+    header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 32px; } 
+    h1 { margin: 0; } 
+    .muted { color: #64756d; } 
+    .logout, .back-button { border: 1px solid #cfddd6; background: #fff; border-radius: 10px; padding: 10px 16px; cursor: pointer; font: inherit; } 
+    .back-button { margin-bottom: 16px; background: #143b32; color: #fff; border-color: #143b32; } 
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; } 
+    .admin-link { display: block; padding: 28px; color: #fff; text-decoration: none; border: 0; text-align: right; font: inherit; border-radius: 18px; min-height: 170px; cursor: pointer; box-shadow: 0 12px 30px #19362c18; } 
+    .admin-link:nth-child(1) { background: #146c4d; } 
+    .admin-link:nth-child(2) { background: #1d5e78; } 
+    .admin-link:nth-child(3) { background: #9b5b27; } 
+    .admin-link strong { display: block; font-size: 1.4rem; margin-bottom: 10px; } 
+    .admin-frame { display: none; } 
+    .admin-frame.open { display: block; position: fixed; inset: 0; z-index: 10; padding: 16px; background: #edf5f1; } 
+    #admin-iframe { display: block; width: 100%; height: calc(100vh - 76px); border: 1px solid #cfddd6; border-radius: 16px; background: #fff; } 
+    
+    /* ستايل شاشة التحميل لمنع رؤية اللوحة قبل التحقق */
+    #loading-screen {
+      position: fixed; inset: 0; background: #edf5f1; z-index: 9999; 
+      display: flex; justify-content: center; align-items: center; flex-direction: column;
+    }
+    .spinner {
+      border: 4px solid #cfddd6; border-top: 4px solid #146c4d; border-radius: 50%;
+      width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    @media (max-width: 700px) { 
+        .grid { grid-template-columns: 1fr; } 
+        header { align-items: flex-start; flex-direction: column; } 
+        .admin-frame.open { padding: 10px; } 
+        #admin-iframe { height: calc(100vh - 68px); } 
+    }
+  </style>
+</head>
+<body>
+  <!-- شاشة التحميل للحماية -->
+  <div id="loading-screen">
+    <div class="spinner"></div>
+    <h3>جارٍ التحقق من الصلاحيات...</h3>
+  </div>
+
+  <main>
+      <header>
+          <div>
+              <h1>لوحة الإدارة</h1>
+              <p class="muted" id="admin-email">جارٍ التحقق...</p>
+          </div>
+          <button class="logout" id="logout">تسجيل الخروج</button>
+      </header>
+      <section class="grid" id="admin-menu" aria-label="لوحات الإدارة">
+          <button class="admin-link" type="button" data-page="fhfk6iuof.html">
+              <strong>إدارة الأخبار</strong><span>إضافة الأخبار وتعديلها ونشرها.</span>
+          </button>
+          <button class="admin-link" type="button" data-page="mm6ops.html">
+              <strong>إدارة المستخدمين</strong><span>مراجعة الحسابات وتفعيلها أو تعطيلها.</span>
+          </button>
+          <button class="admin-link" type="button" data-page="mmd458jh.html">
+              <strong>محرر كود الموقع</strong><span>تعديل ونشر كود الصفحة الرئيسية.</span>
+          </button>
+      </section>
+      <section class="admin-frame" id="admin-frame" aria-live="polite">
+          <button class="back-button" type="button" id="back-button">العودة إلى لوحات الإدارة</button>
+          <iframe id="admin-iframe" title="صفحة الإدارة"></iframe>
+      </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    // إعدادات Firebase الخاصة بك
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo", 
+        authDomain: "wallet-tamer-adel.firebaseapp.com", 
+        projectId: "wallet-tamer-adel", 
+        storageBucket: "wallet-tamer-adel.firebasestorage.app", 
+        messagingSenderId: "51007948250", 
+        appId: "1:51007948250:web:e1f6eaaebb4202b8aface3" 
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // التحقق من الجلسة وصلاحية الأدمن فور فتح الصفحة
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          // جلب بيانات المستخدم من جدول admins للتحقق من صلاحيته
+          const adminSnapshot = await getDoc(doc(db, "admins", user.uid));
+          
+          if (adminSnapshot.exists() && adminSnapshot.data().active !== false) {
+            // الحساب سليم ومصرح له
+            document.getElementById("admin-email").textContent = user.email;
+            // إخفاء شاشة التحميل وإظهار الموقع
+            document.getElementById("loading-screen").style.display = "none";
+            document.body.style.overflow = "auto";
+          } else {
+            // الحساب غير موجود في جدول الإدارة، قم بطرده
+            await signOut(auth);
+            window.location.replace("admin-login.html");
+          }
+        } catch (error) {
+          console.error("خطأ في التحقق من الصلاحيات:", error);
+          window.location.replace("admin-login.html");
+        }
+      } else {
+        // لا يوجد مستخدم مسجل دخول، اطرده لصفحة تسجيل الدخول
+        window.location.replace("adlog.html");
+      }
+    });
+
+    // كود تسجيل الخروج الحقيقي من Firebase
+    document.getElementById("logout").addEventListener("click", async () => {
+        await signOut(auth);
+        window.location.replace("adlog.html");
+    });
+
+    // أكواد واجهة المستخدم (التنقل بين الصفحات)
+    const menu = document.getElementById("admin-menu");
+    const frame = document.getElementById("admin-frame");
+    const iframe = document.getElementById("admin-iframe");
+    
+    document.querySelectorAll(".admin-link").forEach((button) => button.addEventListener("click", () => {
+      iframe.src = button.dataset.page;
+      menu.style.display = "none";
+      frame.classList.add("open");
+    }));
+    
+    document.getElementById("back-button").addEventListener("click", () => {
+      iframe.src = "about:blank";
+      frame.classList.remove("open");
+      menu.style.display = "grid";
+    });
+  </script>
+</body>
+</html>

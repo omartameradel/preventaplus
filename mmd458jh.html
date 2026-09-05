@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PreventaPlus</title>
+    <link rel="icon" type="image/x-icon" href="/6384.png" />
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 20px;
+        }
+        #codeEditor {
+            width: 100%;
+            height: 400px;
+            padding: 10px;
+            font-family: monospace;
+            direction: ltr;
+            box-sizing: border-box;
+        }
+        #saveBtn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        #saveBtn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>محرر كود صفحة Index</h2>
+    
+    <textarea id="codeEditor" placeholder="اكتب كود HTML/CSS/JS هنا..."></textarea>
+    <br>
+    <button id="saveBtn">حفظ ونشر الكود</button>
+
+    <!-- استدعاء Firebase باستخدام نوع module -->
+    <script type="module">
+        // 1. استيراد دوال Firebase من الـ CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // 2. إعدادات Firebase الخاصة بك (استبدلها ببيانات مشروعك الحقيقية)
+const firebaseConfig = {
+  apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo",
+  authDomain: "wallet-tamer-adel.firebaseapp.com",
+  projectId: "wallet-tamer-adel",
+  storageBucket: "wallet-tamer-adel.firebasestorage.app",
+  messagingSenderId: "51007948250",
+  appId: "1:51007948250:web:e1f6eaaebb4202b8aface3",
+  measurementId: "G-M9LTMX3LHV"
+};
+
+        // 3. تهيئة التطبيق وقاعدة البيانات
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 4. تعريف عناصر الصفحة
+        const codeEditor = document.getElementById('codeEditor');
+        const saveBtn = document.getElementById('saveBtn');
+
+        // 5. دالة جلب الكود الحالي عند تحميل الصفحة
+        async function loadCurrentCode() {
+            try {
+                const pageRef = doc(db, "pages", "index_page");
+                const docSnap = await getDoc(pageRef);
+                
+                if (docSnap.exists()) {
+                    codeEditor.value = docSnap.data().source_code;
+                }
+            } catch (error) {
+                console.error("Error loading document:", error);
+            }
+        }
+
+        // 6. دالة حفظ الكود عند الضغط على الزر
+        async function handleSave() {
+            saveBtn.disabled = true;
+            saveBtn.innerText = "جاري الحفظ...";
+
+            try {
+                const pageRef = doc(db, "pages", "index_page");
+                await setDoc(pageRef, { source_code: codeEditor.value });
+                alert("تم تحديث الكود بنجاح!");
+            } catch (error) {
+                console.error("Error saving document: ", error);
+                alert("حدث خطأ أثناء الحفظ.");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = "حفظ ونشر الكود";
+            }
+        }
+
+        // 7. ربط زر الحفظ بالدالة وتشغيل دالة الجلب عند البداية
+        saveBtn.addEventListener('click', handleSave);
+        window.addEventListener('DOMContentLoaded', loadCurrentCode);
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موقع الأخبار الاحترافي</title>
+    <!-- استدعاء خط تجول -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- استدعاء أيقونات FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="index.css">
+    <!-- ضع هذا في قسم الـ <head> -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+<!-- ضع هذا قبل نهاية </body> مباشرة -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+</head>
+<body>
+
+    <!-- الهيدر -->
+   <!-- الهيدر -->
+   <!-- الهيدر -->
+<!-- الهيدر -->
+ <header class="main-header">
+        
+        <!-- اللوجو النصي الكبير (مكان اللوجو القديم) -->
+       <!-- اللوجو (صورة) -->
+<a href="/" class="logo">
+    <img src="Gemini_Generated_Image_sqbqqysqbqqysqbq.png" alt="Preventa Plus Logo" width="100" height="100"> 
+</a>
+
+    <button class="menu-toggle" id="mobile-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+        
+        <!-- القائمة مع الأيقونات -->
+        <nav class="navbar" id="navbar" aria-label="القائمة الرئيسية">
+            <a href="/" class="active"><i class="fa-solid fa-house"></i> الرئيسية</a>
+            <a href="about.html"><i class="fa-solid fa-circle-info"></i> من نحن</a>
+            <a href="News.html"><i class="fa-solid fa-newspaper"></i> الأخبار</a>
+            <a href="contact.html"><i class="fa-solid fa-envelope"></i> التواصل</a>
+        </nav>
+
+        <!-- أزرار التحكم وتسجيل الدخول -->
+        <div class="controls" id="controls">
+           
+            
+            <select class="lang-selector" id="langSelect">
+                <option value="ar">AR</option>
+                <option value="en">EN</option>
+            </select>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+        
+    </header>
+
+<!-- عنصر الترجمة (مخفي تماماً خارج الهيدر لتجنب تشويه التصميم) -->
+<div id="google_translate_element" style="display: none;"></div>
+
+<!-- استدعاء مكتبة الترجمة -->
+<script type="text/javascript">
+  function googleTranslateElementInit() {
+    new google.translate.TranslateElement({
+      pageLanguage: 'ar', 
+      includedLanguages: 'ar,en', 
+      autoDisplay: false
+    }, 'google_translate_element');
+  }
+</script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<!-- سكريبت عمل زر القائمة للموبايل -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const menuBtn = document.getElementById('mobile-menu-btn');
+        const navbar = document.getElementById('navbar');
+        const controls = document.getElementById('controls');
+
+        navbar?.classList.remove('active');
+        controls?.classList.remove('active');
+        menuBtn?.setAttribute('aria-expanded', 'false');
+
+        // عند الضغط على زر الموبايل
+        menuBtn?.addEventListener('click', () => {
+            // إضافة وإزالة كلاس active لفتح وإغلاق القائمة
+            const isOpen = !navbar.classList.contains('active');
+            navbar.classList.toggle('active', isOpen);
+            controls.classList.toggle('active', isOpen);
+            menuBtn.setAttribute('aria-expanded', String(isOpen));
+            
+            // تغيير شكل الأيقونة بين (ثلاث شرط) و (علامة X)
+            if (navbar.classList.contains('active')) {
+                menuBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            } else {
+                menuBtn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+            }
+        });
+
+        // (إضافة ذكية): إغلاق القائمة تلقائياً عند الضغط على أي رابط بداخلها
+        const navLinks = navbar?.querySelectorAll('a') || [];
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                navbar.classList.remove('active');
+                controls.classList.remove('active');
+                menuBtn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+            });
+        });
+    });
+</script>
+    
+
+    <!-- حاوية الأخبار -->
+    <main>
+       <!-- قسم الأخبار -->
+<section class="news-section">
+  <div class="container">
+    <div class="section-title">
+      <h2>أحدث <span>الأخبار</span></h2>
+    </div>
+    
+    <!-- السلايدر -->
+    <div class="swiper news-slider" dir="rtl">
+      <div class="swiper-wrapper" id="newsGrid">
+        <!-- الفايربيس هيحط الأخبار هنا جوا swiper-slide تلقائياً -->
+      </div>
+      <!-- نقاط التنقل -->
+      <div class="swiper-pagination"></div>
+    </div>
+  </div>
+</section>
+    </main>
+
+    <section class="login-hero-section">
+    <div class="container">
+        <div class="row align-items-center custom-row-reverse">
+            
+            <!-- العمود الأول (اليمين): النصوص والصور المتداخلة -->
+            <div class="col-md-5 col-sm-12 info-column">
+                <h2 class="sub-heading">خطوتك الأولى نحو حياة .</h2>
+                <p class="desc-text">نُقدّم في [ مدونة الطب الوقائي] برامج متكاملة للطب الوقائي والفحوصات الدورية، لمساعدة مجتمعنا على تجنب المخاطر الصحية، وتعزيز الوعي الطبي، وتقديم استشارات متخصصة ترتقي بصحتك وصحة عائلتك.</p>
+                
+                <div class="trusted-wrap">
+                    <ul class="trusted-pics">
+                        <li><img src="https://storage.perfectcdn.com/1847ba/fbkc0u4te10xy06s.png" alt="image-1"></li>
+                        <li><img src="https://storage.perfectcdn.com/1847ba/apt4o7ili1o32amq.png" alt="image-2"></li>
+                        <li><img src="https://storage.perfectcdn.com/1847ba/bbo70x4d86129w2c.png" alt="image-3"></li>
+                        <li><img src="https://storage.perfectcdn.com/1847ba/p5y2xxgkjszyneb2.png" alt="image-4"></li>
+                    </ul>
+                    <div class="truster-stars">
+                        <div class="stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="trusted-partners">انضم الى <strong>+250k</strong> الف عميل </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- مسافة فاصلة -->
+            <div class="col-md-2 d-none d-md-block"></div>
+            
+            <!-- العمود الثاني (اليسار): نموذج تسجيل الدخول -->
+            <div class="col-md-5 col-sm-12 form-column">
+                <h1 class="top-heading">المرجع الأول للتوعية الصحية والطب الوقائي في مصر </h1>
+                <p class="sub-text">📚 محتوى طبي معتمد | 👥 مجتمع صحي واعٍ</p>
+                
+                <form id="firebase-login-form" class="rtl-form custom-login-form">
+                    <!-- حقل البريد الإلكتروني -->
+                    <div class="form-group icon-group">
+                        <span class="input-icon">
+                            <i class="fa-solid fa-envelope"></i>
+                        </span>
+                        <input type="email" class="form-control" id="email" placeholder="البريد الإلكتروني" required>
+                    </div>
+                    
+                    <!-- حقل كلمة المرور -->
+                    <div class="form-group form-group__password icon-group">
+                        <span class="input-icon">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" class="form-control" id="password" placeholder="كلمه السر" required>
+                        <button id="togglePassword" type="button" class="eye-btn">
+                            <!-- أيقونات العين -->
+                            <svg id="eyeClosed" width="16" height="16" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5.44957 7.95612L4.32266 7.65413L4.78202 5.93983C4.08837 5.68433 3.45103 5.31239 2.89369 4.84783L1.63758 6.10392L0.81262 5.27897L2.06873 4.02288C1.3739 3.18935 0.886424 2.1769 0.685547 1.06478L1.83359 0.856049C2.27636 3.30736 4.42094 5.16674 6.99979 5.16674C9.57865 5.16674 11.7233 3.30736 12.166 0.856049L13.3141 1.06478C13.1132 2.1769 12.6257 3.18935 11.9309 4.02288L13.187 5.27897L12.362 6.10392L11.1059 4.84783C10.5486 5.31239 9.91121 5.68433 9.21757 5.93983L9.67694 7.65413L8.55006 7.95612L8.09051 6.24106C7.73602 6.30179 7.37161 6.3334 6.99979 6.3334C6.62803 6.3334 6.26357 6.30179 5.90913 6.24106L5.44957 7.95612Z" fill="currentColor"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="remember-decision">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" id="remember"> تذكرنى
+                            </label>
+                        </div>
+                        <a href="/resetpassword.html" class="forget-password">اعادة تعيين</a>
+                    </div>
+                    
+                    <div class="form-group form-action">
+                        <button type="submit" class="btn btn-black-rounded" id="loginBtn">
+                            <span>تسجيل الدخول <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</section>
+<!-- قسم مؤسس المدونة -->
+<section class="about-author-section" id="about-author">
+    <div class="container">
+        <div class="section-header">
+            <h3 class="main-heading">تعرف على مؤسس المدونة</h3>
+        </div>
+        
+        <div class="row align-items-center">
+            
+            <!-- عمود الصورة (على اليمين) -->
+            <div class="col-md-5 col-sm-12 author-img-col">
+                <div class="author-container">
+                    <!-- الخلفية التي خلف الصورة -->
+                    <div class="author-background"></div>
+                    <!-- صورة الكاتب -->
+                    <img src="Generated Image October 18, 2025 - 3_54P.png" alt="ا. تامر عادل حميدة" class="author-img">
+                </div>
+            </div>
+            
+            <!-- عمود النصوص (على اليسار) -->
+            <div class="col-md-7 col-sm-12 author-info-col">
+                <div class="author-info">
+                    <h3 class="author-name">ا. تامر عادل حميدة</h3>
+                    <h5 class="author-title">مؤسس مدونة الطب الوقائي و مدير الطب الوقائي</h5>
+                    
+                    <p class="author-desc">
+                        أهلاً بك في مساحتي الخاصة بالتوعية الصحية! أكرس وقتي وخبرتي لنشر ثقافة الطب الوقائي، إيماناً مني بأن الوقاية خير من العلاج. أسعى من خلال هذه المنصة لتقديم إرشادات موثوقة ومبنية على أسس علمية دقيقة لمساعدتك على بناء درعك الصحي وتحسين جودة حياتك اليومية.
+                    </p>
+                    
+                    <!-- صندوق بيانات التواصل -->
+                    <div class="contact-box">
+                        <ul class="contact-list">
+                            <!-- البريد الإلكتروني -->
+                            <li>
+                                <span class="contact-icon">@</span>
+                                <div class="contact-details">
+                                    <span class="contact-label">البريد الإلكتروني:</span> 
+                                    <a href="mailto:info@preventaplus.online" class="contact-link" dir="ltr">info@preventplus.online</a>
+                                </div>
+                            </li>
+                            
+                            <!-- رقم الهاتف -->
+                            <li>
+                                <span class="contact-icon"><i class="fa-solid fa-phone"></i></span>
+                                <div class="contact-details">
+                                    <span class="contact-label">رقم الهاتف:</span> 
+                                    <a href="tel:+201007349611" class="contact-link" dir="ltr">+20 1007349611</a>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</section>
+<section id="empower">
+      <div class="container">
+        <div class="row">
+          <div class="col-sm-12">
+            <h2 class="main-heading text-center">يركز على التوعية والثقة الطبية</h2>
+            <div class="empower-animations">
+              <div class="cloud-a cloud-3"></div>
+              <div class="cube cube-1">
+                <div class="face front"></div>
+                <div class="face back"></div>
+                <div class="face right"></div>
+                <div class="face left"></div>
+                <div class="face top"></div>
+                <div class="face bottom"></div>
+              </div>
+              <div class="cube cube-2">
+                <div class="face front"></div>
+                <div class="face back"></div>
+                <div class="face right"></div>
+                <div class="face left"></div>
+                <div class="face top"></div>
+                <div class="face bottom"></div>
+              </div>
+            </div>
+            <div class="empower-container">
+              <div>
+                <div class="empower-box">
+                  <div class="empower-icon">
+                    <img src="https://storage.perfectcdn.com/1847ba/burdxkodqpy8psns.png" alt="empower-icon-1">
+                  </div>
+                  <h3>معلومة طبية</h3>
+                  <p>موثوقة ومراجعة</p>
+                </div>
+              </div>
+              <div>
+                <div class="empower-box">
+                  <div class="empower-icon">
+                    <img src="https://storage.perfectcdn.com/1847ba/i4eq1ljhdipn72lb.png" alt="empower-icon-2">
+                  </div>
+                  <h3> مقال ونصيحة صحية</h3>
+                  <p>39237857+</p>
+                </div>
+              </div>
+              <div>
+                <div class="empower-box">
+                  <div class="empower-icon">
+                    <img src="https://storage.perfectcdn.com/1847ba/p6cjj9djm373xa8r.png" alt="empower-icon-3">
+                  </div>
+                  <h3>  صحتك وعافيتك</h3>
+                  <p>لا تُقدر بثمن</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="divider-button-wrap">
+            
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- قسم كيف يعمل -->
+<section id="how" class="how-section">
+  <div class="container">
+    
+    <!-- عنوان القسم -->
+    <div class="row">
+      <div class="col-sm-12 text-center">
+        <h2 class="sub-head-box">كيف يعمل</h2>
+        <h3 class="main-heading">كيف تعمل مدونة الطب الوقائي</h3>
+      </div>
+    </div>
+
+    <div class="row align-items-center custom-how-row">
+      
+      <!-- العمود الأيمن: الصورة والأيقونات -->
+      <div class="col-md-5 col-sm-12">
+        <div class="how-wraper">
+          <!-- المربع الأصفر خلف الصورة -->
+          <div class="yellow-bg-shape"></div>
+          
+          <!-- صورة البنت -->
+          <img src="https://storage.perfectcdn.com/1847ba/g1yn4lb435nebl0c.png" alt="how-girl" class="main-girl-img">
+          
+          <!-- الأيقونات الطائرة -->
+          <img src="6384.png" alt="how-logo" class="float-icon icon-logo">
+          <img src="https://storage.perfectcdn.com/1847ba/n72c1y39lr77udoo.png" alt="instagram" class="float-icon icon-insta">
+          <img src="https://storage.perfectcdn.com/1847ba/fbpbqg7ytx8hylmq.png" alt="facebook" class="float-icon icon-fb">
+          <img src="https://storage.perfectcdn.com/1847ba/chwq0watpk4qa04h.png" alt="x-twitter" class="float-icon icon-x">
+        </div>
+      </div>
+      
+      <!-- العمود الأيسر: الكروت والخطوات -->
+      <div class="col-md-7 col-sm-12 cards-column">
+        
+        <!-- الكارت الأول (كامل العرض) -->
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="how-box">
+              <div class="how-count"><span>01</span></div>
+              <h3>التسجيل في مدونة الطب الوقائي</h3>
+              <p class="main-text">أنشئ حسابك مجانًا على مدونة الطب الوقائي وابدأ باستخدام منصتنا لإدارة طلبات عبر المشرف.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row cards-bottom-row">
+          <div class="col-sm-6">
+            <div class="how-box">
+              <!-- الكلاس active يعطي اللون الأصفر -->
+              <div class="how-count active"><span>02</span></div>
+              <h3>اكتشف وتعلم</h3>
+              <p class="main-text">تصفح أحدث الإرشادات الصحية وطرق الوقاية من الأمراض عبر أقسام المدونة المتنوعة والمبنية على أسس علمية دقيقة.</p>
+            </div>
+          </div>
+          
+          <div class="col-sm-6">
+            <div class="how-box">
+              <div class="how-count"><span>03</span></div>
+              <h3>ابدأ التوعية</h3>
+              <p class="main-text">اكتشف الإرشادات، والأنظمة الصحية، وطرق الكشف المبكر، وابدأ في بناء درعك الواقي ضد الأمراض بخطوات مدروسة.</p>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    
+  </div>
+</section>
+<section id="services" class="services-section">
+  <div class="container">
+    
+    <div class="row">
+      <div class="col-sm-12 text-center">
+        <h2 class="sub-head-box">خدماتنا</h2>
+        <h3 class="main-heading">خدمات مدونة الطب الوقائي</h3>
+        <p class="main-text">"اكتشف مجموعة واسعة من المقالات والإرشادات الطبية المصممة لتعزيز مناعتك، والوقاية من الأمراض، وتحسين جودة حياتك بأسس علمية وموثوقة."</p>
+      </div>
+    </div>
+
+    <div class="swiper services-slider" dir="rtl">
+      <div class="swiper-wrapper">
+        
+        <div class="swiper-slide">
+          <div class="service-box">
+            <h3>مكافحة العدوى والعادات اليومية</h3>
+            <p>إرشادات سهلة التطبيق للحفاظ على النظافة الشخصية والمنزلية، وطرق التعامل الآمن لمنع انتشار الفيروسات والبكتيريا.</p>
+          </div>
+        </div>
+        
+        <div class="swiper-slide">
+          <div class="service-box">
+            <h3>تصحيح المفاهيم الطبية الخاطئة</h3>
+            <p>قسم مخصص للرد على الخرافات الصحية المنتشرة على الإنترنت، وتقديم المعلومة الدقيقة والموثقة من مصادر علمية.</p>
+          </div>
+        </div>
+
+        <div class="swiper-slide">
+          <div class="service-box">
+            <h3>النشرة الصحية الأسبوعية</h3>
+            <p>خدمة اشتراك مجانية تصلك عبر البريد الإلكتروني، تضم أحدث الدراسات والنصائح الوقائية لتبقى دائماً على اطلاع بكل ما يهم صحتك.</p>
+          </div>
+        </div>
+
+        <div class="swiper-slide">
+          <div class="service-box">
+            <h3>أدلة الفحص الدوري والكشف المبكر</h3>
+            <p>تعرف على الجداول الزمنية للفحوصات الطبية اللازمة لكل فئة عمرية، لاكتشاف الأمراض قبل حدوثها وضمان التدخل المبكر.</p>
+          </div>
+        </div>
+
+        <div class="swiper-slide">
+          <div class="service-box">
+            <h3>التغذية الصحية وتقوية المناعة</h3>
+            <p>مقالات متخصصة حول الأنظمة الغذائية السليمة، والأطعمة الغنية بالفيتامينات التي تعزز مناعة الجسم وتحميه من العدوى.</p>
+          </div>
+        </div>
+        
+
+      </div>
+      
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+    </div>
+
+  </div>
+</section>
+<section id="proven" class="proven-section">
+  <div class="container">
+    <div class="row custom-proven-row align-items-stretch">
+      
+      <div class="col-md-6 custom-proven-col">
+        <div class="proven-dark-card">
+          <h2 class="main-heading">نتائج حقيقية مع <br> مدونة الطب الوقائي</h2>
+          <p class="main-text">تقدم مدونة الطب الوقائي إرشادات ومعلومات موثوقة تساعد الأفراد والمجتمعات على الوقاية من الأمراض، وتحسين نمط الحياة، وتعزيز الوعي الصحي بخطوات علمية ومدروسة.</p>
+          
+          <div class="social-tags-container">
+            <span class="social-tag">🩺 صحة عامة</span>
+            <span class="social-tag">💪 لياقة بدنية</span>
+            <span class="social-tag">🍎 تغذية سليمة</span>
+            <span class="social-tag tag-active">🛡️ مناعة</span>
+            <span class="social-tag">🧠 صحة نفسية</span>
+            <span class="social-tag">👶 صحة الطفل</span>
+            <span class="social-tag">🩸 كشف مبكر</span>
+            <span class="social-tag">💧 ترطيب الجسم</span>
+            <span class="social-tag">🚭 الإقلاع عن التدخين</span>
+            <span class="social-tag">🏃‍♂️ نشاط بدني</span>
+            <span class="social-tag">🌿 طب بديل</span>
+            <span class="social-tag">💤 نوم صحي</span>
+          </div>
+          
+        </div>
+      </div>
+
+      <div class="col-md-6 custom-proven-col">
+        <div class="proven-light-card">
+          <h2 class="main-heading text-center">أثر التوعية الصحية لمستخدمينا</h2>
+          
+          <div class="growth-machine">
+            <!-- صورة الموبايل -->
+            <img src="546645.png" alt="Phone Preview" class="phone-img">
+            
+            <!-- البادج الأول -->
+            <div class="floating-badge badge-1">
+              <strong>11241</strong> مستفيد من النصائح <span class="badge-icon">👍</span>
+            </div>
+            
+            <!-- البادج الثاني -->
+            <div class="floating-badge badge-2">
+              <strong>56454</strong> متابع مهتم بصحته <span class="badge-icon">🤩</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+<section id="reviews" class="reviews-section">
+  <div class="container">
+    <div class="row align-items-center">
+      
+      <div class="col-md-5 col-sm-12 text-content-col">
+        <h2 class="sub-head-box">الشهادات</h2>
+        
+        <div class="heading-with-floating">
+          <h3 class="main-heading">مستخدمونا <br>يتحدثون عنا</h3>
+          
+          <ul class="em-list">
+            <li class="float-badge badge-love">
+              <img src="https://storage.perfectcdn.com/1847ba/3ikd4g1345bd9edm.png" alt="أحببتها"> أحببتها
+            </li>
+            <li class="float-badge badge-useful">
+              <img src="https://storage.perfectcdn.com/1847ba/yznrk6655w6lpz32.png" alt="مفيدة"> مفيدة
+            </li>
+            <li class="float-badge badge-easy">
+              <img src="https://storage.perfectcdn.com/1847ba/o7ipnjd7rpf4c5d8.png" alt="سهلة الاستخدام"> سهلة الاستخدام
+            </li>
+            <li class="float-badge badge-recommend">
+              <img src="https://storage.perfectcdn.com/1847ba/p3cpmkcr72xxm9a9.png" alt="أنصح بها"> أنصح بها
+            </li>
+          </ul>
+        </div>
+        
+        <p class="main-text mt-4">يشارك قراء مدونتنا تجاربهم الواقعية، وكيف ساعدتهم النصائح والإرشادات الطبية في تبني أسلوب حياة صحي، وتعزيز مناعتهم، وتحسين جودة حياتهم اليومية بشكل ملحوظ.</p>
+      </div>
+
+      <div class="col-md-7 col-sm-12">
+        <div class="reviews_slider_wrapper">
+          
+          <div class="swiper reviews_slider reviews_top" dir="rtl">
+            <div class="swiper-wrapper">
+              
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/w57nunjl4gfzdk29.png" alt="Mohammed Shaban"></div>
+                  <h3>Mohammed Shaban</h3>
+                  <p>Good experience</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/8qfy2j6xnipcz37y.png" alt="Mauricio Srour"></div>
+                  <h3>Mauricio Srour</h3>
+                  <p>Very helpful and professional Highly recommended!!</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/5nqhgbm91chboqq3.png" alt="Rena Abou Habib"></div>
+                  <h3>Rena Abou Habib</h3>
+                  <p>Very helpful 😍💖 AMAZING experience!!</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/6j1ue2ata5spcz8q.png" alt="Arno Dorain II"></div>
+                  <h3>Arno Dorain II</h3>
+                  <p>very very great services</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/7x0hpk0l2r5mzf8u.png" alt="Mohammed Fawzi"></div>
+                  <h3>Mohammed Fawzi</h3>
+                  <p>Very good and i should use</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/rqgtc8a3t64b34eq.png" alt="Nancy Abi Ramia"></div>
+                  <h3>Nancy Abi Ramia</h3>
+                  <p>Very professional amazing service always the bestt❤️❤️</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="swiper reviews_slider reviews_bottom" dir="rtl">
+            <div class="swiper-wrapper">
+              
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/y1iaw8lkcl9si6pq.png" alt="توته الورديه"></div>
+                  <h3>توته الورديه</h3>
+                  <p>من افضل لمواقع اللي تعاملت معهم ثقه وانجاز سريع</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/6q88xj69zl6trbwi.webp" alt="Abou Hamzeh"></div>
+                  <h3>Abou Hamzeh</h3>
+                  <p>highly recommended!!! had a great time❤️</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/oj13nieflmrqb7ur.png" alt="Elissa Saad"></div>
+                  <h3>Elissa Saad</h3>
+                  <p>Highly recommended! Worked with them and they’re really friendly and helpful guys 🙏🏻❤️</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/rgcknxmg37m445i0.png" alt="Jeffrey Abboud"></div>
+                  <h3>Jeffrey Abboud</h3>
+                  <p>Great service, very friendly and helpful ❤️❤️</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/q70epq83yiiuf1m1.png" alt="مهند العلي"></div>
+                  <h3>مهند العلي</h3>
+                  <p>Great marketing agency,, keep it up</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+              <div class="swiper-slide">
+                <div class="reviews-box">
+                  <div class="review-avatar"><img src="https://storage.perfectcdn.com/1847ba/zatlofsugbf35zwy.png" alt="Vivlog 's"></div>
+                  <h3>Vivlog 's</h3>
+                  <p>On of the best products !!</p>
+                  <div class="trust-stars"><i class="fa-solid fa-star"></i> Trustpilot (5/5)</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+<section id="questions" class="faq-section">
+  <div class="container">
+    <div class="row align-items-stretch">
+      
+      <div class="col-md-7 col-sm-12 faq-column">
+        
+        <div class="faq-header text-right">
+          <h2 class="sub-head-box">الأسئلة الشائعة</h2>
+          <h3 class="main-heading">أي سؤال؟</h3>
+        </div>
+
+        <div class="panel-group custom-accordion" id="accordion">
+          
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a class="collapsed faq-link" data-toggle="collapse" href="#collapseOne">
+                  ما هي مدونة الطب الوقائي؟
+                </a>
+              </h4>
+            </div>
+            <div id="collapseOne" class="panel-collapse collapse">
+              <div class="panel-body">
+                هي منصة صحية متخصصة تهدف إلى نشر الوعي الطبي، وتقديم نصائح وإرشادات موثوقة حول كيفية الوقاية من الأمراض، الكشف المبكر، وتبني أسلوب حياة صحي وسليم لك ولعائلتك.
+              </div>
+            </div>
+          </div>
+          
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a class="collapsed faq-link" data-toggle="collapse" href="#collapseTwo">
+                  هل المعلومات الطبية في المدونة موثوقة؟
+                </a>
+              </h4>
+            </div>
+            <div id="collapseTwo" class="panel-collapse collapse">
+              <div class="panel-body">
+                بالتأكيد. نحرص على أن تكون جميع المقالات والنصائح مبنية على أسس علمية ومستمدة من مصادر طبية موثوقة، لمساعدتك في اتخاذ قرارات صحيحة بشأن صحتك.
+              </div>
+            </div>
+          </div>
+          
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a class="collapsed faq-link" data-toggle="collapse" href="#collapseThree">
+                  كيف يمكنني الاستفادة القصوى من محتوى المدونة؟
+                </a>
+              </h4>
+            </div>
+            <div id="collapseThree" class="panel-collapse collapse">
+              <div class="panel-body">
+                يمكنك تصفح الأقسام المختلفة مثل التغذية، الصحة النفسية، واللياقة البدنية. كما ننصحك بتحويل المعلومات التي تقرأها إلى عادات يومية بسيطة لتحقيق أفضل النتائج الصحية.
+              </div>
+            </div>
+          </div>
+          
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a class="collapsed faq-link" data-toggle="collapse" href="#collapsefour">
+                  هل تقدمون استشارات طبية خاصة أو تشخيصاً للأمراض؟
+                </a>
+              </h4>
+            </div>
+            <div id="collapsefour" class="panel-collapse collapse">
+              <div class="panel-body">
+                المدونة تهدف للتوعية العامة والطب الوقائي فقط ولا تغني بأي حال عن زيارة الطبيب المختص. إذا كنت تعاني من أعراض مرضية، ننصحك بالتوجه لأقرب مركز رعاية صحية.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="col-md-5 col-sm-12 help-column">
+        
+        <div class="help-dark-box">
+          <div class="help-icon-large">
+            <i class="fa-solid fa-comments"></i>
+          </div>
+          <h3>هل تحتاج استشارة أو مساعدة؟</h3>
+          <p>فريقنا جاهز للإجابة على استفساراتك العامة وتوجيهك للمقالات الصحية التي تناسب اهتماماتك وحالتك.</p>
+          <a href="/contact.html" class="btn-theme-full">تواصل معنا الآن</a>
+        </div>
+        
+        <div class="help-email-box">
+          <div class="email-details">
+            <span class="email-label">البريد الإلكتروني:</span>
+            <a href="mailto:info@preventaplus.online" dir="ltr">info@preventaplus.online</a>
+          </div>
+          <div class="email-icon">
+            <i class="fa-regular fa-envelope"></i>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="main-footer" dir="rtl">
+  <div class="container">
+    
+    <div class="footer-grid">
+      
+      <div class="footer-col brand-col">
+        <a class="footer-brand" href="/">
+          <img src="Gemini_Generated_Image_sqbqqysqbqqysqbq.png" alt="Preventa Plus Logo" class="footer-logo-img">
+        </a>
+        <p class="footer-desc">المرجع الأول للتوعية الصحية والطب الوقائي في مصر 🌍</p>
+        
+        <div class="subscribe-wrapper">
+          <h4 class="widget-heading">اشترك معنا</h4>
+          <form id="subscribe-form" class="subscribe-form">
+            <div class="input-icon">
+              <i class="fa-regular fa-envelope"></i>
+            </div>
+            <input type="email" id="subscribe-email" placeholder="أدخل بريدك الإلكتروني" required>
+            <button type="submit" id="subscribe-btn" class="submit-btn">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="widget-heading">روابط سريعة</h4>
+        <ul class="footer-links">
+          <li><a href="/">الرئيسية</a></li>
+          <li><a href="/services">خدماتنا</a></li>
+          <li><a href="/howitworks">كيف تعمل منصتنا</a></li>
+          <li><a href="/blog">المدونات</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="widget-heading">التواصل</h4>
+        <ul class="footer-links">
+          <li><a href="#">فيسبوك</a></li>
+          <li><a href="#">إنستغرام</a></li>
+          <li><a href="#">يوتيوب</a></li>
+          <li><a href="#">تيك توك</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="widget-heading">معلومات قانونية</h4>
+        <ul class="footer-links">
+          <li><a href="/terms">الشروط والأحكام</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      
+      <div class="copyright">
+        حقوق الطبع والنشر © 2026-2027 PreventaPlus. جميع الحقوق محفوظة
+      </div>
+      
+      <div class="footer-actions">
+        <ul class="social-links">
+          <li><a href="#"><i class="fab fa-instagram"></i></a></li>
+          <li><a href="#"><i class="fab fa-youtube"></i></a></li>
+          <li><a href="#"><i class="fab fa-telegram-plane"></i></a></li>
+        </ul>
+        
+        <button type="button" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">
+          إلى الأعلى
+        </button>
+      </div>
+
+    </div>
+  </div>
+</footer>
+  <script src="//code.jivosite.com/widget/dQDbXAAJl4" async></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script type="module" src="main.js"></script>
+</body>
+</html>

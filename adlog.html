@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دخول الإدارة | Preventa Plus</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { font-family: Cairo, sans-serif; color: #17212b; background: #eef5f1; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 15% 10%, #cce8d9, transparent 38%), linear-gradient(135deg, #f7fbf8, #dcebe5); }
+    .shell { width: min(100%, 980px); display: grid; grid-template-columns: .9fr 1.1fr; background: #fff; border: 1px solid #d7e5dd; box-shadow: 0 24px 70px #19362c1c; border-radius: 24px; overflow: hidden; }
+    .intro { padding: 52px 42px; background: #143b32; color: #fff; display: flex; flex-direction: column; justify-content: space-between; }
+    .intro h1 { margin: 0 0 12px; font-size: clamp(2rem, 4vw, 3.3rem); line-height: 1.15; }
+    .intro p { color: #c9dfd5; line-height: 1.9; }
+    .badge { color: #9ee5bd; font-weight: 700; letter-spacing: .04em; }
+    .form-area { padding: 42px; }
+    h2 { margin: 0 0 8px; font-size: 1.8rem; }
+    .muted { margin: 0 0 25px; color: #687871; }
+    label { display: block; margin: 16px 0 7px; font-weight: 700; }
+    input, button, select { width: 100%; min-height: 48px; border-radius: 11px; font: inherit; }
+    input, select { border: 1px solid #cbdad3; padding: 0 14px; background: #fbfdfc; }
+    button { border: 0; cursor: pointer; font-weight: 700; }
+    .primary { background: #146c4d; color: #fff; margin-top: 22px; }
+    .primary:hover { background: #0d563c; }
+    .google { background: #fff; color: #26332e; border: 1px solid #cbdad3; margin-top: 12px; }
+    .passkey { background: #e7f5ed; color: #14573f; margin-top: 12px; }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0 4px; color: #8a9892; font-size: .9rem; }
+    .divider::before, .divider::after { content: ''; height: 1px; background: #dbe5e0; flex: 1; }
+    .message { min-height: 24px; margin: 16px 0 0; color: #ad2d2d; font-size: .92rem; }
+    .trust { display: flex; gap: 9px; align-items: flex-start; color: #597168; font-size: .84rem; line-height: 1.7; margin-top: 18px; }
+    @media (max-width: 720px) { .shell { grid-template-columns: 1fr; } .intro { padding: 30px; } .intro p { margin-bottom: 0; } .form-area { padding: 30px 24px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="intro">
+      <div><div class="badge">PREVENTA PLUS / ADMIN</div><h1>مساحة الإدارة الآمنة</h1><p>إدارة الأخبار، المستخدمين، وكود الموقع من نقطة دخول واحدة.</p></div>
+      <small>لا تشارك بيانات الدخول. سيتم رفض أي حساب غير مسجل كمسؤول.</small>
+    </section>
+    <section class="form-area" aria-labelledby="title">
+      <h2 id="title">تسجيل دخول الأدمن</h2>
+      <p class="muted">استخدم حساب  المصرح له بالإدارة.</p>
+      <form id="admin-login-form">
+        <label for="email">البريد الإلكتروني</label>
+        <input id="email" type="email" autocomplete="username" required>
+        <label for="password">كلمة المرور</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+        <button class="primary" type="submit" id="login-button">تسجيل الدخول</button>
+      </form>
+      <div class="divider">أو</div>
+      <button class="google" type="button" id="google-button">الدخول باستخدام Google</button>
+      <p class="message" id="message" role="alert"></p>
+      <div class="trust">🔒 التحقق من صلاحية الأدمن يتم من  قبل عرض أي لوحة. لا يتم تخزين كلمات المرور في المتصفح.</div>
+    </section>
+  </main>
+ <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { 
+        getAuth, 
+        setPersistence, 
+        browserLocalPersistence, 
+        signInWithEmailAndPassword, 
+        GoogleAuthProvider, 
+        signInWithPopup, 
+        signOut, 
+        signInWithCustomToken 
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo", 
+        authDomain: "wallet-tamer-adel.firebaseapp.com", 
+        projectId: "wallet-tamer-adel", 
+        storageBucket: "wallet-tamer-adel.firebasestorage.app", 
+        messagingSenderId: "51007948250", 
+        appId: "1:51007948250:web:e1f6eaaebb4202b8aface3" 
+    };
+    
+    const auth = getAuth(initializeApp(firebaseConfig));
+    await setPersistence(auth, browserLocalPersistence);
+    const db = getFirestore(auth.app);
+    
+    const message = document.getElementById("message");
+    const form = document.getElementById("admin-login-form");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    
+    const showError = (text) => { message.textContent = text; };
+
+    // دالة توجيه الأدمن بعد تسجيل الدخول
+    async function routeAdmin(user) {
+      const adminSnapshot = await getDoc(doc(db, "admins", user.uid));
+      if (!adminSnapshot.exists() || adminSnapshot.data().active === false) {
+        await signOut(auth);
+        throw new Error("هذا الحساب ليس لديه صلاحية أدمن.");
+      }
+      const role = adminSnapshot.data().role || "admin";
+      const destinations = { news: "fhfk6iuof.html", users: "mm6ops.html", code: "mmd458jh.html", admin: "addash.html" };
+      window.location.href = destinations[role] || destinations.admin;
+    }
+
+    // دالة إتمام تسجيل الدخول المشتركة
+    async function finishLogin(loginPromise) {
+      try { 
+          const result = await loginPromise; 
+          await routeAdmin(result.user); 
+      } catch (error) { 
+          console.error(error); 
+          showError(error.message.includes("صلاحية") ? error.message : "تعذر تسجيل الدخول. راجع البيانات أو إعدادات ."); 
+      }
+    }
+
+    // 1. الدخول بالبريد وكلمة المرور
+    form.addEventListener("submit", (event) => { 
+        event.preventDefault(); 
+        finishLogin(signInWithEmailAndPassword(auth, emailInput.value.trim(), passwordInput.value)); 
+    });
+
+    // 2. الدخول بحساب جوجل
+    document.getElementById("google-button").addEventListener("click", () => {
+        finishLogin(signInWithPopup(auth, new GoogleAuthProvider()));
+    });
+
+    
+</script>
+</body>
+</html>

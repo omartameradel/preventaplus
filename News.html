@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>الأخبار | Preventa Plus</title>
+	<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link rel="stylesheet" href="index.css">
+</head>
+<body class="news-page">
+	<header class="main-header">
+		<a href="index.html" class="logo" aria-label="Preventa Plus"><img src="Gemini_Generated_Image_sqbqqysqbqqysqbq.png" alt="Preventa Plus" width="100" height="100"></a>
+		<button class="menu-toggle" id="mobile-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+		<nav class="navbar" id="navbar" aria-label="القائمة الرئيسية">
+			<a href="index.html"><i class="fa-solid fa-house"></i> الرئيسية</a>
+			<a href="about.html"><i class="fa-solid fa-circle-info"></i> من نحن</a>
+			<a href="News.html" class="active"><i class="fa-solid fa-newspaper"></i> الأخبار</a>
+			<a href="contact.html"><i class="fa-solid fa-envelope"></i> التواصل</a>
+		</nav>
+		<div class="controls" id="controls">
+			<select class="lang-selector" id="langSelect" aria-label="اختيار اللغة"><option value="ar">AR</option><option value="en">EN</option></select>
+			<button class="theme-toggle" id="themeToggle" type="button" aria-label="تغيير الوضع"><i class="fa-solid fa-moon"></i></button>
+		</div>
+	</header>
+
+	<div id="google_translate_element" style="display:none"></div>
+	<script>
+		function googleTranslateElementInit() {
+			new google.translate.TranslateElement({ pageLanguage: "ar", includedLanguages: "ar,en", autoDisplay: false }, "google_translate_element");
+		}
+	</script>
+	<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+	<main>
+		<section class="news-hero">
+			<div>
+				<span class="news-eyebrow">المعرفة بين يديك</span>
+				<h1>أحدث الأخبار<br><strong>من أجل صحة أفضل.</strong></h1>
+				<p>مقالات وإرشادات موثوقة تساعدك على فهم صحتك واتخاذ خطوات وقائية أذكى كل يوم.</p>
+			</div>
+			<div class="news-hero-mark"><i class="fa-solid fa-newspaper"></i><span>اقرأ<br>وَاعرف<br>واحْمِ نفسك</span></div>
+		</section>
+
+		<section class="news-content">
+			<div class="news-section-heading"><div><span class="news-eyebrow">آخر ما نشرناه</span><h2>الأخبار <strong>والنصائح</strong></h2></div><span id="news-count" class="news-count">جاري تحميل الأخبار...</span></div>
+			<div id="news-grid" class="news-card-grid" aria-live="polite"><div class="news-loading"><i class="fa-solid fa-spinner fa-spin"></i><span>جاري تحميل الأخبار...</span></div></div>
+		</section>
+	</main>
+
+	<footer class="main-footer" dir="rtl"><div class="container"><div class="footer-grid"><div class="footer-col brand-col"><a class="footer-brand" href="index.html"><img src="Gemini_Generated_Image_sqbqqysqbqqysqbq.png" alt="Preventa Plus Logo" class="footer-logo-img"></a><p class="footer-desc">المرجع الأول للتوعية الصحية والطب الوقائي في مصر 🌍</p><div class="subscribe-wrapper"><h4 class="widget-heading">اشترك معنا</h4><form class="subscribe-form"><div class="input-icon"><i class="fa-regular fa-envelope"></i></div><input type="email" placeholder="أدخل بريدك الإلكتروني" required><button type="submit" class="submit-btn"><i class="fa-solid fa-arrow-left"></i></button></form></div></div><div class="footer-col"><h4 class="widget-heading">روابط سريعة</h4><ul class="footer-links"><li><a href="index.html">الرئيسية</a></li><li><a href="about.html">من نحن</a></li><li><a href="index.html#how">كيف تعمل منصتنا</a></li><li><a href="News.html">الأخبار</a></li></ul></div><div class="footer-col"><h4 class="widget-heading">التواصل</h4><ul class="footer-links"><li><a href="#">فيسبوك</a></li><li><a href="#">إنستغرام</a></li><li><a href="#">يوتيوب</a></li><li><a href="#">تيك توك</a></li></ul></div><div class="footer-col"><h4 class="widget-heading">معلومات قانونية</h4><ul class="footer-links"><li><a href="/terms">الشروط والأحكام</a></li></ul></div></div><div class="footer-bottom"><div class="copyright">حقوق الطبع والنشر © 2026-2027 PreventaPlus. جميع الحقوق محفوظة</div><div class="footer-actions"><ul class="social-links"><li><a href="#"><i class="fab fa-instagram"></i></a></li><li><a href="#"><i class="fab fa-youtube"></i></a></li><li><a href="#"><i class="fab fa-telegram-plane"></i></a></li></ul><button type="button" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">إلى الأعلى</button></div></div></div></footer>
+
+	<script type="module">
+		import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+		import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+		const firebaseConfig = { apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo", authDomain: "wallet-tamer-adel.firebaseapp.com", projectId: "wallet-tamer-adel", storageBucket: "wallet-tamer-adel.firebasestorage.app", messagingSenderId: "51007948250", appId: "1:51007948250:web:e1f6eaaebb4202b8aface3" };
+		const db = getFirestore(initializeApp(firebaseConfig));
+		const body = document.body;
+		const menuButton = document.getElementById("mobile-menu-btn");
+		const navbar = document.getElementById("navbar");
+		const controls = document.getElementById("controls");
+		const themeToggle = document.getElementById("themeToggle");
+		const themeIcon = themeToggle.querySelector("i");
+		const langSelect = document.getElementById("langSelect");
+		const newsGrid = document.getElementById("news-grid");
+		const newsCount = document.getElementById("news-count");
+
+		const escapeHTML = (value = "") => String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
+		const formatDescription = (value = "") => escapeHTML(value).replace(/(https?:\/\/[^\s<]+)/gi, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>').replace(/\n/g, "<br>");
+
+		function closeMenu() { navbar.classList.remove("active"); controls.classList.remove("active"); menuButton.setAttribute("aria-expanded", "false"); menuButton.innerHTML = '<i class="fa-solid fa-bars"></i>'; }
+		if (localStorage.getItem("theme") === "dark") { body.setAttribute("data-theme", "dark"); themeIcon.classList.replace("fa-moon", "fa-sun"); }
+		menuButton.addEventListener("click", () => { const open = !navbar.classList.contains("active"); navbar.classList.toggle("active", open); controls.classList.toggle("active", open); menuButton.setAttribute("aria-expanded", String(open)); menuButton.innerHTML = open ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>'; });
+		navbar.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
+		themeToggle.addEventListener("click", () => { const dark = body.getAttribute("data-theme") === "dark"; if (dark) { body.removeAttribute("data-theme"); localStorage.setItem("theme", "light"); themeIcon.classList.replace("fa-sun", "fa-moon"); } else { body.setAttribute("data-theme", "dark"); localStorage.setItem("theme", "dark"); themeIcon.classList.replace("fa-moon", "fa-sun"); } });
+		langSelect.addEventListener("change", () => { const googleSelect = document.querySelector(".goog-te-combo"); if (googleSelect) { googleSelect.value = langSelect.value; googleSelect.dispatchEvent(new Event("change")); } document.documentElement.lang = langSelect.value; document.documentElement.dir = langSelect.value === "ar" ? "rtl" : "ltr"; });
+
+		onSnapshot(query(collection(db, "news"), orderBy("createdAt", "desc")), (snapshot) => {
+			const visibleNews = snapshot.docs.filter((item) => item.data().isVisible !== false);
+			newsCount.textContent = `${visibleNews.length} ${visibleNews.length === 1 ? "خبر منشور" : "أخبار منشورة"}`;
+			if (!visibleNews.length) { newsGrid.innerHTML = '<div class="news-empty"><i class="fa-regular fa-newspaper"></i><h3>لا توجد أخبار منشورة حاليًا</h3><p>تابعنا قريبًا لمعرفة آخر النصائح والتحديثات.</p></div>'; return; }
+			newsGrid.innerHTML = visibleNews.map((documentSnapshot) => { const data = documentSnapshot.data(); const date = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" }) : "منشور حديثًا"; return `<article class="news-page-card"><div class="news-page-image-wrap"><img src="${escapeHTML(data.imageUrl || "6384.png")}" alt="${escapeHTML(data.title || "خبر صحي")}" loading="lazy"><span><i class="fa-regular fa-calendar"></i> ${date}</span></div><div class="news-page-card-body"><h3>${escapeHTML(data.title || "خبر صحي")}</h3><p>${formatDescription(data.description || "")}</p><div class="news-page-card-footer"><span><i class="fa-solid fa-shield-heart"></i> Preventa Plus</span><i class="fa-solid fa-arrow-left"></i></div></div></article>`; }).join("");
+		}, () => { newsCount.textContent = "تعذر التحميل"; newsGrid.innerHTML = '<div class="news-empty error"><i class="fa-solid fa-triangle-exclamation"></i><h3>تعذر تحميل الأخبار</h3><p>تحقق من الاتصال بالإنترنت وحاول مرة أخرى.</p></div>'; });
+	</script>
+</body>
+</html>
