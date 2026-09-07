@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | الأخبار والسلايدر</title>
+    
+    <!-- مكتبة FontAwesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        /* إعدادات الألوان والوضع الفاتح */
+        :root {
+            --primary: #007bff;
+            --bg: #f4f7f6;
+            --text: #333;
+            --card-bg: #fff;
+            --border: #ddd;
+        }
+
+        /* إعدادات الوضع الليلي */
+        [data-theme="dark"] {
+            --primary: #4da3ff;
+            --bg: #121212;
+            --text: #f4f4f4;
+            --card-bg: #1e1e1e;
+            --border: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* شريط التصفح العلوي */
+        nav {
+            background: var(--card-bg);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+        nav button {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #themeToggle {
+            position: absolute;
+            left: 20px;
+            background: transparent;
+            color: var(--text);
+            font-size: 20px;
+            padding: 5px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        /* تنسيق السلايدر (الجمهور) */
+        .news-slider {
+            width: 100%;
+            padding-bottom: 40px;
+        }
+        .news-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            text-align: center;
+        }
+        .news-card img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+        .card-content { padding: 15px; }
+        .card-title { color: var(--primary); margin: 0 0 10px; }
+        .card-desc a { color: var(--primary); text-decoration: underline; }
+
+        /* تنسيق الفورم (الأدمن) */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea {
+            width: 100%; padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 5px; box-sizing: border-box;
+            background: var(--bg); color: var(--text);
+        }
+        .btn-submit {
+            background: #28a745; color: white; border: none;
+            padding: 12px; cursor: pointer; border-radius: 5px;
+            width: 100%; font-size: 16px; margin-bottom: 10px;
+        }
+        .btn-cancel {
+            background: #6c757d; color: white; border: none;
+            padding: 12px; cursor: pointer; border-radius: 5px;
+            width: 100%; font-size: 16px; display: none;
+        }
+
+        /* تنسيق الجدول */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid var(--border); padding: 12px; text-align: center; }
+        th { background-color: var(--bg); }
+        td img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; }
+        .action-btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; margin: 2px; }
+        .btn-edit { background: #ffc107; color: black; }
+        .btn-delete { background: #dc3545; }
+        .btn-toggle { background: #17a2b8; } /* لون زر الإظهار والإخفاء */
+
+        /* تنسيق شارات الحالة (مخفي/ظاهر) */
+        .badge-visible { background: #28a745; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+        .badge-hidden { background: #6c757d; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+
+        #public-view { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- أدوات لوحة الإدارة -->
+    <nav>
+        <button><i class="fa-solid fa-lock"></i> لوحة الإدارة</button>
+        <button id="themeToggle"><i class="fa-solid fa-moon"></i></button>
+    </nav>
+
+    <!-- واجهة لوحة الإدارة -->
+    <div id="admin-view" class="container">
+        <h2 id="formTitle"><i class="fa-solid fa-plus"></i> إضافة خبر جديد</h2>
+        
+        <form id="news-form">
+            <input type="hidden" id="newsId">
+            <div class="form-group">
+                <label>عنوان الخبر:</label>
+                <input type="text" id="newsTitle" required>
+            </div>
+            <div class="form-group">
+                <label>رابط الصورة:</label>
+                <input type="url" id="newsImage" required placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>التفاصيل (يمكنك إضافة روابط):</label>
+                <textarea id="newsDesc" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn-submit" id="submitBtn">نشر الخبر <i class="fa-solid fa-paper-plane"></i></button>
+            <button type="button" class="btn-cancel" id="cancelEditBtn">إلغاء التعديل <i class="fa-solid fa-times"></i></button>
+        </form>
+
+        <hr style="margin: 30px 0; border-color: var(--border);">
+
+        <h3><i class="fa-solid fa-list"></i> إدارة الأخبار الحالية</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>الصورة</th>
+                    <th>العنوان</th>
+                    <th>الحالة</th> <!-- تمت إضافة هذا العمود -->
+                    <th>تاريخ النشر</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="newsTableBody">
+                <!-- يتم تحميل الجدول هنا -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- كود الجافاسكريبت الخاص بك (مدمج مع Firebase) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, orderBy, onSnapshot, doc, addDoc, deleteDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // إعدادات مشروعك
+        const firebaseConfig = {
+            apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo",
+            authDomain: "wallet-tamer-adel.firebaseapp.com",
+            projectId: "wallet-tamer-adel",
+            storageBucket: "wallet-tamer-adel.firebasestorage.app",
+            messagingSenderId: "51007948250",
+            appId: "1:51007948250:web:e1f6eaaebb4202b8aface3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ==========================================
+        // 1. إعدادات الوضع الليلي / النهاري
+        // ==========================================
+        const body = document.body;
+        if (localStorage.getItem('theme') === 'dark') {
+            body.setAttribute('data-theme', 'dark');
+        }
+
+        function linkify(text) {
+            if (!text) return "";
+            const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+            return text.replace(urlRegex, function (url) {
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            // --- تشغيل زر الوضع الليلي ---
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                const icon = themeToggle.querySelector('i');
+                if (body.getAttribute('data-theme') === 'dark' && icon) icon.classList.replace('fa-moon', 'fa-sun');
+
+                themeToggle.addEventListener('click', () => {
+                    if (body.getAttribute('data-theme') === 'dark') {
+                        body.removeAttribute('data-theme');
+                        localStorage.setItem('theme', 'light');
+                        if(icon) icon.classList.replace('fa-sun', 'fa-moon');
+                    } else {
+                        body.setAttribute('data-theme', 'dark');
+                        localStorage.setItem('theme', 'dark');
+                        if(icon) icon.classList.replace('fa-moon', 'fa-sun');
+                    }
+                });
+            }
+
+            // ==========================================
+            // أكواد إدارة الأخبار (الأدمن)
+            // ==========================================
+            const newsForm = document.getElementById('news-form');
+            const newsIdInput = document.getElementById('newsId');
+            const titleInput = document.getElementById('newsTitle');
+            const imageInput = document.getElementById('newsImage');
+            const descInput = document.getElementById('newsDesc');
+            const submitBtn = document.getElementById('submitBtn');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            const newsTableBody = document.getElementById('newsTableBody');
+            const formTitle = document.getElementById('formTitle');
+
+            let newsArray = []; 
+
+            // 1. جلب جميع الأخبار (للأدمن) وعرضها في الجدول
+            const qAdmin = query(collection(db, "news"), orderBy("createdAt", "desc"));
+
+            onSnapshot(qAdmin, (snapshot) => {
+                if(!newsTableBody) return;
+                
+                newsTableBody.innerHTML = ""; 
+                newsArray = []; 
+
+                if (snapshot.empty) {
+                    newsTableBody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد أخبار مضافة حالياً.</td></tr>";
+                    return;
+                }
+
+                snapshot.forEach((documentSnapshot) => {
+                    const data = documentSnapshot.data();
+                    const id = documentSnapshot.id;
+                    newsArray.push({ id, ...data });
+
+                    const date = data.createdAt ? data.createdAt.toDate().toLocaleDateString('ar-EG') : 'الآن';
+                    
+                    // تحديد حالة الخبر (إذا لم تكن isVisible موجودة مسبقاً نعتبرها true)
+                    const isVisible = data.isVisible !== false; 
+                    const statusBadge = isVisible 
+                        ? '<span class="badge-visible">ظاهر</span>' 
+                        : '<span class="badge-hidden">مخفي</span>';
+                    
+                    const toggleBtnText = isVisible 
+                        ? '<i class="fa-solid fa-eye-slash"></i> إخفاء' 
+                        : '<i class="fa-solid fa-eye"></i> إظهار';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><img src="${data.imageUrl}" alt="صورة الخبر"></td>
+                        <td>${data.title}</td>
+                        <td>${statusBadge}</td>
+                        <td>${date}</td>
+                        <td>
+                            <button class="action-btn btn-toggle" data-id="${id}" data-status="${isVisible}">${toggleBtnText}</button>
+                            <button class="action-btn btn-edit" data-id="${id}"><i class="fa-solid fa-pen"></i> تعديل</button>
+                            <button class="action-btn btn-delete" data-id="${id}"><i class="fa-solid fa-trash"></i> حذف</button>
+                        </td>
+                    `;
+                    newsTableBody.appendChild(tr);
+                });
+            });
+
+            // 2. إضافة أو تعديل خبر
+            if(newsForm) {
+                newsForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    submitBtn.innerHTML = "جاري الحفظ... <i class='fa-solid fa-spinner fa-spin'></i>";
+                    submitBtn.disabled = true;
+
+                    const id = newsIdInput.value;
+                    const title = titleInput.value;
+                    const imageUrl = imageInput.value;
+                    const description = descInput.value;
+
+                    try {
+                        if (id) {
+                            await updateDoc(doc(db, "news", id), {
+                                title: title,
+                                imageUrl: imageUrl,
+                                description: description
+                            });
+                            alert("تم تعديل الخبر بنجاح!");
+                            resetForm();
+                        } else {
+                            await addDoc(collection(db, "news"), {
+                                title: title,
+                                imageUrl: imageUrl,
+                                description: description,
+                                isVisible: true, // افتراضياً الخبر الجديد يكون ظاهراً
+                                createdAt: serverTimestamp() 
+                            });
+                            alert("تمت إضافة الخبر بنجاح!");
+                            newsForm.reset();
+                        }
+                    } catch (error) {
+                        console.error("خطأ:", error);
+                        alert("حدث خطأ أثناء حفظ الخبر.");
+                    } finally {
+                        submitBtn.innerHTML = "نشر الخبر <i class='fa-solid fa-paper-plane'></i>";
+                        submitBtn.disabled = false;
+                    }
+                });
+            }
+
+            // 3. الاستماع لأزرار (تعديل - حذف - إظهار/إخفاء) داخل الجدول
+            if(newsTableBody) {
+                newsTableBody.addEventListener('click', async (e) => {
+                    
+                    // --- زر الإظهار / الإخفاء ---
+                    if (e.target.closest('.btn-toggle')) {
+                        const btn = e.target.closest('.btn-toggle');
+                        const id = btn.dataset.id;
+                        // تحويل النص إلى قيمة منطقية (Boolean)
+                        const currentStatus = btn.dataset.status === 'true'; 
+                        
+                        try {
+                            await updateDoc(doc(db, "news", id), {
+                                isVisible: !currentStatus // عكس الحالة الحالية
+                            });
+                        } catch (error) {
+                            console.error("خطأ:", error);
+                            alert("حدث خطأ أثناء تغيير حالة الخبر.");
+                        }
+                    }
+
+                    // --- زر الحذف ---
+                    if (e.target.closest('.btn-delete')) {
+                        const id = e.target.closest('.btn-delete').dataset.id;
+                        if (confirm("هل أنت متأكد من حذف هذا الخبر نهائياً؟")) {
+                            try {
+                                await deleteDoc(doc(db, "news", id));
+                            } catch (error) {
+                                console.error("خطأ في الحذف:", error);
+                                alert("حدث خطأ أثناء الحذف.");
+                            }
+                        }
+                    }
+
+                    // --- زر التعديل ---
+                    if (e.target.closest('.btn-edit')) {
+                        const id = e.target.closest('.btn-edit').dataset.id;
+                        const newsItem = newsArray.find(item => item.id === id);
+                        if (newsItem) {
+                            newsIdInput.value = newsItem.id;
+                            titleInput.value = newsItem.title;
+                            imageInput.value = newsItem.imageUrl;
+                            descInput.value = newsItem.description;
+
+                            formTitle.innerHTML = "<i class='fa-solid fa-pen-to-square'></i> تعديل الخبر الحالي";
+                            submitBtn.innerHTML = "حفظ التعديلات <i class='fa-solid fa-check'></i>";
+                            cancelEditBtn.style.display = "block";
+                            
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                    }
+                });
+            }
+
+            // 4. إلغاء التعديل
+            if(cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', resetForm);
+            }
+
+            function resetForm() {
+                newsForm.reset();
+                newsIdInput.value = "";
+                formTitle.innerHTML = "<i class='fa-solid fa-plus'></i> إضافة خبر جديد";
+                submitBtn.innerHTML = "نشر الخبر <i class='fa-solid fa-paper-plane'></i>";
+                cancelEditBtn.style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>
