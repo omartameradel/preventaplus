@@ -48,7 +48,19 @@
 		</section>
 	</main>
 
-	<footer class="main-footer" dir="rtl"><div class="container"><div class="footer-grid"><div class="footer-col brand-col"><a class="footer-brand" href="index.html"><img src="Gemini_Generated_Image_sqbqqysqbqqysqbq.png" alt="Preventa Plus Logo" class="footer-logo-img"></a><p class="footer-desc">المرجع الأول للتوعية الصحية والطب الوقائي في مصر 🌍</p><div class="subscribe-wrapper"><h4 class="widget-heading">اشترك معنا</h4><form class="subscribe-form"><div class="input-icon"><i class="fa-regular fa-envelope"></i></div><input type="email" placeholder="أدخل بريدك الإلكتروني" required><button type="submit" class="submit-btn"><i class="fa-solid fa-arrow-left"></i></button></form></div></div><div class="footer-col"><h4 class="widget-heading">روابط سريعة</h4><ul class="footer-links"><li><a href="index.html">الرئيسية</a></li><li><a href="about.html">من نحن</a></li><li><a href="index.html#how">كيف تعمل منصتنا</a></li><li><a href="News.html">الأخبار</a></li></ul></div><div class="footer-col"><h4 class="widget-heading">التواصل</h4><ul class="footer-links"><li><a href="#">فيسبوك</a></li><li><a href="#">إنستغرام</a></li><li><a href="#">يوتيوب</a></li><li><a href="#">تيك توك</a></li></ul></div><div class="footer-col"><h4 class="widget-heading">معلومات قانونية</h4><ul class="footer-links"><li><a href="/terms">الشروط والأحكام</a></li></ul></div></div><div class="footer-bottom"><div class="copyright">حقوق الطبع والنشر © 2026-2027 PreventaPlus. جميع الحقوق محفوظة</div><div class="footer-actions"><ul class="social-links"><li><a href="#"><i class="fab fa-instagram"></i></a></li><li><a href="#"><i class="fab fa-youtube"></i></a></li><li><a href="#"><i class="fab fa-telegram-plane"></i></a></li></ul><button type="button" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">إلى الأعلى</button></div></div></div></footer>
+	<div class="news-modal" id="news-modal" role="dialog" aria-modal="true" aria-labelledby="news-modal-title" hidden>
+		<div class="news-modal-backdrop" data-close-news-modal></div>
+		<div class="news-modal-dialog">
+			<button class="news-modal-close" type="button" aria-label="إغلاق تفاصيل الخبر" data-close-news-modal><i class="fa-solid fa-xmark"></i></button>
+			<img id="news-modal-image" class="news-modal-image" src="" alt="">
+			<div class="news-modal-content">
+				<h2 id="news-modal-title"></h2>
+				<p id="news-modal-description"></p>
+			</div>
+		</div>
+	</div>
+
+	<footer class="main-footer" dir="rtl"><div class="container"><div class="footer-grid"><div class="footer-col brand-col"><a class="footer-brand" href="index.html"><img src="Gemini_Generated_Image_sqbqqysqbqqysqbq.png" alt="Preventa Plus Logo" class="footer-logo-img"></a><p class="footer-desc">المرجع الأول للتوعية الصحية والطب الوقائي في مصر 🌍</p></div><div class="footer-col"><h4 class="widget-heading">روابط سريعة</h4><ul class="footer-links"><li><a href="index.html">الرئيسية</a></li><li><a href="about.html">من نحن</a></li><li><a href="News.html">الأخبار</a></li><li><a href="contact.html">تواصل معنا</a></li></ul></div><div class="footer-col"><h4 class="widget-heading">التواصل</h4><ul class="footer-links"><li><a href="https://www.facebook.com/PreventaPlus" target="_blank" rel="noopener noreferrer">فيسبوك</a></li><li><a href="https://wa.me/201007349611" target="_blank" rel="noopener noreferrer">واتساب</a></li><li><a href="https://www.instagram.com/PreventaPlus" target="_blank" rel="noopener noreferrer">إنستغرام</a></li><li><a href="https://www.youtube.com/@PreventaPlus" target="_blank" rel="noopener noreferrer">يوتيوب</a></li></ul></div><div class="footer-col"><h4 class="widget-heading">معلومات قانونية</h4><ul class="footer-links"><li><a href="terms.html">الشروط والأحكام</a></li></ul></div></div><div class="footer-bottom"><div class="copyright">حقوق الطبع والنشر © 2026-2027 PreventaPlus. جميع الحقوق محفوظة</div><div class="footer-actions"><ul class="social-links"><li><a href="https://www.instagram.com/PreventaPlus" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li><li><a href="https://www.youtube.com/@PreventaPlus" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a></li><li><a href="https://wa.me/201007349611" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a></li></ul><button type="button" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">إلى الأعلى</button></div></div></div></footer>
 
 	<script type="module">
 		import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -65,6 +77,11 @@
 		const langSelect = document.getElementById("langSelect");
 		const newsGrid = document.getElementById("news-grid");
 		const newsCount = document.getElementById("news-count");
+		const newsModal = document.getElementById("news-modal");
+		const newsModalImage = document.getElementById("news-modal-image");
+		const newsModalTitle = document.getElementById("news-modal-title");
+		const newsModalDescription = document.getElementById("news-modal-description");
+		const newsDetails = new Map();
 
 		const escapeHTML = (value = "") => String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
 		const formatDescription = (value = "") => escapeHTML(value).replace(/(https?:\/\/[^\s<]+)/gi, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>').replace(/\n/g, "<br>");
@@ -75,13 +92,30 @@
 		navbar.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
 		themeToggle.addEventListener("click", () => { const dark = body.getAttribute("data-theme") === "dark"; if (dark) { body.removeAttribute("data-theme"); localStorage.setItem("theme", "light"); themeIcon.classList.replace("fa-sun", "fa-moon"); } else { body.setAttribute("data-theme", "dark"); localStorage.setItem("theme", "dark"); themeIcon.classList.replace("fa-moon", "fa-sun"); } });
 		langSelect.addEventListener("change", () => { const googleSelect = document.querySelector(".goog-te-combo"); if (googleSelect) { googleSelect.value = langSelect.value; googleSelect.dispatchEvent(new Event("change")); } document.documentElement.lang = langSelect.value; document.documentElement.dir = langSelect.value === "ar" ? "rtl" : "ltr"; });
+		function closeNewsModal() { newsModal.hidden = true; document.body.classList.remove("news-modal-open"); }
+		function openNewsModal(newsId) {
+			const data = newsDetails.get(newsId);
+			if (!data) return;
+			newsModalImage.src = data.imageUrl || "6384.png";
+			newsModalImage.alt = data.title || "خبر صحي";
+			newsModalTitle.textContent = data.title || "خبر صحي";
+			newsModalDescription.innerHTML = formatDescription(data.description || "لا يوجد وصف لهذا الخبر.");
+			newsModal.hidden = false;
+			document.body.classList.add("news-modal-open");
+		}
+		newsGrid.addEventListener("click", (event) => { const button = event.target.closest("[data-news-id]"); if (button) openNewsModal(button.dataset.newsId); });
+		document.querySelectorAll("[data-close-news-modal]").forEach((element) => element.addEventListener("click", closeNewsModal));
+		document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !newsModal.hidden) closeNewsModal(); });
 
 		onSnapshot(query(collection(db, "news"), orderBy("createdAt", "desc")), (snapshot) => {
 			const visibleNews = snapshot.docs.filter((item) => item.data().isVisible !== false);
+			newsDetails.clear();
 			newsCount.textContent = `${visibleNews.length} ${visibleNews.length === 1 ? "خبر منشور" : "أخبار منشورة"}`;
 			if (!visibleNews.length) { newsGrid.innerHTML = '<div class="news-empty"><i class="fa-regular fa-newspaper"></i><h3>لا توجد أخبار منشورة حاليًا</h3><p>تابعنا قريبًا لمعرفة آخر النصائح والتحديثات.</p></div>'; return; }
-			newsGrid.innerHTML = visibleNews.map((documentSnapshot) => { const data = documentSnapshot.data(); const date = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" }) : "منشور حديثًا"; return `<article class="news-page-card"><div class="news-page-image-wrap"><img src="${escapeHTML(data.imageUrl || "6384.png")}" alt="${escapeHTML(data.title || "خبر صحي")}" loading="lazy"><span><i class="fa-regular fa-calendar"></i> ${date}</span></div><div class="news-page-card-body"><h3>${escapeHTML(data.title || "خبر صحي")}</h3><p>${formatDescription(data.description || "")}</p><div class="news-page-card-footer"><span><i class="fa-solid fa-shield-heart"></i> Preventa Plus</span><i class="fa-solid fa-arrow-left"></i></div></div></article>`; }).join("");
+			newsGrid.innerHTML = visibleNews.map((documentSnapshot) => { const data = documentSnapshot.data(); const newsId = documentSnapshot.id; newsDetails.set(newsId, data); const date = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" }) : "منشور حديثًا"; return `<article class="news-page-card"><div class="news-page-image-wrap"><img src="${escapeHTML(data.imageUrl || "6384.png")}" alt="${escapeHTML(data.title || "خبر صحي")}" loading="lazy"><span><i class="fa-regular fa-calendar"></i> ${date}</span></div><div class="news-page-card-body"><h3>${escapeHTML(data.title || "خبر صحي")}</h3><p>${formatDescription(data.description || "")}</p><div class="news-page-card-footer"><span><i class="fa-solid fa-shield-heart"></i> Preventa Plus</span><button class="news-details-button" type="button" data-news-id="${escapeHTML(newsId)}" aria-label="عرض تفاصيل الخبر"><i class="fa-solid fa-arrow-left"></i></button></div></div></article>`; }).join("");
 		}, () => { newsCount.textContent = "تعذر التحميل"; newsGrid.innerHTML = '<div class="news-empty error"><i class="fa-solid fa-triangle-exclamation"></i><h3>تعذر تحميل الأخبار</h3><p>تحقق من الاتصال بالإنترنت وحاول مرة أخرى.</p></div>'; });
 	</script>
+	  <script src="//code.jivosite.com/widget/dQDbXAAJl4" async></script>
+
 </body>
 </html>

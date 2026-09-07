@@ -290,6 +290,45 @@ body {
     color: var(--primary-color);
 }
 
+.terms-page {
+    padding: 72px 0 96px;
+}
+
+.terms-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 36px clamp(22px, 5vw, 64px);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    line-height: 2;
+}
+
+.terms-content h2 {
+    margin: 28px 0 8px;
+    color: var(--primary-color);
+    font-size: 1.35rem;
+}
+
+.terms-content h2:first-of-type {
+    margin-top: 8px;
+}
+
+.terms-content p {
+    margin: 0;
+}
+
+.terms-updated {
+    color: #6b7280;
+    font-size: .9rem;
+}
+
+.terms-content a {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
 /* حاوية السلايدر */
 .news-slider {
     width: 100%;
@@ -3182,11 +3221,28 @@ body {
 .news-page-image-wrap > span i { margin-left: 4px; color: var(--news-yellow); }
 .news-page-card-body { display: flex; flex: 1; flex-direction: column; padding: 22px; }
 .news-page-card-body h3 { margin: 0 0 12px; color: var(--news-ink); font-size: 1.35rem; line-height: 1.5; }
-.news-page-card-body p { display: -webkit-box; overflow: hidden; margin: 0; color: #697287; line-height: 1.85; -webkit-box-orient: vertical; -webkit-line-clamp: 5; }
+.news-page-card-body p { display: -webkit-box; overflow: hidden; margin: 0; color: #697287; line-height: 1.85; -webkit-box-orient: vertical; -webkit-line-clamp: 5; line-clamp: 5; }
 .news-page-card-body p a { color: var(--news-coral); font-weight: 700; overflow-wrap: anywhere; }
 .news-page-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 22px; color: var(--news-coral); font-size: .82rem; font-weight: 800; }
 .news-page-card-footer span { color: #8991a1; }
 .news-page-card-footer span i { color: #18a879; }
+.news-details-button { display: grid; width: 42px; height: 42px; place-items: center; border: 0; border-radius: 50%; background: var(--news-coral); color: #fff; cursor: pointer; transition: transform .2s, background-color .2s; }
+.news-details-button:hover, .news-details-button:focus-visible { background: #c91832; transform: translateX(-3px); }
+.news-modal[hidden] { display: none; }
+.news-modal { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: 20px; }
+.news-modal-backdrop { position: absolute; inset: 0; background: rgba(8, 14, 31, .78); backdrop-filter: blur(4px); }
+.news-modal-dialog { position: relative; z-index: 1; display: flex; width: min(900px, 100%); max-height: min(850px, 92vh); flex-direction: column; overflow: auto; border-radius: 20px; background: #fff; box-shadow: 0 28px 80px rgba(0, 0, 0, .3); }
+.news-modal-close { position: absolute; top: 14px; left: 14px; z-index: 2; display: grid; width: 42px; height: 42px; place-items: center; border: 0; border-radius: 50%; background: rgba(16, 26, 55, .8); color: #fff; cursor: pointer; font-size: 1.1rem; }
+.news-modal-close:hover, .news-modal-close:focus-visible { background: var(--news-coral); }
+.news-modal-image { display: block; width: 100%; max-height: 480px; object-fit: contain; background: #101a37; }
+.news-modal-content { padding: 28px 32px 34px; }
+.news-modal-content h2 { margin: 0 0 14px; color: var(--news-ink); font-size: clamp(1.45rem, 3vw, 2.2rem); line-height: 1.45; }
+.news-modal-content p { margin: 0; color: #4f5a70; line-height: 2; white-space: normal; }
+.news-modal-content p a { color: var(--news-coral); font-weight: 700; overflow-wrap: anywhere; }
+.news-modal-open { overflow: hidden; }
+[data-theme="dark"] .news-modal-dialog { background: #1b243c; }
+[data-theme="dark"] .news-modal-content h2 { color: #fff; }
+[data-theme="dark"] .news-modal-content p { color: #c2c9d8; }
 .news-loading, .news-empty { grid-column: 1 / -1; display: flex; min-height: 240px; flex-direction: column; align-items: center; justify-content: center; gap: 12px; border: 1px dashed #d6dcd5; border-radius: 20px; color: #697287; text-align: center; }
 .news-loading i, .news-empty > i { color: var(--news-coral); font-size: 2.5rem; }
 .news-empty h3 { margin: 0; color: var(--news-ink); }
@@ -3215,4 +3271,7 @@ body {
     .news-card-grid { grid-template-columns: 1fr; }
     .news-page-image-wrap { height: 245px; }
     .news-content { padding-bottom: 70px; }
+    .news-modal { padding: 12px; }
+    .news-modal-image { max-height: 330px; }
+    .news-modal-content { padding: 22px 20px 26px; }
 }

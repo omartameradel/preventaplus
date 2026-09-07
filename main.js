@@ -2,7 +2,7 @@
 // استدعاء مكتبات Firebase (الإصدار الحديث v10)
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, setPersistence, browserLocalPersistence, browserSessionPersistence, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getFirestore, collection, query, where, getDocs, orderBy, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // إعدادات مشروعك
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
             loop: true, 
             grabCursor: true, 
             autoplay: {
-                delay: 4000, 
+                delay: 15000, 
                 disableOnInteraction: false, 
             },
             pagination: {
@@ -138,12 +138,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const passwordInput = document.getElementById('password');
         const rememberCheckbox = document.getElementById('remember');
         const submitBtn = document.getElementById('loginBtn');
+        const togglePassword = document.getElementById('togglePassword');
 
         const savedEmail = localStorage.getItem("rememberedEmail");
         if (savedEmail) {
             emailInput.value = savedEmail;
             rememberCheckbox.checked = true;
         }
+
+        togglePassword?.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            togglePassword.setAttribute('aria-label', isPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور');
+            togglePassword.setAttribute('aria-pressed', String(isPassword));
+            togglePassword.querySelector('svg')?.classList.toggle('is-visible', isPassword);
+        });
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -162,15 +171,28 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             try {
+                await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
                 const credential = await signInWithEmailAndPassword(auth, email, password);
                 sessionStorage.setItem("loggedInUser", JSON.stringify({ uid: credential.user.uid, email: credential.user.email }));
-                window.location.href = "dashboard.html";
+                submitBtn.innerHTML = "<span>تم تسجيل الدخول <i class='fa-solid fa-check'></i></span>";
+                loginForm.reset();
+                if (rememberMe) {
+                    emailInput.value = email;
+                    rememberCheckbox.checked = true;
+                }
             } catch (error) {
                 console.error("Error during login:", error);
-                alert("حدث خطأ أثناء محاولة تسجيل الدخول. تأكد من اتصالك بالإنترنت.");
+                const messages = {
+                    "auth/invalid-credential": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+                    "auth/invalid-email": "يرجى إدخال بريد إلكتروني صحيح.",
+                    "auth/too-many-requests": "تم تجاوز عدد المحاولات. حاول لاحقاً."
+                };
+                alert(messages[error.code] || "تعذر تسجيل الدخول. تحقق من الاتصال والبيانات.");
             } finally {
-                submitBtn.innerHTML = originalBtnText;
-                submitBtn.disabled = false;
+                if (!auth.currentUser) {
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                }
             }
         });
     }
