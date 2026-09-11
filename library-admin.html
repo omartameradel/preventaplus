@@ -27,7 +27,8 @@
     .page { padding:16px; border:1px solid var(--line); border-radius:11px; background:#fff; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
     .page-head { display:flex; justify-content:space-between; gap:10px; align-items:start; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
     .page strong { color:var(--navy); font-size: 1.1rem; } .page small { color:var(--muted); display: block; margin-top: 4px; }
-    .delete { margin-top:11px; padding:7px 10px; border:1px solid #efcaca; border-radius:7px; background:#fff5f5; color:#a52e2e; cursor:pointer; font:inherit; font-size:.75rem; width: 100%; font-weight: bold; }
+    .delete { padding:7px 10px; border:1px solid #efcaca; border-radius:7px; background:#fff5f5; color:#a52e2e; cursor:pointer; font:inherit; font-size:.75rem; width: 100%; font-weight: bold; }
+    .edit-btn { padding:7px 10px; border:1px solid #cacaef; border-radius:7px; background:#f5f5ff; color:#2e2ea5; cursor:pointer; font:inherit; font-size:.75rem; width: 100%; font-weight: bold; }
     .message { min-height:20px; margin:10px 0 0; }
     .files-list { list-style: none; padding: 0; margin: 0; }
     .files-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #eee; }
@@ -47,6 +48,13 @@
     .user-row input { width:auto; margin:0; }
     .user-row strong { display:block; font-size:0.9rem; color:var(--navy); }
     .user-row small { display:block; margin-top:2px; color:var(--muted); }
+    
+    /* تنسيقات نافذة التعديل المنبثقة */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal.open { display: flex; }
+    .modal-content { background: #fff; padding: 24px; border-radius: 16px; width: 100%; max-width: 450px; box-shadow: 0 14px 30px rgba(16,47,89,.2); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
     @media (max-width:800px) { body { padding:14px; } header { align-items:flex-start; flex-direction:column; } .layout { grid-template-columns:1fr; } }
   </style>
 </head>
@@ -57,7 +65,6 @@
         <h1>إدارة المكتبة</h1>
         <p class="muted" id="adminStatus">وضع التشغيل المباشر (بدون حماية)</p>
       </div>
-     
     </header>
     
     <div class="layout">
@@ -104,6 +111,28 @@
       </section>
     </div>
   </main>
+
+  <!-- نافذة التعديل المنبثقة -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h2>تعديل بيانات الصفحة</h2>
+      <form id="editPageForm">
+        <input type="hidden" id="editPageId">
+        <div class="field">
+          <label for="editPageName">اسم الصفحة</label>
+          <input id="editPageName" type="text" required maxlength="80">
+        </div>
+        <div class="field">
+          <label for="editPageDescription">وصف الصفحة</label>
+          <textarea id="editPageDescription" maxlength="500"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="primary" type="submit">حفظ التعديلات</button>
+          <button class="back" type="button" id="closeEditModal" style="background: var(--muted)">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -208,7 +237,10 @@
               <small style="background:var(--line); padding:4px 8px; border-radius:4px; color:var(--navy); font-weight:bold;">${filesCount} ملف</small>
             </div>
             ${filesHtml}
-            <button class="delete" type="button" data-delete="${pageId}">حذف الصفحة بالكامل</button>
+            <div style="display:flex; gap:10px; margin-top:11px;">
+              <button class="edit-btn" type="button" data-edit-id="${pageId}" data-edit-name="${escapeHtml(page.name || "")}" data-edit-desc="${escapeHtml(page.description || "")}">تعديل البيانات</button>
+              <button class="delete" type="button" data-delete="${pageId}">حذف الصفحة بالكامل</button>
+            </div>
           </article>`; 
       });
 
@@ -230,6 +262,16 @@
         });
       });
       
+      // تفعيل زر تعديل الصفحة
+      box.querySelectorAll(".edit-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.getElementById("editPageId").value = button.dataset.editId;
+          document.getElementById("editPageName").value = button.dataset.editName;
+          document.getElementById("editPageDescription").value = button.dataset.editDesc;
+          document.getElementById("editModal").classList.add("open");
+        });
+      });
+
       // تفعيل أزرار حذف الصفحة
       box.querySelectorAll("[data-delete]").forEach((button) => button.addEventListener("click", async () => { 
         if (!confirm("هل أنت متأكد من حذف الصفحة بالكامل؟ سيتم حذف بياناتها من قاعدة البيانات.")) return; 
@@ -442,6 +484,35 @@
         console.error(error); 
         message.textContent = "حدث خطأ. تأكد من قواعد (Rules) الفايربيز."; 
         message.style.color = "red";
+      }
+    });
+
+    // كود تعديل بيانات الصفحة (النافذة المنبثقة)
+    document.getElementById("closeEditModal").addEventListener("click", () => {
+      document.getElementById("editModal").classList.remove("open");
+    });
+
+    document.getElementById("editPageForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("editPageId").value;
+      const name = document.getElementById("editPageName").value.trim();
+      const description = document.getElementById("editPageDescription").value.trim();
+      const btn = e.target.querySelector("button[type='submit']");
+      const originalText = btn.textContent;
+      
+      btn.textContent = "جاري الحفظ...";
+      btn.disabled = true;
+      
+      try {
+        await updateDoc(doc(db, "libraryPages", id), { name, description });
+        document.getElementById("editModal").classList.remove("open");
+        await loadPages(); // إعادة تحميل القائمة لتحديث العرض
+      } catch (error) {
+        console.error("تعذر تعديل الصفحة:", error);
+        alert("حدث خطأ أثناء حفظ التعديلات.");
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
       }
     });
 
