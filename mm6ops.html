@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="utf-8">
+  <title>لوحة تحكم الأدمن | إدارة الحسابات</title>
+  
+  <!-- تضمين خط تجوال من جوجل -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  
+  <!-- تضمين Bootstrap 3 للواجهة -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  
+  <style>
+    /* الإعدادات العامة والخطوط */
+    body { 
+      background-color: #f4f7f6; 
+      font-family: 'Tajawal', sans-serif; 
+      color: #333;
+    }
+
+    /* تحسين البطاقات (الكروت) */
+    .admin-wrapper { 
+      background-color: #ffffff; 
+      padding: 30px; 
+      border-radius: 20px; 
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); 
+      margin-bottom: 25px; 
+      border: none;
+      transition: all 0.3s ease;
+    }
+    
+    .admin-wrapper h3 {
+      font-weight: 700;
+      color: #1a4d2e;
+      margin-bottom: 25px;
+      border-bottom: 2px solid #eef2f0;
+      padding-bottom: 15px;
+    }
+
+    /* تحسين حقول الإدخال */
+    .form-control {
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+      padding: 10px 15px;
+      height: auto;
+      box-shadow: none;
+      transition: border-color 0.3s;
+    }
+    .form-control:focus {
+      border-color: #1a4d2e;
+      box-shadow: 0 0 8px rgba(26, 77, 46, 0.1);
+    }
+    label { font-weight: 600; color: #4a4a4a; margin-bottom: 8px;}
+
+    /* قائمة الصلاحيات */
+    .checkbox-list { 
+      display: grid; 
+      gap: 5px; 
+      max-height: 200px; 
+      overflow-y: auto; 
+      padding: 15px; 
+      border: 1px solid #e0e0e0; 
+      border-radius: 10px; 
+      background: #fafafa; 
+    }
+    .checkbox-list label { 
+      display: block; 
+      font-weight: 500; 
+      padding: 8px 12px; 
+      border-radius: 8px; 
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .checkbox-list label:hover { background: #eef2f0; }
+    .checkbox-list input { margin-left: 10px; }
+
+    /* تصميم الجدول الجديد */
+    .table-responsive {
+      border-radius: 15px;
+      overflow-x: auto;
+      box-shadow: 0 0 15px rgba(0,0,0,0.02);
+    }
+    .table { margin-bottom: 0; background: #fff; }
+    .table thead th {
+      background-color: #1a4d2e;
+      color: #ffffff;
+      font-weight: 500;
+      padding: 15px;
+      border-bottom: none;
+      white-space: nowrap;
+    }
+    .table > tbody > tr > td { 
+      vertical-align: middle; 
+      padding: 15px;
+      border-top: 1px solid #f0f0f0;
+      font-size: 14px;
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) { background-color: #fcfcfc; }
+    .table-hover > tbody > tr:hover { background-color: #f1f5f3; }
+
+    /* التحكم في عرض الأعمدة لمنع تكسر النص */
+    .table td { min-width: 120px; }
+    .table td:nth-child(2) { min-width: 200px; /* البريد الإلكتروني */ }
+    .table td:nth-child(7) { min-width: 220px; /* الصفحات العامة */ }
+    .actions-cell { min-width: 260px; white-space: nowrap; }
+
+    /* الشارات (Badges) */
+    .badge { padding: 6px 12px; border-radius: 20px; font-weight: 500; font-family: 'Tajawal', sans-serif;}
+    .badge-active { background-color: #2ecc71; color: white;}
+    .badge-inactive { background-color: #e74c3c; color: white;}
+
+    /* الأزرار */
+    .btn { 
+      border-radius: 8px; 
+      font-weight: 600; 
+      transition: all 0.2s;
+      font-family: 'Tajawal', sans-serif;
+    }
+    .btn-block { padding: 12px; font-size: 16px; }
+    .btn-primary { background-color: #1a4d2e; border-color: #1a4d2e; }
+    .btn-primary:hover { background-color: #133a22; border-color: #133a22; }
+    .btn-xs { padding: 6px 10px; margin: 2px; font-size: 13px; font-weight: 500; border-radius: 6px;}
+
+    /* تصميم شريط التمرير (Scrollbar) */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    
+    /* تصميم النوافذ المنبثقة (Modals) */
+    .modal-content { border-radius: 20px; border: none; box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
+    .modal-header { background: #1a4d2e; color: white; border-radius: 20px 20px 0 0; padding: 20px; }
+    .modal-title { font-weight: 700; }
+    .modal-header .close { color: white; opacity: 0.8; text-shadow: none; }
+    .modal-header .close:hover { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- تم التغيير من container إلى container-fluid لاستغلال مساحة الشاشة -->
+<div class="container-fluid" style="margin-top: 40px; padding: 0 30px;">
+  <div class="row">
+    
+    <!-- قسم إنشاء حساب جديد (مساحة أقل بقليل) -->
+    <div class="col-lg-3 col-md-4">
+      <div class="admin-wrapper">
+        <h3>إنشاء حساب جديد</h3>
+        <form id="admin-create-user-form">
+          <div class="form-group">
+            <label>الاسم بالكامل</label>
+            <input type="text" class="form-control" id="new-name" required>
+          </div>
+          <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" class="form-control" id="new-email" required>
+          </div>
+          <div class="form-group">
+            <label>رقم الهاتف</label>
+            <input type="tel" class="form-control" id="new-phone" dir="ltr" required>
+          </div>
+          <div class="form-group">
+            <label>الوظيفة</label>
+            <input type="text" class="form-control" id="new-job-title">
+          </div>
+          <div class="form-group">
+            <label>مكان العمل</label>
+            <input type="text" class="form-control" id="new-workplace">
+          </div>
+          <div class="form-group">
+            <label>كلمة المرور</label>
+            <input type="text" class="form-control" id="new-password" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label>الصفحات العامة المسموح بها</label>
+            <div id="new-user-page-list" class="checkbox-list"></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">إنشاء الحساب</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- قسم عرض الحسابات (مساحة أكبر لراحة الجدول) -->
+    <div class="col-lg-9 col-md-8">
+      <div class="admin-wrapper">
+        <h3>الحسابات المسجلة</h3>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>البريد الإلكتروني</th>
+                <th>رقم الهاتف</th>
+                <th>الوظيفة</th>
+                <th>مكان العمل</th>
+                <th>كلمة المرور</th>
+                <th>الصفحات العامة</th>
+                <th>الحالة</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <!-- سيتم جلب الحسابات هنا -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal لتعديل بيانات المستخدم -->
+<div class="modal fade" id="editUserModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" style="float: left;">&times;</button>
+        <h4 class="modal-title">تعديل بيانات الحساب</h4>
+      </div>
+      <form id="edit-user-form">
+        <div class="modal-body">
+          <input type="hidden" id="edit-doc-id">
+          <div class="form-group">
+            <label>الاسم بالكامل</label>
+            <input type="text" class="form-control" id="edit-name" required>
+          </div>
+          <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" class="form-control" id="edit-email" required>
+          </div>
+          <div class="form-group">
+            <label>رقم الهاتف</label>
+            <input type="tel" class="form-control" id="edit-phone" dir="ltr" required>
+          </div>
+          <div class="form-group">
+            <label>الوظيفة</label>
+            <input type="text" class="form-control" id="edit-job-title">
+          </div>
+          <div class="form-group">
+            <label>مكان العمل</label>
+            <input type="text" class="form-control" id="edit-workplace">
+          </div>
+          <div class="form-group">
+            <label>كلمة المرور</label>
+            <input type="text" class="form-control" id="edit-password" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">حفظ التعديلات</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal لتحديد الصفحات العامة للمستخدم -->
+<div class="modal fade" id="pageAccessModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" style="float: left;">&times;</button>
+        <h4 class="modal-title">تحديد الصفحات العامة للمستخدم</h4>
+      </div>
+      <form id="page-access-form">
+        <div class="modal-body">
+          <input type="hidden" id="page-access-doc-id">
+          <p id="page-access-user-name" style="font-weight: 700; color:#1a4d2e; margin-bottom: 15px; font-size: 16px;"></p>
+          <div id="page-access-options" class="checkbox-list" style="max-height: 300px;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">حفظ التحديد</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- تضمين مكتبات البوتستراب للـ Modal -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<!-- كود Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+  import { getFirestore, collection, onSnapshot, serverTimestamp, doc, deleteDoc, updateDoc, setDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo",
+    authDomain: "wallet-tamer-adel.firebaseapp.com",
+    projectId: "wallet-tamer-adel",
+    storageBucket: "wallet-tamer-adel.firebasestorage.app",
+    messagingSenderId: "51007948250",
+    appId: "1:51007948250:web:e1f6eaaebb4202b8aface3",
+    measurementId: "G-M9LTMX3LHV"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const usersCollection = collection(db, "users");
+  const generalPages = [
+    { id: "home", name: "الرئيسية" },
+    { id: "meetings", name: "الاجتماعات" },
+    { id: "search", name: "البحث" },
+    { id: "tests", name: "الاختبارات" },
+    { id: "community", name: "المجتمع" },
+    { id: "articles", name: "المقالات" },
+    { id: "dashboard", name: "لوحة التحكم" },
+    { id: "support", name: "الدعم الفني" },
+    { id: "profile", name: "الملف الشخصي" },
+    { id: "library", name: "المكتبة" }
+  ];
+  const pageNameMap = Object.fromEntries(generalPages.map((page) => [page.id, page.name]));
+
+  function populatePageChecklist(container, selectedIds = []) {
+    if (!container) return;
+    container.innerHTML = generalPages.length
+      ? generalPages.map((page) => `
+          <label>
+            <input type="checkbox" value="${page.id}" ${selectedIds.includes(page.id) ? "checked" : ""}>
+            ${page.name}
+          </label>
+        `).join("")
+      : "<p>لا توجد صفحات عامة حتى الآن.</p>";
+  }
+
+  function getAllowedPagesSummary(allowedPages, user) {
+    const selectedPages = Array.isArray(allowedPages) ? allowedPages : [];
+    const hasAllowList = Object.prototype.hasOwnProperty.call(user || {}, "allowedPages") || Object.prototype.hasOwnProperty.call(user || {}, "allowedLibraryPages");
+    if (!hasAllowList) return "الكل";
+    if (!selectedPages.length) return "لا توجد صفحات";
+    const summary = selectedPages.map((pageId) => pageNameMap[pageId]).filter(Boolean);
+    return summary.length ? summary.join("، ") : "لا توجد صفحات";
+  }
+
+  const createUserForm = document.getElementById('admin-create-user-form');
+  createUserForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('new-name').value;
+    const email = document.getElementById('new-email').value;
+    const phone = document.getElementById('new-phone').value;
+    const password = document.getElementById('new-password').value;
+
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const selectedGeneralPages = [...document.querySelectorAll('#new-user-page-list input:checked')].map((input) => input.value);
+      const jobTitle = document.getElementById('new-job-title').value.trim();
+      const workplace = document.getElementById('new-workplace').value.trim();
+
+      await setDoc(doc(db, "users", credential.user.uid), {
+        uid: credential.user.uid,
+        name: name,
+        email: email,
+        phone: phone,
+        jobTitle: jobTitle,
+        workplace: workplace,
+        password: password,
+        allowedPages: selectedGeneralPages,
+        isActive: true,
+        createdAt: serverTimestamp()
+      });
+
+      alert("تم إنشاء الحساب بنجاح!");
+      createUserForm.reset();
+    } catch (error) {
+      console.error(error);
+      if (error?.code === 'auth/email-already-in-use') {
+        alert("هذا البريد الإلكتروني موجود بالفعل.");
+      } else {
+        alert("حدث خطأ أثناء الحفظ: " + (error?.message || 'خطأ غير معروف'));
+      }
+    }
+  });
+
+  const usersTableBody = document.getElementById('users-table-body');
+  
+  onSnapshot(usersCollection, (snapshot) => {
+    usersTableBody.innerHTML = ""; 
+    
+    snapshot.forEach((docSnap) => {
+      const user = docSnap.data();
+      const docId = docSnap.id; 
+      
+      const statusBadge = user.isActive 
+        ? `<span class="badge badge-active">مفعل</span>` 
+        : `<span class="badge badge-inactive">معطل</span>`;
+        
+      const statusBtnText = user.isActive ? "تعطيل" : "تفعيل";
+      const statusBtnClass = user.isActive ? "btn-warning" : "btn-success";
+      const allowedPagesSummary = getAllowedPagesSummary(user.allowedPages || user.allowedLibraryPages, user);
+      const selectedPageIds = Array.isArray(user.allowedPages || user.allowedLibraryPages) ? (user.allowedPages || user.allowedLibraryPages) : [];
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${user.name || ''}</strong></td>
+        <td>${user.email || ''}</td>
+        <td dir="ltr">${user.phone || ''}</td>
+        <td>${user.jobTitle || user.job || ''}</td>
+        <td>${user.workplace || ''}</td>
+        <td>${user.password || 'غير متوفرة'}</td>
+        <td style="color: #666; font-size: 13px; line-height:1.6;">${allowedPagesSummary}</td>
+        <td>${statusBadge}</td>
+        <td class="actions-cell">
+          <button class="btn btn-xs ${statusBtnClass} toggle-status-btn">${statusBtnText}</button>
+          <button class="btn btn-xs btn-info edit-user-btn">تعديل</button>
+          <button class="btn btn-xs btn-primary page-access-btn">تحديد الصفحات</button>
+          <button class="btn btn-xs btn-danger delete-user-btn">حذف</button>
+        </td>
+      `;
+
+      tr.querySelector('.toggle-status-btn').addEventListener('click', () => toggleStatus(docId, !!user.isActive));
+      tr.querySelector('.edit-user-btn').addEventListener('click', () => openEditModal(docId, user.name || '', user.email || '', user.phone || '', user.password || '', user.jobTitle || user.job || '', user.workplace || ''));
+      tr.querySelector('.page-access-btn').addEventListener('click', () => openPageAccessModal(docId, user.name || '', selectedPageIds));
+      tr.querySelector('.delete-user-btn').addEventListener('click', () => deleteUser(docId));
+
+      usersTableBody.appendChild(tr);
+    });
+  });
+
+  window.openPageAccessModal = (docId, name, allowedPages) => {
+    document.getElementById('page-access-doc-id').value = docId;
+    document.getElementById('page-access-user-name').textContent = "تعديل صلاحيات: " + (name || 'المستخدم');
+    populatePageChecklist(document.getElementById('page-access-options'), allowedPages || []);
+    $('#pageAccessModal').modal('show');
+  };
+
+  window.toggleStatus = async (docId, currentStatus) => {
+    try {
+      const userRef = doc(db, "users", docId);
+      await updateDoc(userRef, { isActive: !currentStatus });
+    } catch (error) {
+      alert("حدث خطأ أثناء تغيير الحالة.");
+    }
+  };
+
+  window.openEditModal = (docId, name, email, phone, password, jobTitle, workplace) => {
+    document.getElementById('edit-doc-id').value = docId;
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-email').value = email;
+    document.getElementById('edit-phone').value = phone;
+    document.getElementById('edit-job-title').value = jobTitle || '';
+    document.getElementById('edit-workplace').value = workplace || '';
+    document.getElementById('edit-password').value = password; 
+    $('#editUserModal').modal('show'); 
+  };
+
+  document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const docId = document.getElementById('edit-doc-id').value;
+    try {
+      const userRef = doc(db, "users", docId);
+      await updateDoc(userRef, {
+        name: document.getElementById('edit-name').value,
+        email: document.getElementById('edit-email').value,
+        phone: document.getElementById('edit-phone').value,
+        jobTitle: document.getElementById('edit-job-title').value.trim(),
+        workplace: document.getElementById('edit-workplace').value.trim(),
+        password: document.getElementById('edit-password').value
+      });
+      $('#editUserModal').modal('hide');
+    } catch (error) {
+      alert("حدث خطأ أثناء التحديث.");
+    }
+  });
+
+  document.getElementById('page-access-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const docId = document.getElementById('page-access-doc-id').value;
+    const selectedPages = [...document.querySelectorAll('#page-access-options input:checked')].map((input) => input.value);
+    try {
+      await updateDoc(doc(db, "users", docId), { allowedPages: selectedPages });
+      $('#pageAccessModal').modal('hide');
+    } catch (error) {
+      alert("حدث خطأ أثناء تحديث الصفحات.");
+    }
+  });
+
+  window.deleteUser = async (docId) => {
+    if (confirm("هل أنت متأكد من حذف هذا الحساب نهائياً؟")) {
+      try { await deleteDoc(doc(db, "users", docId)); } 
+      catch (error) { alert("حدث خطأ أثناء الحذف."); }
+    }
+  };
+
+  populatePageChecklist(document.getElementById('new-user-page-list'));
+</script>
+
+</body>
+</html>

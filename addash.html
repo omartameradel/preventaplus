@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة الإدارة | Preventa Plus</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; } 
+    body { margin: 0; font-family: Cairo, sans-serif; color: #17212b; background: #edf5f1; overflow: hidden; /* لمنع التمرير أثناء التحميل */ } 
+    main { width: min(100% - 32px, 1050px); margin: 48px auto; } 
+    header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 32px; } 
+    h1 { margin: 0; } 
+    .muted { color: #64756d; } 
+    .logout, .back-button { border: 1px solid #cfddd6; background: #fff; border-radius: 10px; padding: 10px 16px; cursor: pointer; font: inherit; } 
+    .back-button { margin-bottom: 16px; background: #143b32; color: #fff; border-color: #143b32; } 
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; } 
+    .admin-link { position: relative; display: block; padding: 28px; color: #fff; text-decoration: none; border: 0; text-align: right; font: inherit; border-radius: 18px; min-height: 170px; cursor: pointer; box-shadow: 0 12px 30px #19362c18; } 
+    .admin-link strong { display: block; font-size: 1.4rem; margin-bottom: 10px; } 
+    .admin-link-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      min-width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      border-radius: 999px;
+      background: #dc2626;
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(220, 38, 38, 0.35);
+      border: 2px solid rgba(255,255,255,0.7);
+      display: none;
+    }
+    .admin-link-badge.visible { display: inline-flex; }
+    .admin-link--news { background: linear-gradient(135deg, #146c4d, #1f8f60); }
+    .admin-link--articles { background: linear-gradient(135deg, #1d5e78, #2b7da1); }
+    .admin-link--users { background: linear-gradient(135deg, #9b5b27, #c97a35); }
+    .admin-link--community { background: linear-gradient(135deg, #2f6f5a, #4c9b7f); }
+    .admin-link--support { background: linear-gradient(135deg, #4a4b8d, #6e71b5); }
+    .admin-link--meetings { background: linear-gradient(135deg, #7a4c2f, #b56d3a); }
+    .admin-link--library { background: linear-gradient(135deg, #56636d, #7b8a95); }
+    .admin-link--tests { background: linear-gradient(135deg, #0f6d60, #1ead9e); }
+    .admin-link--code { background: linear-gradient(135deg, #495c58, #768a85); }
+    .admin-frame { display: none; } 
+    .admin-frame.open { display: block; position: fixed; inset: 0; z-index: 10; padding: 16px; background: #edf5f1; } 
+    #admin-iframe { display: block; width: 100%; height: calc(100vh - 76px); border: 1px solid #cfddd6; border-radius: 16px; background: #fff; } 
+    
+    /* ستايل شاشة التحميل لمنع رؤية اللوحة قبل التحقق */
+    #loading-screen {
+      position: fixed; inset: 0; background: #edf5f1; z-index: 9999; 
+      display: flex; justify-content: center; align-items: center; flex-direction: column;
+    }
+    .spinner {
+      border: 4px solid #cfddd6; border-top: 4px solid #146c4d; border-radius: 50%;
+      width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    @media (max-width: 700px) { 
+        .grid { grid-template-columns: 1fr; } 
+        header { align-items: flex-start; flex-direction: column; } 
+        .admin-frame.open { padding: 10px; } 
+        #admin-iframe { height: calc(100vh - 68px); } 
+    }
+  </style>
+</head>
+<body>
+  <!-- شاشة التحميل للحماية -->
+  <div id="loading-screen">
+    <div class="spinner"></div>
+    <h3>جارٍ التحقق من الصلاحيات...</h3>
+  </div>
+
+  <main>
+      <header>
+          <div>
+              <h1>لوحة الإدارة</h1>
+              <p class="muted" id="admin-email">جارٍ التحقق...</p>
+          </div>
+          <button class="logout" id="logout">تسجيل الخروج</button>
+      </header>
+      <section class="grid" id="admin-menu" aria-label="لوحات الإدارة">
+          <button class="admin-link admin-link--news" type="button" data-page="fhfk6iuof.html">
+              <strong>إدارة الأخبار</strong><span>إضافة الأخبار وتعديلها ونشرها.</span>
+          </button>
+          <button class="admin-link admin-link--articles" type="button" data-page="articles-admin.html">
+              <strong>إدارة المقالات</strong><span>إنشاء المقالات الصحفية الواسعة وتحريرها.</span>
+          </button>
+          <button class="admin-link admin-link--users" type="button" data-page="mm6ops.html">
+              <span class="admin-link-badge" data-badge-target="users">0</span>
+              <strong>إدارة المستخدمين</strong><span>مراجعة الحسابات وتفعيلها أو تعطيلها.</span>
+          </button>
+          <button class="admin-link admin-link--community" type="button" data-page="community-admin.html">
+              <span class="admin-link-badge" data-badge-target="community">0</span>
+              <strong>إدارة المجتمع</strong><span>مشاركة رسائل وملفات كمسؤول داخل المجتمع.</span>
+          </button>
+          <button class="admin-link admin-link--support" type="button" data-page="support-admin.html">
+              <span class="admin-link-badge" data-badge-target="support">0</span>
+              <strong>إدارة الدعم الفني</strong><span>متابعة التذاكر ورسائل المستخدمين داخل المنصة.</span>
+          </button>
+            <button class="admin-link admin-link--meetings" type="button" data-page="meetings-admin.html">
+              <strong>إدارة الجلسات</strong><span>إنشاء الاجتماعات وتحديد المستخدمين المصرح لهم بالدخول.</span>
+            </button>
+              <button class="admin-link admin-link--library" type="button" data-page="library-admin.html">
+                <strong>إدارة المكتبة</strong><span>إنشاء صفحات جديدة ورفع الملفات داخل كل صفحة.</span>
+              </button>
+          <button class="admin-link admin-link--tests" type="button" data-page="tests-admin.html">
+              <strong>إدارة الاختبارات</strong><span>إضافة الأسئلة، الصور، وإعداد مدة الاختبار وتحديد الإجابة الصحيحة.</span>
+          </button>
+          <button class="admin-link admin-link--code" type="button" data-page="mmd458jh.html">
+              <strong>محرر كود الموقع</strong><span>تعديل ونشر كود الصفحة الرئيسية.</span>
+          </button>
+      </section>
+      <section class="admin-frame" id="admin-frame" aria-live="polite">
+          <button class="back-button" type="button" id="back-button">العودة إلى لوحات الإدارة</button>
+          <iframe id="admin-iframe" title="صفحة الإدارة"></iframe>
+      </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    // إعدادات Firebase الخاصة بك
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo", 
+        authDomain: "wallet-tamer-adel.firebaseapp.com", 
+        projectId: "wallet-tamer-adel", 
+        storageBucket: "wallet-tamer-adel.firebasestorage.app", 
+        messagingSenderId: "51007948250", 
+        appId: "1:51007948250:web:e1f6eaaebb4202b8aface3" 
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    function updateBadge(target, count) {
+      const badge = document.querySelector(`[data-badge-target="${target}"]`);
+      if (!badge) return;
+      badge.textContent = String(count);
+      badge.classList.toggle("visible", count > 0);
+    }
+
+    onSnapshot(collection(db, "users"), (snapshot) => {
+      const inactiveUsers = snapshot.docs.filter((docSnapshot) => {
+        const data = docSnapshot.data();
+        return data.isActive !== true;
+      }).length;
+      updateBadge("users", inactiveUsers);
+    }, (error) => {
+      console.error("Users badge listener failed:", error);
+    });
+
+    onSnapshot(collection(db, "messages"), (snapshot) => {
+      const pendingMessages = snapshot.docs.filter((docSnapshot) => {
+        const data = docSnapshot.data();
+        return data.isAdmin !== true && data.senderRole !== "admin";
+      }).length;
+      updateBadge("community", pendingMessages);
+    }, (error) => {
+      console.error("Community badge listener failed:", error);
+    });
+
+    onSnapshot(collection(db, "support_tickets"), (snapshot) => {
+      const activeTickets = snapshot.docs.filter((docSnapshot) => {
+        const data = docSnapshot.data();
+        return data.status !== "closed";
+      }).length;
+      updateBadge("support", activeTickets);
+    }, (error) => {
+      console.error("Support badge listener failed:", error);
+    });
+
+    // التحقق من الجلسة وصلاحية الأدمن فور فتح الصفحة
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          // جلب بيانات المستخدم من جدول admins للتحقق من صلاحيته
+          const adminSnapshot = await getDoc(doc(db, "admins", user.uid));
+          
+          if (adminSnapshot.exists() && adminSnapshot.data().active !== false) {
+            // الحساب سليم ومصرح له
+            document.getElementById("admin-email").textContent = user.email;
+            // إخفاء شاشة التحميل وإظهار الموقع
+            document.getElementById("loading-screen").style.display = "none";
+            document.body.style.overflow = "auto";
+          } else {
+            // الحساب غير موجود في جدول الإدارة، قم بطرده
+            await signOut(auth);
+            window.location.replace("adlog.html");
+          }
+        } catch (error) {
+          console.error("خطأ في التحقق من الصلاحيات:", error);
+          window.location.replace("adlog.html");
+        }
+      } else {
+        // لا يوجد مستخدم مسجل دخول، اطرده لصفحة تسجيل الدخول
+        window.location.replace("adlog.html");
+      }
+    });
+
+    // كود تسجيل الخروج الحقيقي من Firebase
+    document.getElementById("logout").addEventListener("click", async () => {
+        await signOut(auth);
+        window.location.replace("adlog.html");
+    });
+
+    // أكواد واجهة المستخدم (التنقل بين الصفحات)
+    const menu = document.getElementById("admin-menu");
+    const frame = document.getElementById("admin-frame");
+    const iframe = document.getElementById("admin-iframe");
+    
+    document.querySelectorAll(".admin-link").forEach((button) => button.addEventListener("click", () => {
+      iframe.src = button.dataset.page;
+      menu.style.display = "none";
+      frame.classList.add("open");
+    }));
+    
+    document.getElementById("back-button").addEventListener("click", () => {
+      iframe.src = "about:blank";
+      frame.classList.remove("open");
+      menu.style.display = "grid";
+    });
+  </script>
+</body>
+</html>

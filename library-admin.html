@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة المكتبة | Preventa Plus</title>
+      <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root { --navy:#102f59; --blue:#1b6ca8; --mint:#5dc9bd; --line:#dbe7ed; --muted:#6d7d8c; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; padding:24px; background:linear-gradient(135deg,#eef8f7,#f8f5ec); color:#183047; font-family:Tahoma,Arial,sans-serif; }
+    main { width:min(1120px,100%); margin:auto; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:18px; margin-bottom:24px; }
+    h1,h2,p { margin-top:0; } h1,h2 { color:var(--navy); }
+    .muted,.message { color:var(--muted); font-size:.85rem; }
+    .back,.primary { padding:11px 16px; border:0; border-radius:8px; background:var(--navy); color:#fff; cursor:pointer; font:inherit; }
+    .primary { width:100%; background:var(--blue); font-weight:bold; }
+    .layout { display:grid; grid-template-columns:minmax(320px, 1fr) minmax(0, 1.5fr); gap:18px; }
+    .side-forms { display: flex; flex-direction: column; gap: 18px; }
+    .card { padding:22px; border:1px solid var(--line); border-radius:16px; background:rgba(255,255,255,.92); box-shadow:0 14px 30px rgba(16,47,89,.08); }
+    .field { display:grid; gap:7px; margin-bottom:14px; } label { color:var(--muted); font-size:.8rem; font-weight:bold; }
+    input,textarea,select { width:100%; padding:12px; border:1px solid var(--line); border-radius:8px; background:#fff; color:#183047; font:inherit; }
+    textarea { min-height:90px; resize:vertical; }
+    input[type=file] { padding:9px; }
+    .pages { display:grid; gap:14px; max-height:700px; overflow:auto; padding-left: 5px;}
+    .page { padding:16px; border:1px solid var(--line); border-radius:11px; background:#fff; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+    .page-head { display:flex; justify-content:space-between; gap:10px; align-items:start; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+    .page strong { color:var(--navy); font-size: 1.1rem; } .page small { color:var(--muted); display: block; margin-top: 4px; }
+    .delete { margin-top:11px; padding:7px 10px; border:1px solid #efcaca; border-radius:7px; background:#fff5f5; color:#a52e2e; cursor:pointer; font:inherit; font-size:.75rem; width: 100%; font-weight: bold; }
+    .message { min-height:20px; margin:10px 0 0; }
+    .files-list { list-style: none; padding: 0; margin: 0; }
+    .files-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #eee; }
+    .files-list a { color: var(--blue); text-decoration: none; font-weight: bold; font-size: 0.9rem; word-break: break-all; margin-left: 10px;}
+    .files-list a:hover { text-decoration: underline; }
+    .delete-file { padding:6px 10px; border:1px solid #efcaca; border-radius:7px; background:#fff5f5; color:#a52e2e; cursor:pointer; font:inherit; font-size:.72rem; font-weight:bold; }
+    .file-actions { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; }
+    .file-permissions-toggle { padding:7px 10px; border:1px solid var(--line); border-radius:7px; background:#edf6fb; color:var(--navy); cursor:pointer; font:inherit; font-size:.72rem; font-weight:bold; }
+    .file-permissions-panel { margin-top:10px; padding:10px; border:1px solid var(--line); border-radius:10px; background:#f8fbfc; }
+    .permission-summary { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; color:var(--muted); font-size:.75rem; }
+    .permission-chip { padding:4px 8px; border-radius:999px; background:rgba(93,201,189,.15); color:var(--navy); font-weight:bold; }
+    .permission-input-row { display:flex; gap:8px; margin-top:6px; }
+    .permission-input-row input { flex:1; }
+    .permission-add-button { padding:9px 12px; border:0; border-radius:8px; background:var(--blue); color:#fff; cursor:pointer; font:inherit; }
+    .user-select-box { display:grid; gap:8px; max-height:220px; overflow:auto; padding:8px; border:1px solid var(--line); border-radius:10px; background:#f8fbfc; }
+    .user-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+    .user-row input { width:auto; margin:0; }
+    .user-row strong { display:block; font-size:0.9rem; color:var(--navy); }
+    .user-row small { display:block; margin-top:2px; color:var(--muted); }
+    @media (max-width:800px) { body { padding:14px; } header { align-items:flex-start; flex-direction:column; } .layout { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>إدارة المكتبة</h1>
+        <p class="muted" id="adminStatus">وضع التشغيل المباشر (بدون حماية)</p>
+      </div>
+     
+    </header>
+    
+    <div class="layout">
+      <!-- الجزء الجانبي للنماذج -->
+      <div class="side-forms">
+        <!-- 1. نموذج إنشاء الصفحة -->
+        <section class="card">
+          <h2>1. إنشاء صفحة مكتبة جديدة</h2>
+          <form id="createPageForm">
+            <div class="field"><label for="pageName">اسم الصفحة</label><input id="pageName" type="text" required maxlength="80" placeholder="مثال: قسم الكيمياء"></div>
+            <div class="field"><label for="pageDescription">وصف الصفحة</label><textarea id="pageDescription" maxlength="500" placeholder="اكتب وصفًا مختصرًا"></textarea></div>
+            <button class="primary" type="submit">إنشاء الصفحة</button>
+            <p class="message" id="createMessage"></p>
+          </form>
+        </section>
+
+        <!-- 2. نموذج رفع الملفات لصفحة موجودة -->
+        <section class="card">
+          <h2>2. إضافة ملفات للصفحة</h2>
+          <form id="uploadFilesForm">
+            <div class="field">
+              <label for="pageSelect">اختر الصفحة</label>
+              <select id="pageSelect" required>
+                <option value="">-- جاري التحميل --</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>من يسمح له بمشاهدة ملفات هذه الصفحة؟</label>
+              <input id="downloadUserSearch" type="search" placeholder="ابحث عن مستخدم...">
+              <div id="downloadUsersList" class="user-select-box">اختر صفحة أولاً.</div>
+              <p class="muted" style="margin:0;">اترك القائمة فارغة للسماح للجميع بمشاهدة الملفات.</p>
+            </div>
+            <div class="field"><label for="pageFiles">الملفات المراد رفعها</label><input id="pageFiles" type="file" multiple required></div>
+            <button class="primary" type="submit">بدء رفع الملفات</button>
+            <p class="message" id="uploadMessage"></p>
+          </form>
+        </section>
+      </div>
+
+      <!-- 3. عرض الصفحات والملفات -->
+      <section class="card">
+        <h2>3. صفحات المكتبة ومحتوياتها</h2>
+        <div class="pages" id="pagesList">جاري تحميل البيانات...</div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { addDoc, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const config = { apiKey:"AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo", authDomain:"wallet-tamer-adel.firebaseapp.com", projectId:"wallet-tamer-adel", storageBucket:"wallet-tamer-adel.firebasestorage.app", messagingSenderId:"51007948250", appId:"1:51007948250:web:e1f6eaaebb4202b8aface3" };
+    const app = initializeApp(config); 
+    const auth = getAuth(app);
+    const db = getFirestore(app); 
+    const cloudinaryCloudName = "dorrpdul5";
+    const cloudinaryUploadPreset = "ml_default";
+    
+    const escapeHtml = (value) => String(value || "").replace(/[&<>'"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+    const maxFileSize = 200 * 1024 * 1024;
+    const formatSize = (bytes) => bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    const normalizeAllowedUsers = (values) => Array.from(new Set((Array.isArray(values) ? values : [])
+      .map((value) => String(value || "").trim())
+      .filter((value) => value !== "")));
+    let adminUser = null;
+    let allUsers = [];
+    let libraryPagesCache = [];
+
+    // دالة عرض الصفحات في القائمة وفي قائمة الاختيار (Dropdown)
+    function renderPages(snapshot) {
+      libraryPagesCache = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+      const box = document.getElementById("pagesList");
+      const select = document.getElementById("pageSelect");
+      
+      let html = "";
+      let selectOptions = '<option value="">-- اختر الصفحة --</option>';
+
+      if (snapshot.docs.length === 0) {
+        box.innerHTML = "لا توجد صفحات مكتبة بعد.";
+        select.innerHTML = '<option value="">لا توجد صفحات متاحة</option>';
+        return;
+      }
+
+      snapshot.docs.forEach((item) => { 
+        const page = item.data(); 
+        const pageId = item.id;
+        const filesCount = (page.files || []).length;
+        
+        // إضافة الصفحة لقائمة الاختيار للرفع
+        selectOptions += `<option value="${pageId}">${escapeHtml(page.name)}</option>`;
+
+        // تجهيز قائمة الملفات المعروضة تحت الصفحة
+        let filesHtml = "";
+        if (filesCount > 0) {
+          filesHtml = `<ul class="files-list">`;
+          page.files.forEach((file, index) => {
+            const fileAllowedUsers = normalizeAllowedUsers(file.downloadAllowedUsers);
+            const uniqueUsers = [];
+            fileAllowedUsers.forEach((userValue) => {
+              const match = allUsers.find((user) => user.id === userValue || user.email === userValue);
+              if (!match) {
+                if (!uniqueUsers.includes(userValue)) uniqueUsers.push(userValue);
+                return;
+              }
+              const uniqueKey = match.id || match.email || userValue;
+              if (!uniqueUsers.some((entry) => entry === uniqueKey || entry === match.email || entry === match.id)) {
+                uniqueUsers.push(uniqueKey);
+              }
+            });
+            const fileAllowedNames = uniqueUsers
+              .map((userValue) => {
+                const match = allUsers.find((user) => user.id === userValue || user.email === userValue);
+                return match ? (match.name || match.email || userValue) : userValue;
+              })
+              .slice(0, 3);
+            const summary = uniqueUsers.length ? fileAllowedNames.join("، ") : "الجميع";
+
+            filesHtml += `
+              <li>
+                <div style="display:flex; flex-direction:column; gap:6px; flex:1; min-width:0;">
+                  <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                    <a href="${file.url}" target="_blank" title="اضغط لتحميل أو فتح الملف">📄 ${escapeHtml(file.name)}</a>
+                    <span class="muted">${formatSize(file.size)}</span>
+                  </div>
+                  <small class="muted">من يمكنه مشاهدة الملف: ${escapeHtml(summary)}</small>
+                  <div class="file-actions">
+                    <button class="file-permissions-toggle" type="button" data-page-id="${pageId}" data-file-index="${index}">تحديد من يمكنه مشاهدة الملف</button>
+                    <button class="delete-file" type="button" data-page-id="${pageId}" data-file-index="${index}">حذف الملف</button>
+                  </div>
+                  <div class="file-permissions-panel" data-file-panel-page-id="${pageId}" data-file-panel-index="${index}" hidden></div>
+                </div>
+              </li>`;
+          });
+          filesHtml += `</ul>`;
+        } else {
+          filesHtml = `<p class="muted" style="margin:10px 0;">لا توجد ملفات مرفوعة في هذه الصفحة حتى الآن.</p>`;
+        }
+
+        // بناء كارت الصفحة
+        html += `
+          <article class="page">
+            <div class="page-head">
+              <div>
+                <strong>${escapeHtml(page.name || "صفحة بلا اسم")}</strong>
+                <small>${escapeHtml(page.description || "بدون وصف")}</small>
+              </div>
+              <small style="background:var(--line); padding:4px 8px; border-radius:4px; color:var(--navy); font-weight:bold;">${filesCount} ملف</small>
+            </div>
+            ${filesHtml}
+            <button class="delete" type="button" data-delete="${pageId}">حذف الصفحة بالكامل</button>
+          </article>`; 
+      });
+
+      box.innerHTML = html;
+      select.innerHTML = selectOptions;
+      renderDownloadUsersList(select.value || "");
+
+      box.querySelectorAll(".file-permissions-toggle").forEach((button) => {
+        button.addEventListener("click", () => {
+          const pageId = button.dataset.pageId;
+          const fileIndex = Number(button.dataset.fileIndex);
+          const panel = box.querySelector(`[data-file-panel-page-id="${pageId}"][data-file-panel-index="${fileIndex}"]`);
+          if (!panel) return;
+          const isOpen = !panel.hidden;
+          box.querySelectorAll(".file-permissions-panel").forEach((item) => item.hidden = true);
+          if (isOpen) return;
+          renderFilePermissionsPanel(pageId, fileIndex);
+          panel.hidden = false;
+        });
+      });
+      
+      // تفعيل أزرار حذف الصفحة
+      box.querySelectorAll("[data-delete]").forEach((button) => button.addEventListener("click", async () => { 
+        if (!confirm("هل أنت متأكد من حذف الصفحة بالكامل؟ سيتم حذف بياناتها من قاعدة البيانات.")) return; 
+        button.textContent = "جاري الحذف...";
+        await deleteDoc(doc(db, "libraryPages", button.dataset.delete)); 
+        await loadPages(); 
+      }));
+
+      // تفعيل أزرار حذف الملف المحدد داخل الصفحة
+      box.querySelectorAll(".delete-file").forEach((button) => button.addEventListener("click", async () => {
+        const pageId = button.dataset.pageId;
+        const fileIndex = Number(button.dataset.fileIndex);
+        const pageDoc = snapshot.docs.find((item) => item.id === pageId);
+        const pageData = pageDoc?.data?.() || {};
+        const currentFiles = Array.isArray(pageData.files) ? [...pageData.files] : [];
+
+        if (fileIndex < 0 || fileIndex >= currentFiles.length) return;
+
+        if (!confirm(`هل أنت متأكد من حذف الملف المحدد؟\n${currentFiles[fileIndex].name || "الملف"}`)) return;
+
+        const updatedFiles = currentFiles.filter((_, index) => index !== fileIndex);
+        await updateDoc(doc(db, "libraryPages", pageId), { files: updatedFiles });
+        await loadPages();
+      }));
+    }
+
+    async function loadUsers() {
+      try {
+        const snapshot = await getDocs(collection(db, "users"));
+        allUsers = snapshot.docs
+          .map((item) => ({ id: item.id, ...(item.data() || {}) }))
+          .filter((user) => user.email)
+          .sort((first, second) => (first.name || first.email).localeCompare(second.name || second.email, "ar"));
+      } catch (error) {
+        console.warn("تعذر تحميل قائمة المستخدمين:", error);
+        allUsers = [];
+      }
+    }
+
+    function renderDownloadUsersList(pageId) {
+      const list = document.getElementById("downloadUsersList");
+      const searchTerm = document.getElementById("downloadUserSearch").value.trim().toLowerCase();
+
+      if (!pageId) {
+        list.innerHTML = '<p class="muted" style="margin:0;">اختر صفحة أولاً.</p>';
+        return;
+      }
+
+      const page = libraryPagesCache.find((item) => item.id === pageId);
+      const allowedUsers = normalizeAllowedUsers(page?.downloadAllowedUsers);
+      const filteredUsers = allUsers.filter((user) => {
+        const text = `${user.name || ""} ${user.email || ""}`.toLowerCase();
+        return text.includes(searchTerm);
+      });
+
+      if (!filteredUsers.length) {
+        list.innerHTML = '<p class="muted" style="margin:0;">لا توجد نتائج مطابقة.</p>';
+        return;
+      }
+
+      list.innerHTML = filteredUsers.map((user) => {
+        const checked = allowedUsers.includes(user.id) || allowedUsers.includes(user.email);
+        return `
+          <label class="user-row">
+            <input type="checkbox" data-user-id="${user.id}" ${checked ? "checked" : ""}>
+            <div>
+              <strong>${escapeHtml(user.name || user.email || "مستخدم")}</strong>
+              <small>${escapeHtml(user.email || "")}</small>
+            </div>
+          </label>
+        `;
+      }).join("");
+
+      list.querySelectorAll("input[type=checkbox]").forEach((input) => {
+        input.addEventListener("change", async () => {
+          const selectedUsers = [...list.querySelectorAll("input:checked")].map((item) => item.dataset.userId);
+          try {
+            await updateDoc(doc(db, "libraryPages", pageId), { downloadAllowedUsers: selectedUsers });
+            await loadPages();
+            renderDownloadUsersList(pageId);
+          } catch (error) {
+            console.error("تعذر تحديث صلاحيات التحميل:", error);
+          }
+        });
+      });
+    }
+
+    function renderFilePermissionsPanel(pageId, fileIndex) {
+      const panel = document.querySelector(`[data-file-panel-page-id="${pageId}"][data-file-panel-index="${fileIndex}"]`);
+      if (!panel) return;
+
+      const page = libraryPagesCache.find((item) => item.id === pageId);
+      const file = Array.isArray(page?.files) ? page.files[fileIndex] : null;
+      const allowedUsers = normalizeAllowedUsers(file?.downloadAllowedUsers);
+      const selectedUsers = allUsers.filter((user) => allowedUsers.includes(user.id) || allowedUsers.includes(user.email));
+
+      panel.innerHTML = `
+        <div class="permission-summary">
+          <span>المحددون:</span>
+          ${selectedUsers.length ? selectedUsers.map((user) => `<span class="permission-chip">${escapeHtml(user.name || user.email || "مستخدم")}</span>`).join("") : '<span class="muted">لا يوجد مستخدمون محددون — الجميع يمكنهم مشاهدة الملف</span>'}
+        </div>
+        <div class="permission-input-row">
+          <input type="text" class="file-permission-email" data-page-id="${pageId}" data-file-index="${fileIndex}" placeholder="أضف بريد مستخدم يدويًا">
+          <button type="button" class="permission-add-button" data-page-id="${pageId}" data-file-index="${fileIndex}">إضافة</button>
+        </div>
+        <div class="user-select-box file-user-box">
+          ${allUsers.map((user) => {
+            const checked = allowedUsers.includes(user.id) || allowedUsers.includes(user.email);
+            return `
+              <label class="user-row">
+                <input type="checkbox" data-user-id="${user.id}" data-page-id="${pageId}" data-file-index="${fileIndex}" ${checked ? "checked" : ""}>
+                <div>
+                  <strong>${escapeHtml(user.name || user.email || "مستخدم")}</strong>
+                  <small>${escapeHtml(user.email || "")}</small>
+                </div>
+              </label>
+            `;
+          }).join("") || '<p class="muted" style="margin:0;">لا توجد مستخدمين حتى الآن.</p>'}
+        </div>
+      `;
+
+      panel.querySelectorAll("input[type=checkbox]").forEach((input) => {
+        input.addEventListener("change", async () => {
+          const page = libraryPagesCache.find((item) => item.id === pageId);
+          const currentFiles = Array.isArray(page?.files) ? [...page.files] : [];
+          const existingAllowedUsers = normalizeAllowedUsers(currentFiles[fileIndex]?.downloadAllowedUsers);
+          const manualEmails = existingAllowedUsers.filter((value) => !allUsers.some((user) => user.id === value || user.email === value));
+          const checkedUsers = allUsers.filter((user) => panel.querySelector(`input[data-user-id="${user.id}"]:checked`));
+          const selectedUserIds = checkedUsers.map((user) => user.id);
+
+          currentFiles[fileIndex] = {
+            ...currentFiles[fileIndex],
+            downloadAllowedUsers: Array.from(new Set([...selectedUserIds, ...manualEmails]))
+          };
+
+          await updateDoc(doc(db, "libraryPages", pageId), { files: currentFiles });
+          await loadPages();
+        });
+      });
+
+      panel.querySelector(".permission-add-button")?.addEventListener("click", async () => {
+        const page = libraryPagesCache.find((item) => item.id === pageId);
+        const currentFiles = Array.isArray(page?.files) ? [...page.files] : [];
+        const currentAllowedUsers = normalizeAllowedUsers(currentFiles[fileIndex]?.downloadAllowedUsers);
+        const emailInput = panel.querySelector(".file-permission-email");
+        const email = emailInput?.value.trim();
+        if (!email) return;
+        if (!currentAllowedUsers.includes(email)) {
+          currentAllowedUsers.push(email);
+          currentFiles[fileIndex] = { ...currentFiles[fileIndex], downloadAllowedUsers: currentAllowedUsers };
+          await updateDoc(doc(db, "libraryPages", pageId), { files: currentFiles });
+          await loadPages();
+        }
+      });
+    }
+
+    async function loadPages() { 
+      try {
+        const querySnapshot = await getDocs(query(collection(db, "libraryPages"), orderBy("createdAt", "desc")));
+        renderPages(querySnapshot);
+      } catch (error) {
+        console.error("تعذر تحميل صفحات المكتبة:", error);
+        document.getElementById("pagesList").textContent = "تعذر تحميل المكتبة. تأكد من تسجيل دخول الأدمن ونشر قواعد Firestore.";
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.replace("adlog.html"); return; }
+      const adminSnapshot = await getDoc(doc(db, "admins", user.uid));
+      if (!adminSnapshot.exists() || adminSnapshot.data().active === false) {
+        await signOut(auth);
+        window.location.replace("adlog.html");
+        return;
+      }
+      adminUser = user;
+      document.getElementById("adminStatus").textContent = user.email || "مدير النظام";
+      await loadUsers();
+      await loadPages();
+    });
+
+    // 1. كود إنشاء الصفحة (بدون ملفات)
+    document.getElementById("createPageForm").addEventListener("submit", async (event) => {
+      event.preventDefault(); 
+      const message = document.getElementById("createMessage"); 
+      const name = document.getElementById("pageName").value.trim(); 
+      const description = document.getElementById("pageDescription").value.trim();
+      if (!adminUser) {
+        message.textContent = "جارٍ التحقق من صلاحيات الأدمن.";
+        message.style.color = "red";
+        return;
+      }
+      
+      try {
+        message.textContent = "جاري إنشاء الصفحة...";
+        message.style.color = "var(--navy)";
+        
+        await addDoc(collection(db, "libraryPages"), { 
+          name, 
+          description, 
+          files: [], 
+          createdBy: adminUser.uid,
+          createdAt: serverTimestamp() 
+        });
+        
+        event.target.reset(); 
+        message.textContent = "تم إنشاء الصفحة بنجاح! يمكنك الآن اختيارها لرفع الملفات."; 
+        message.style.color = "green";
+        await loadPages(); // تحديث القوائم
+      } catch (error) { 
+        console.error(error); 
+        message.textContent = "حدث خطأ. تأكد من قواعد (Rules) الفايربيز."; 
+        message.style.color = "red";
+      }
+    });
+
+    document.getElementById("pageSelect").addEventListener("change", () => {
+      renderDownloadUsersList(document.getElementById("pageSelect").value || "");
+    });
+
+    document.getElementById("downloadUserSearch").addEventListener("input", () => {
+      renderDownloadUsersList(document.getElementById("pageSelect").value || "");
+    });
+
+    // 2. كود رفع الملفات لصفحة موجودة
+    document.getElementById("uploadFilesForm").addEventListener("submit", async (event) => {
+      event.preventDefault(); 
+      const message = document.getElementById("uploadMessage"); 
+      const pageId = document.getElementById("pageSelect").value;
+      const filesInput = document.getElementById("pageFiles");
+      const files = [...filesInput.files];
+
+      if (!adminUser) {
+        message.textContent = "جارٍ التحقق من صلاحيات الأدمن.";
+        message.style.color = "red";
+        return;
+      }
+
+      if (!pageId) {
+        message.textContent = "يرجى اختيار الصفحة أولاً.";
+        message.style.color = "red";
+        return;
+      }
+      if (!files.length) {
+        message.textContent = "اختر ملفًا واحدًا على الأقل.";
+        message.style.color = "red";
+        return;
+      }
+      const oversizedFile = files.find((file) => file.size > maxFileSize);
+      if (oversizedFile) {
+        message.textContent = `الملف ${oversizedFile.name} أكبر من 200MB.`;
+        message.style.color = "red";
+        return;
+      }
+      
+      try {
+        message.textContent = "جاري رفع الملفات (يرجى الانتظار)...";
+        message.style.color = "var(--navy)";
+        
+        const uploadedFiles = [];
+        
+        // رفع الملف الأصلي إلى Cloudinary بدون تحويل أو ضغط.
+        for (const file of files) { 
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("upload_preset", cloudinaryUploadPreset);
+          formData.append("folder", "preventa-library");
+          const resourceType = file.type.startsWith("image/") ? "image" : (file.type.startsWith("video/") ? "video" : "raw");
+          const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/${resourceType}/upload`, { method: "POST", body: formData });          const result = await response.json();
+          if (!response.ok || !result.secure_url) throw new Error(result.error?.message || "فشل رفع الملف إلى Cloudinary.");
+          
+          uploadedFiles.push({ 
+            name: result.original_filename ? `${result.original_filename}${result.format ? `.${result.format}` : ""}` : file.name,
+            type: file.type || result.resource_type || "application/octet-stream", 
+            size: result.bytes || file.size, 
+            url: result.secure_url,
+            publicId: result.public_id,
+            resourceType: result.resource_type
+          }); 
+        }
+        
+        // تحديث مستند الصفحة لإضافة الملفات الجديدة دون مسح القديمة
+        const pageRef = doc(db, "libraryPages", pageId);
+        await updateDoc(pageRef, {
+          files: arrayUnion(...uploadedFiles)
+        });
+
+        event.target.reset(); 
+        message.textContent = `تم رفع ${uploadedFiles.length} ملف بنجاح!`; 
+        message.style.color = "green";
+        await loadPages(); // تحديث القوائم لعرض الملفات
+      } catch (error) { 
+        console.error(error); 
+        message.textContent = error.message || "تعذر رفع الملفات إلى Cloudinary."; 
+        message.style.color = "red";
+      }
+    });
+
+    const backButton = document.getElementById("backButton");
+    if (backButton) {
+      backButton.onclick = () => location.replace("addash.html");
+    }
+  </script>
+</body>
+</html>

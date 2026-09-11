@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة الاختبارات | Preventa Plus</title>
+  <style>
+    :root {
+      --navy: #102f59;
+      --blue: #1b6ca8;
+      --mint: #5dc9bd;
+      --line: #dbe7ed;
+      --muted: #6d7d8c;
+      --soft: #f6fbfb;
+      --danger: #b64242;
+      --light-danger: #fff4f4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      background: linear-gradient(135deg, #eef8f7, #f8f5ec);
+      color: #183047;
+      font-family: Tahoma, Arial, sans-serif;
+    }
+    main {
+      width: min(1160px, 100%);
+      margin: auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { color: var(--navy); }
+    .muted, .message {
+      color: var(--muted);
+      font-size: .85rem;
+    }
+    .back, .primary, .secondary, .danger {
+      padding: 11px 16px;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: bold;
+    }
+    .primary {
+      width: 100%;
+      background: var(--blue);
+      color: #fff;
+    }
+    .secondary {
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--navy);
+    }
+    .danger {
+      background: var(--light-danger);
+      border: 1px solid #efcaca;
+      color: var(--danger);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(420px, 1.15fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+    .card {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 14px 30px rgba(16,47,89,.08);
+    }
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+    label {
+      color: var(--muted);
+      font-size: .8rem;
+      font-weight: bold;
+    }
+    input, textarea, select,
+    .option-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: #183047;
+      font: inherit;
+    }
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+    input[type=file] {
+      padding: 9px;
+    }
+    .question-list {
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .user-selection-list {
+      display: grid;
+      gap: 8px;
+      max-height: 240px;
+      overflow: auto;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+    }
+    .user-selection-list label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-weight: normal;
+      color: var(--navy);
+      border: 1px solid transparent;
+    }
+    .user-selection-list label:hover {
+      background: #f2f8fd;
+      border-color: var(--line);
+    }
+    .user-selection-list input {
+      width: auto;
+      margin: 0;
+    }
+    .question-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      background: var(--soft);
+      position: relative;
+    }
+    .question-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .message {
+      min-height: 18px;
+      margin: 10px 0 0;
+    }
+    .tests-list {
+      display: grid;
+      gap: 14px;
+      max-height: 800px;
+      overflow: auto;
+      padding-left: 4px;
+    }
+    .test-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      background: #fff;
+    }
+    .test-item-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .test-item h3 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 1rem;
+    }
+    .test-item p {
+      margin-bottom: 10px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: .85rem;
+    }
+    .meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: .75rem;
+      margin-bottom: 10px;
+    }
+    .badge {
+      padding: 6px 8px;
+      background: #edf5ff;
+      border: 1px solid #cfe1f8;
+      border-radius: 999px;
+      color: var(--blue);
+      font-weight: bold;
+    }
+    .question-preview {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .8rem;
+      line-height: 1.8;
+    }
+    .question-preview strong { color: var(--navy); }
+    .empty {
+      padding: 22px;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px dashed var(--line);
+      color: var(--muted);
+    }
+    @media (max-width: 900px) {
+      body { padding: 14px; }
+      header { align-items: flex-start; flex-direction: column; }
+      .layout { grid-template-columns: 1fr; }
+      .option-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>إدارة الاختبارات</h1>
+        <p class="muted" id="adminStatus">جارٍ التحقق من الصلاحيات...</p>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="card">
+        <h2>إنشاء اختبار جديد</h2>
+        <form id="createTestForm">
+          <div class="field">
+            <label for="testTitle">عنوان الاختبار</label>
+            <input id="testTitle" type="text" maxlength="120" required placeholder="مثال: اختبار التوعية الوقائية">
+          </div>
+          <div class="field">
+            <label for="testDescription">وصف الاختبار</label>
+            <textarea id="testDescription" maxlength="500" placeholder="اكتب وصفًا مختصرًا"></textarea>
+          </div>
+          <div class="field">
+            <label for="testDuration">مدة الاختبار بالدقائق</label>
+            <input id="testDuration" type="number" min="1" max="180" value="10" required>
+          </div>
+
+          <div class="field">
+            <label>المستخدمون الذين سيظهر لهم الاختبار</label>
+            <div id="testUsersList" class="user-selection-list"></div>
+            <small class="muted">اترك القائمة فارغة إذا كنت تريد إظهار الاختبار لكافة المستخدمين.</small>
+          </div>
+
+          <div class="field">
+            <label>الأسئلة</label>
+            <div class="question-list" id="questionsContainer"></div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
+            <button class="secondary" type="button" id="addQuestionBtn">+ إضافة سؤال جديد</button>
+            <button class="primary" type="submit">حفظ الاختبار</button>
+          </div>
+          <p class="message" id="formMessage"></p>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>الاختبارات الحالية</h2>
+        <div class="tests-list" id="testsList">جارٍ تحميل البيانات...</div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const config = {
+      apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo",
+      authDomain: "wallet-tamer-adel.firebaseapp.com",
+      projectId: "wallet-tamer-adel",
+      storageBucket: "wallet-tamer-adel.firebasestorage.app",
+      messagingSenderId: "51007948250",
+      appId: "1:51007948250:web:e1f6eaaebb4202b8aface3"
+    };
+
+    const app = initializeApp(config);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const cloudinaryCloudName = "dorrpdul5";
+    const cloudinaryUploadPreset = "ml_default";
+    let adminUser = null;
+
+    const escapeHtml = (value) => String(value || "").replace(/[&<>\"']/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[character]));
+
+    function formatAttemptDate(value) {
+      if (!value) return "غير محدد";
+      const date = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+      if (Number.isNaN(date.getTime())) return "غير محدد";
+      return new Intl.DateTimeFormat("ar-EG", { dateStyle: "medium", timeStyle: "short" }).format(date);
+    }
+
+    function buildQuestionCard(question = {}, index = 0) {
+      const card = document.createElement("article");
+      card.className = "question-card";
+      card.innerHTML = `
+        <div class="question-head">
+          <strong>السؤال ${index + 1}</strong>
+          <button class="danger" type="button">حذف السؤال</button>
+        </div>
+        <div class="field">
+          <label>نص السؤال</label>
+          <textarea class="question-text" placeholder="اكتب نص السؤال هنا...">${escapeHtml(question.text || "")}</textarea>
+        </div>
+        <div class="option-grid">
+          <div class="field">
+            <label>الخيار 1</label>
+            <input class="option-input option-0" type="text" value="${escapeHtml(question.options?.[0] || "")}" placeholder="الخيار الأول">
+          </div>
+          <div class="field">
+            <label>الخيار 2</label>
+            <input class="option-input option-1" type="text" value="${escapeHtml(question.options?.[1] || "")}" placeholder="الخيار الثاني">
+          </div>
+          <div class="field">
+            <label>الخيار 3</label>
+            <input class="option-input option-2" type="text" value="${escapeHtml(question.options?.[2] || "")}" placeholder="الخيار الثالث">
+          </div>
+          <div class="field">
+            <label>الخيار 4</label>
+            <input class="option-input option-3" type="text" value="${escapeHtml(question.options?.[3] || "")}" placeholder="الخيار الرابع">
+          </div>
+        </div>
+        <div class="field">
+          <label>الإجابة الصحيحة</label>
+          <select class="correct-index">
+            <option value="0" ${Number(question.correctIndex) === 0 ? "selected" : ""}>الخيار 1</option>
+            <option value="1" ${Number(question.correctIndex) === 1 ? "selected" : ""}>الخيار 2</option>
+            <option value="2" ${Number(question.correctIndex) === 2 ? "selected" : ""}>الخيار 3</option>
+            <option value="3" ${Number(question.correctIndex) === 3 ? "selected" : ""}>الخيار 4</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>صورة اختيارية للسؤال</label>
+          <input type="file" class="question-image" accept="image/*">
+        </div>
+      `;
+
+      card.querySelector(".danger").addEventListener("click", () => card.remove());
+      return card;
+    }
+
+    function addQuestionCard(question = {}, index = null) {
+      const container = document.getElementById("questionsContainer");
+      const card = buildQuestionCard(question, container.children.length);
+      container.appendChild(card);
+      const cards = [...container.children];
+      cards.forEach((item, itemIndex) => {
+        const title = item.querySelector(".question-head strong");
+        if (title) title.textContent = `السؤال ${itemIndex + 1}`;
+      });
+    }
+
+    function resetQuestionCards() {
+      const container = document.getElementById("questionsContainer");
+      container.innerHTML = "";
+      addQuestionCard();
+      addQuestionCard();
+    }
+
+    async function uploadQuestionImage(file) {
+      if (!file) return "";
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", cloudinaryUploadPreset);
+      formData.append("folder", "preventa-tests");
+
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`, {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result.secure_url) {
+        throw new Error(result.error?.message || "فشل رفع الصورة إلى Cloudinary.");
+      }
+
+      return result.secure_url;
+    }
+
+    async function loadUsersForSelection() {
+      try {
+        const snapshot = await getDocs(query(collection(db, "users"), orderBy("createdAt", "desc")));
+        const usersList = document.getElementById("testUsersList");
+
+        if (!snapshot.docs.length) {
+          usersList.innerHTML = '<span class="muted">لا توجد مستخدمين مسجلين بعد.</span>';
+          return;
+        }
+
+        usersList.innerHTML = snapshot.docs.map((item) => {
+          const user = item.data();
+          return `
+            <label>
+              <input type="checkbox" value="${item.id}">
+              <span>${escapeHtml(user.name || user.email || "مستخدم")}</span>
+            </label>
+          `;
+        }).join("");
+      } catch (error) {
+        console.error("تعذر تحميل المستخدمين للتحديد:", error);
+        document.getElementById("testUsersList").innerHTML = '<span class="muted">تعذر تحميل قائمة المستخدمين.</span>';
+      }
+    }
+
+    async function loadTests() {
+      try {
+        const [snapshot, attemptsSnapshot] = await Promise.all([
+          getDocs(query(collection(db, "tests"), orderBy("createdAt", "desc"))),
+          getDocs(collection(db, "testAttempts"))
+        ]);
+        const list = document.getElementById("testsList");
+
+        if (!snapshot.docs.length) {
+          list.innerHTML = '<div class="empty">لا توجد اختبارات حتى الآن.</div>';
+          return;
+        }
+
+        const attempts = attemptsSnapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+
+        list.innerHTML = snapshot.docs.map((item) => {
+          const test = item.data();
+          const questions = Array.isArray(test.questions) ? test.questions : [];
+          const assignedCount = Array.isArray(test.assignedUserIds) ? test.assignedUserIds.filter(Boolean).length : 0;
+          const completedAttempts = attempts
+            .filter((attempt) => attempt.testId === item.id && attempt.isCompleted)
+            .sort((first, second) => {
+              const firstTime = typeof first.completedAt?.toDate === "function" ? first.completedAt.toDate().getTime() : new Date(first.completedAt || 0).getTime();
+              const secondTime = typeof second.completedAt?.toDate === "function" ? second.completedAt.toDate().getTime() : new Date(second.completedAt || 0).getTime();
+              return secondTime - firstTime;
+            });
+
+          const resultHtml = completedAttempts.length
+            ? completedAttempts.map((attempt) => {
+                const wrongQuestions = Array.isArray(attempt.wrongQuestions) ? attempt.wrongQuestions : [];
+                const scoreText = `${attempt.correctCount ?? 0}/${attempt.totalQuestions || questions.length}`;
+                return `
+                  <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line);">
+                    <div style="min-width:0; flex:1;">
+                      <strong style="display:block; color:var(--navy);">${escapeHtml(attempt.userName || attempt.userEmail || "مستخدم")}</strong>
+                      <small style="color:var(--muted);">${escapeHtml(formatAttemptDate(attempt.completedAt))}</small>
+                    </div>
+                    <div style="font-weight:bold; color:var(--navy); white-space:nowrap;">${scoreText}</div>
+                    <button class="secondary" type="button" data-show-errors="${attempt.id}" style="padding:7px 10px; font-size:.75rem;">عرض الأخطاء</button>
+                  </div>
+                `;
+              }).join("")
+            : '<div class="muted">لا توجد محاولات بعد.</div>';
+
+          return `
+            <article class="test-item">
+              <div class="test-item-head">
+                <h3>${escapeHtml(test.title || "اختبار بدون عنوان")}</h3>
+                <button class="danger" type="button" data-delete-test="${item.id}">حذف</button>
+              </div>
+              <p>${escapeHtml(test.description || "لا يوجد وصف لهذا الاختبار.")}</p>
+              <div class="meta">
+                <span class="badge">المدة: ${Number(test.durationMinutes || 0)} دقيقة</span>
+                <span class="badge">الأسئلة: ${questions.length}</span>
+                <span class="badge">${assignedCount ? `مخصص لـ ${assignedCount} مستخدم` : "لكافة المستخدمين"}</span>
+              </div>
+              <div class="question-preview">
+                <strong style="display:block; margin-bottom:8px; color:var(--navy);">النتائج الحالية:</strong>
+                ${resultHtml}
+              </div>
+            </article>
+          `;
+        }).join("");
+
+        list.querySelectorAll("[data-delete-test]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const id = button.dataset.deleteTest;
+            if (!confirm("هل أنت متأكد من حذف هذا الاختبار؟")) return;
+            await deleteDoc(doc(db, "tests", id));
+            await loadTests();
+          });
+        });
+
+        list.querySelectorAll("[data-show-errors]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const attempt = attempts.find((item) => item.id === button.dataset.showErrors);
+            const wrongQuestions = Array.isArray(attempt?.wrongQuestions) ? attempt.wrongQuestions : [];
+            if (!wrongQuestions.length) {
+              alert("لا توجد أخطاء مسجلة لهذه المحاولة.");
+              return;
+            }
+
+            const message = wrongQuestions
+              .map((item) => `السؤال ${item.questionNumber}: ${item.text || "بدون نص"}`)
+              .join("\n");
+
+            alert(message);
+          });
+        });
+      } catch (error) {
+        console.error("تعذر تحميل الاختبارات:", error);
+        document.getElementById("testsList").innerHTML = '<div class="empty">تعذر تحميل الاختبارات. تأكد من قواعد Firestore.</div>';
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.replace("adlog.html");
+        return;
+      }
+
+      try {
+        const adminSnapshot = await getDoc(doc(db, "admins", user.uid));
+        if (!adminSnapshot.exists() || adminSnapshot.data().active === false) {
+          await signOut(auth);
+          window.location.replace("adlog.html");
+          return;
+        }
+
+        adminUser = user;
+        document.getElementById("adminStatus").textContent = user.email || "مدير النظام";
+        resetQuestionCards();
+        await loadUsersForSelection();
+        await loadTests();
+      } catch (error) {
+        console.error("خطأ في التحقق من صلاحيات الأدمن:", error);
+        document.getElementById("adminStatus").textContent = "تعذر التحقق من صلاحيات الأدمن";
+      }
+    });
+
+    document.getElementById("addQuestionBtn").addEventListener("click", () => {
+      addQuestionCard();
+    });
+
+    document.getElementById("createTestForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = document.getElementById("formMessage");
+      const title = document.getElementById("testTitle").value.trim();
+      const description = document.getElementById("testDescription").value.trim();
+      const durationMinutes = Number(document.getElementById("testDuration").value);
+      const selectedUserIds = [...document.querySelectorAll("#testUsersList input:checked")].map((input) => input.value);
+      const cards = [...document.querySelectorAll("#questionsContainer .question-card")];
+
+      if (!adminUser) {
+        message.textContent = "جارٍ التحقق من صلاحيات الأدمن...";
+        message.style.color = "red";
+        return;
+      }
+
+      if (!title || !durationMinutes || cards.length === 0) {
+        message.textContent = "يرجى ملء عنوان الاختبار، مدة الاختبار، وإضافة سؤال واحد على الأقل.";
+        message.style.color = "red";
+        return;
+      }
+
+      try {
+        message.textContent = "جاري حفظ الاختبار...";
+        message.style.color = "var(--muted)";
+
+        const questions = [];
+
+        for (const card of cards) {
+          const text = card.querySelector(".question-text").value.trim();
+          const options = Array.from(card.querySelectorAll(".option-input")).map((input) => input.value.trim());
+          const correctIndex = Number(card.querySelector(".correct-index").value);
+          const file = card.querySelector(".question-image").files[0];
+
+          if (!text || options.some((option) => !option)) {
+            throw new Error("كل سؤال يجب أن يحتوي على نص السؤال وأربعة خيارات مكتوبة.");
+          }
+
+          const question = {
+            text,
+            options,
+            correctIndex,
+            imageUrl: ""
+          };
+
+          if (file) {
+            question.imageUrl = await uploadQuestionImage(file);
+          }
+
+          questions.push(question);
+        }
+
+        await addDoc(collection(db, "tests"), {
+          title,
+          description,
+          durationMinutes,
+          questions,
+          assignedUserIds: selectedUserIds,
+          createdBy: adminUser.uid,
+          createdAt: serverTimestamp()
+        });
+
+        message.textContent = "تم حفظ الاختبار بنجاح!";
+        message.style.color = "green";
+        event.target.reset();
+        document.getElementById("testDuration").value = 10;
+        resetQuestionCards();
+        await loadTests();
+      } catch (error) {
+        console.error("حدث خطأ أثناء حفظ الاختبار:", error);
+        message.textContent = error.message || "حدث خطأ أثناء حفظ الاختبار.";
+        message.style.color = "red";
+      }
+    });
+
+    document.getElementById("logout").addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.replace("adlog.html");
+    });
+  </script>
+</body>
+</html>

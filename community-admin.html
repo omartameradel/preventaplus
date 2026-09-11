@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>المجتمع | إدارة</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #edf5f1;
+      --panel: #ffffff;
+      --line: #d2e2dd;
+      --navy: #143b32;
+      --text: #17212b;
+      --muted: #5d726d;
+      --blue: #1b6ca8;
+      --light: #eef8fb;
+      --admin: #146c4d;
+      --admin-soft: #eafaf2;
+      --danger: #c33b3b;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; font-family: Cairo, sans-serif; background: var(--bg); color: var(--text); }
+    body { padding: 24px; }
+
+    .page {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    h1 { margin: 0; color: var(--navy); font-size: clamp(1.6rem, 3vw, 2.2rem); }
+    .muted { color: var(--muted); margin: 4px 0 0; }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--admin-soft);
+      border: 1px solid #c5e7d8;
+      color: var(--admin);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, #1b6ca8, #125a92);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(27,108,168,0.18);
+    }
+    .btn-secondary {
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--navy);
+      padding: 8px 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 18px 32px rgba(20,59,50,0.05);
+      overflow: hidden;
+    }
+
+    .composer {
+      padding: 18px;
+    }
+
+    .composer-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field textarea {
+      width: 100%;
+      min-height: 96px;
+      max-height: 180px;
+      resize: vertical;
+      border: 1px solid #cfe0ea;
+      border-radius: 12px;
+      padding: 14px 16px;
+      background: linear-gradient(180deg, #ffffff, #f9fbfd);
+      color: var(--text);
+      font: inherit;
+      line-height: 1.8;
+    }
+
+    .field textarea:focus {
+      border-color: #5ea6d6;
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(94,166,214,0.12);
+    }
+
+    .file-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      background: var(--light);
+      border: 1px solid #d2e8f1;
+      color: var(--blue);
+      cursor: pointer;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .file-wrap input { display: none; }
+
+    .replying-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: #fff7e4;
+      border: 1px solid #f0dba4;
+      color: #7b5a0d;
+      font-size: 0.8rem;
+    }
+
+    .replying-bar.show {
+      display: flex;
+    }
+
+    .replying-bar button {
+      border: 0;
+      background: transparent;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .file-name {
+      margin-top: 8px;
+      min-height: 22px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .messages {
+      background: linear-gradient(180deg, #f8fbfc, #f5f9fb);
+      padding: 20px;
+      min-height: 400px;
+      max-height: calc(100vh - 290px);
+      overflow: auto;
+    }
+
+    .empty {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 220px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.96rem;
+    }
+
+    .message-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .message {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      max-width: min(900px, 100%);
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #d7edf4;
+      background: #eef6fa;
+    }
+
+    .bubble {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px 16px 16px 6px;
+      padding: 12px 14px;
+      box-shadow: 0 8px 18px rgba(20,59,50,0.03);
+    }
+
+    .message.mine .bubble {
+      background: linear-gradient(135deg, #edfdf7, #ebf8ff);
+      border-color: #bae4d5;
+      border-radius: 16px 16px 6px 16px;
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--admin-soft);
+      color: var(--admin);
+      font-size: 0.7rem;
+      font-weight: 800;
+    }
+
+    .text {
+      margin: 0;
+      color: var(--text);
+      line-height: 1.8;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .reply-preview {
+      margin-bottom: 8px;
+      padding: 7px 10px;
+      border-right: 3px solid #f2b94b;
+      border-radius: 6px;
+      background: rgba(20,59,50,0.04);
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .reply-btn {
+      margin-top: 8px;
+      border: 0;
+      background: transparent;
+      color: var(--blue);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.76rem;
+      padding: 0;
+    }
+
+    .attachment {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(20,59,50,0.05);
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 0.79rem;
+    }
+
+    .attachment-image {
+      display: block;
+      max-width: min(360px, 100%);
+      max-height: 260px;
+      margin-top: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #eef6fa;
+      object-fit: contain;
+    }
+
+    .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(27, 108, 168, .08);
+      color: var(--blue);
+      font-size: 0.78rem;
+      text-decoration: none;
+    }
+
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border: 4px solid #dcebe6;
+      border-top-color: var(--admin);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 760px) {
+      body { padding: 16px; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+      .composer-grid { grid-template-columns: 1fr; }
+      .messages { max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-screen" class="loading-screen">
+    <div class="spinner"></div>
+    <div>جارٍ التحقق من صلاحيات المشرف...</div>
+  </div>
+
+  <div class="page">
+    <div class="topbar">
+      <div>
+        <h1>المجتمع</h1>
+        <p class="muted" id="adminEmail">جارٍ التحقق...</p>
+      </div>
+      <div class="header-actions">
+        <span class="pill">وضع المشرف</span>
+        <!-- تم إضافة زر تسجيل الخروج الذي كان ينقص الكود ويسبب مشكلة -->
+        <button id="logoutBtn" class="btn btn-secondary">تسجيل خروج</button>
+      </div>
+    </div>
+
+    <section class="panel messages">
+      <div id="messagesList" class="message-list"></div>
+    </section>
+
+    <!-- تم إدخال قسم الكتابة إلى داخل الصفحة لضبط التصميم -->
+    <section class="panel composer">
+      <div id="replyingBar" class="replying-bar">
+        <span id="replyingText"></span>
+        <button id="cancelReplyBtn" type="button" aria-label="إلغاء الرد">×</button>
+      </div>
+      <div class="composer-grid">
+        <div class="field">
+          <textarea id="messageInput" placeholder="اكتب رسالتك هنا..." maxlength="3000"></textarea>
+          <div id="fileName" class="file-name"></div>
+        </div>
+
+        <label class="file-wrap" title="إرفاق ملف">
+          ⌕
+          <input id="fileInput" type="file" />
+        </label>
+
+        <button id="sendBtn" type="button" class="btn btn-primary">إرسال</button>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      getDoc,
+      query,
+      orderBy,
+      onSnapshot,
+      addDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import {
+      getStorage,
+      ref,
+      uploadBytesResumable,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo",
+      authDomain: "wallet-tamer-adel.firebaseapp.com",
+      projectId: "wallet-tamer-adel",
+      storageBucket: "wallet-tamer-adel.firebasestorage.app",
+      messagingSenderId: "51007948250",
+      appId: "1:51007948250:web:e1f6eaaebb4202b8aface3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const loadingScreen = document.getElementById("loading-screen");
+    const adminEmail = document.getElementById("adminEmail");
+    const messageInput = document.getElementById("messageInput");
+    const fileInput = document.getElementById("fileInput");
+    const fileName = document.getElementById("fileName");
+    const sendBtn = document.getElementById("sendBtn");
+    const messagesList = document.getElementById("messagesList");
+    const replyingBar = document.getElementById("replyingBar");
+    const replyingText = document.getElementById("replyingText");
+    const cancelReplyBtn = document.getElementById("cancelReplyBtn");
+
+    let currentAdmin = null;
+    let currentUser = null;
+    let replyTo = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.replace("adlog.html");
+        return;
+      }
+
+      currentUser = user;
+      try {
+        const adminDoc = await getDoc(doc(db, "admins", user.uid));
+        const adminData = adminDoc.exists() ? adminDoc.data() : null;
+
+        if (!adminDoc.exists() || adminData.active === false) {
+          await signOut(auth);
+          window.location.replace("adlog.html");
+          return;
+        }
+
+        currentAdmin = adminData || {};
+        adminEmail.textContent = user.email || currentAdmin.email || "مشرف";
+        loadingScreen.style.display = "none";
+        setupLiveMessages();
+      } catch (error) {
+        console.error("Admin verify failed:", error);
+        window.location.replace("adlog.html");
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.replace("adlog.html");
+    });
+
+    fileInput.addEventListener("change", () => {
+      const selectedFile = fileInput.files[0];
+      fileName.textContent = selectedFile ? `الملف المحدد: ${selectedFile.name}` : "";
+    });
+
+    cancelReplyBtn.addEventListener("click", () => {
+      replyTo = null;
+      replyingBar.classList.remove("show");
+      replyingText.textContent = "";
+      messageInput.focus();
+    });
+
+    sendBtn.addEventListener("click", async () => {
+      const text = messageInput.value.trim();
+      const selectedFile = fileInput.files[0];
+      if (!text && !selectedFile) return;
+
+      sendBtn.disabled = true;
+      try {
+        let attachment = null;
+
+        if (selectedFile) {
+          if (selectedFile.size > 20 * 1024 * 1024) {
+            throw new Error("حجم الملف أكبر من 20 ميجابايت");
+          }
+
+          if (selectedFile.type.startsWith("image/")) {
+            fileName.textContent = `جاري تجهيز الصورة ${selectedFile.name}...`;
+            attachment = {
+              name: selectedFile.name,
+              type: selectedFile.type,
+              size: selectedFile.size,
+              url: await fileToDataUrl(selectedFile),
+              inline: true
+            };
+          } else if (selectedFile.size <= 700 * 1024) {
+            fileName.textContent = `جاري تجهيز الملف ${selectedFile.name}...`;
+            attachment = {
+              name: selectedFile.name,
+              type: selectedFile.type || "application/octet-stream",
+              size: selectedFile.size,
+              url: await fileToDataUrl(selectedFile),
+              inline: true
+            };
+          } else {
+            fileName.textContent = `جاري رفع ${selectedFile.name}...`;
+            const safeFileName = selectedFile.name.replace(/[\\/#?%:*|"<>]/g, "_");
+            const fileRef = ref(storage, `community-admin/${currentUser.uid}/${Date.now()}-${safeFileName}`);
+            const uploadTask = uploadBytesResumable(fileRef, selectedFile);
+            const uploadSnapshot = await new Promise((resolve, reject) => {
+              uploadTask.on(
+                "state_changed",
+                (snapshot) => {
+                  const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                  fileName.textContent = `جاري رفع ${selectedFile.name}... ${progress}%`;
+                },
+                reject,
+                () => resolve(uploadTask.snapshot)
+              );
+            });
+
+            attachment = {
+              name: selectedFile.name,
+              type: selectedFile.type || "application/octet-stream",
+              size: selectedFile.size,
+              url: await getDownloadURL(uploadSnapshot.ref)
+            };
+          }
+        }
+
+        await addDoc(collection(db, "messages"), {
+          text,
+          senderId: currentUser.uid,
+          senderName: currentAdmin?.name || currentUser.email || "مشرف",
+          senderPhoto: currentAdmin?.photoData || currentAdmin?.photoURL || currentAdmin?.photo || "6384.png",
+          attachment,
+          replyTo,
+          isAdmin: true,
+          senderRole: "admin",
+          createdAt: serverTimestamp()
+        });
+
+        messageInput.value = "";
+        fileInput.value = "";
+        fileName.textContent = "";
+        replyTo = null;
+        replyingBar.classList.remove("show");
+        replyingText.textContent = "";
+      } catch (error) {
+        console.error("Send message failed:", error);
+        alert(error.message || "تعذر إرسال الرسالة.");
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+
+    function setupLiveMessages() {
+      const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
+      onSnapshot(q, (snapshot) => {
+        const messages = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        renderMessages(messages);
+      }, (error) => {
+        console.error("Messages listener failed:", error);
+        messagesList.innerHTML = '<div class="empty">تعذر تحميل المحادثة الآن.</div>';
+      });
+    }
+
+    function renderMessages(messages) {
+      if (!messages.length) {
+        messagesList.innerHTML = '<div class="empty">لا توجد رسائل بعد. كن أول من يبدأ الحديث.</div>';
+        return;
+      }
+
+      messagesList.innerHTML = messages.map((message) => {
+        const mine = message.senderId === currentUser.uid;
+        const roleBadge = message.isAdmin || message.senderRole === "admin"
+          ? '<span class="role-badge">مشرف</span>'
+          : '';
+
+        const replyPreview = message.replyTo
+          ? `<div class="reply-preview">رد على: ${escapeHtml(message.replyTo.text || message.replyTo.name || "رسالة")}</div>`
+          : "";
+
+        return `
+          <article class="message ${mine ? "mine" : ""}">
+            <img class="avatar" src="${escapeHtml(message.senderPhoto || "6384.png")}" alt="${escapeHtml(message.senderName || "المستخدم")}" />
+            <div class="bubble">
+              <div class="meta">
+                <div class="author">
+                  <span>${escapeHtml(message.senderName || "مستخدم")}</span>
+                  ${roleBadge}
+                </div>
+                <time>${formatClock(message.createdAt)}</time>
+              </div>
+              <div class="text">${replyPreview}${escapeHtml(message.text || "")}</div>
+              ${renderAttachment(message.attachment)}
+              <button class="reply-btn" type="button" data-reply-id="${message.id}" data-reply-name="${escapeHtml(message.senderName || "العضو")}" data-reply-text="${escapeHtml(message.text || message.attachment?.name || "الرسالة")}">↩ الرد</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      messagesList.querySelectorAll(".reply-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          replyTo = {
+            id: button.dataset.replyId,
+            name: button.dataset.replyName,
+            text: button.dataset.replyText
+          };
+          replyingText.textContent = `أنت ترد على: ${replyTo.name}`;
+          replyingBar.classList.add("show");
+          messageInput.focus();
+        });
+      });
+
+      const container = messagesList.parentElement; // تمرير شريط التمرير إلى الأسفل
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function renderAttachment(attachment) {
+      if (!attachment?.url) return "";
+      const url = escapeHtml(attachment.url);
+      const name = escapeHtml(attachment.name || "الملف المرفق");
+
+      if ((attachment.type || "").startsWith("image/")) {
+        return `
+          <div>
+            <a href="${url}" target="_blank" rel="noopener noreferrer">
+              <img class="attachment-image" src="${url}" alt="${name}" />
+            </a>
+            <a class="download-link" href="${url}" download="${name}">⬇ تحميل الصورة</a>
+          </div>
+        `;
+      }
+
+      return `
+        <div>
+          <a class="attachment" href="${url}" target="_blank" rel="noopener noreferrer">📎 ${name}</a>
+          <a class="download-link" href="${url}" download="${name}">⬇ تحميل الملف</a>
+        </div>
+      `;
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>\"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function formatClock(value) {
+      const date = value?.toDate ? value.toDate() : new Date(value || Date.now());
+      return new Intl.DateTimeFormat("ar-EG", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(date);
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+</html>

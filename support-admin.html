@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>لوحة إدارة الدعم الفني</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Tahoma", Arial, sans-serif; }
+        body { background: #f4f6f9; height: 100vh; overflow: hidden; }
+        .app { display: flex; flex-direction: column; height: 100vh; }
+        .header { background: linear-gradient(135deg, #1e3a5f, #244b77); color: white; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 5; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .header h1 { font-size: 22px; margin-bottom: 4px; }
+        .header p { font-size: 13px; opacity: 0.9; }
+        .admin-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .status-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 999px; font-size: 13px; }
+        .btn { border: none; border-radius: 10px; padding: 10px 14px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-primary { background: #2196f3; color: white; }
+        .btn-primary:hover { background: #0f87e8; }
+        .btn-danger { background: #e53935; color: white; }
+        .btn-danger:hover { background: #d32f2f; }
+        .btn-secondary { background: #eceff1; color: #333; }
+        .btn-secondary:hover { background: #dde3e6; }
+        .main { flex: 1; display: flex; min-height: 0; }
+        .sidebar { width: 360px; background: #fff; border-left: 1px solid #ddd; display: flex; flex-direction: column; min-height: 0; }
+        .sidebar-header { padding: 16px; border-bottom: 1px solid #eee; background: #fafafa; }
+        .sidebar-header h2 { font-size: 18px; margin-bottom: 8px; color: #222; }
+        .sidebar-header p { color: #666; font-size: 13px; }
+        .filter-row { display: flex; gap: 8px; margin-top: 12px; }
+        .filter-btn { flex: 1; border: none; padding: 9px; border-radius: 10px; cursor: pointer; background: #eef2f7; font-weight: bold; color: #444; }
+        .filter-btn.active { background: #2196f3; color: white; }
+        .tickets-list { flex: 1; overflow-y: auto; }
+        .ticket-item { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: 0.2s; position: relative; }
+        .ticket-item:hover { background: #f9fbff; }
+        .ticket-item.active { background: #eaf4ff; border-right: 4px solid #2196f3; }
+        .ticket-top { display: flex; justify-content: space-between; align-items: start; gap: 10px; margin-bottom: 8px; }
+        .ticket-title { font-size: 15px; font-weight: bold; color: #222; line-height: 1.5; }
+        .ticket-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: #666; }
+        .badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 999px; font-size: 11px; color: white; font-weight: bold; }
+        .badge.student { background: #4caf50; }
+        .badge.teacher { background: #ff9800; }
+        .badge.open { background: #2e7d32; }
+        .badge.closed { background: #757575; }
+        .badge.pending { background: #f59e0b; }
+        .ticket-preview { margin-top: 8px; color: #777; font-size: 12px; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; background: #fff; }
+        .chat-header { padding: 16px 18px; border-bottom: 1px solid #e5e5e5; background: #fafafa; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .chat-header-info h3 { font-size: 18px; color: #222; margin-bottom: 6px; }
+        .chat-header-info .sub { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; color: #666; }
+        .chat-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .messages { flex: 1; overflow-y: auto; padding: 18px; background: #e5ddd5; display: flex; flex-direction: column; gap: 10px; }
+        .empty-chat { margin: auto; text-align: center; color: #666; background: rgba(255,255,255,0.75); padding: 30px; border-radius: 18px; max-width: 500px; }
+        .empty-chat h3 { margin-bottom: 10px; color: #333; }
+        .message-row { display: flex; flex-direction: column; max-width: 72%; }
+        .message-row.user { align-self: flex-start; }
+        .message-row.admin { align-self: flex-end; }
+        .msg-sender { font-size: 11px; color: #555; margin-bottom: 4px; font-weight: bold; padding-inline: 4px; }
+        .msg-bubble { padding: 12px 14px; border-radius: 16px; line-height: 1.7; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+        .msg-user { background: white; border-bottom-right-radius: 4px; }
+        .msg-admin { background: #dcf8c6; border-bottom-left-radius: 4px; }
+        .msg-time { font-size: 11px; color: #666; margin-top: 4px; padding-inline: 4px; }
+        .input-area { border-top: 1px solid #ddd; background: #f5f5f5; padding: 14px; display: flex; gap: 10px; align-items: center; }
+        .input-area textarea { flex: 1; min-height: 48px; max-height: 140px; resize: vertical; border: 1px solid #ccc; border-radius: 14px; padding: 12px 14px; outline: none; font-size: 14px; background: white; }
+        .input-area textarea:focus { border-color: #2196f3; box-shadow: 0 0 0 3px rgba(33,150,243,0.12); }
+        .send-btn { min-width: 120px; align-self: stretch; }
+        .send-btn:disabled, .close-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .loading, .empty-state { padding: 24px; text-align: center; color: #666; }
+        @media (max-width: 950px) {
+            .main { flex-direction: column; }
+            .sidebar { width: 100%; height: 300px; border-left: none; border-bottom: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="header-top">
+                <div>
+                    <h1>لوحة إدارة الدعم الفني</h1>
+                    <p>إدارة جميع تذاكر الدعم من هنا</p>
+                </div>
+                <div class="admin-actions">
+                    <div class="status-badge" id="firebaseStatus">جاري الاتصال...</div>
+                    <button class="btn btn-secondary" id="refreshBtn">تحديث</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>التذاكر</h2>
+                </div>
+                <div class="tickets-list" id="ticketsList">
+                    <div class="loading">جاري تحميل التذاكر...</div>
+                </div>
+            </aside>
+
+            <section class="chat-area">
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <h3 id="chatTitle">اختر تذكرة</h3>
+                        <div class="sub" id="chatSub"><span>بانتظار الاختيار...</span></div>
+                    </div>
+                    <div class="chat-header-actions">
+                        <select id="statusSelector" class="btn btn-secondary" style="padding: 10px;">
+                            <option value="open">مفتوحة</option>
+                            <option value="pending">قيد المراجعة</option>
+                            <option value="closed">تم الحل</option>
+                        </select>
+                        <button class="btn btn-danger close-btn" id="closeTicketBtn" disabled>إغلاق التذكرة</button>
+                    </div>
+                </div>
+
+                <div class="messages" id="messagesBox">
+                    <div class="empty-chat">
+                        <h3>مرحبًا بك</h3>
+                        <p>اختر تذكرة لعرض المحادثة والرد عليها.</p>
+                    </div>
+                </div>
+
+                <div class="input-area">
+                    <textarea id="msgInput" placeholder="اكتب ردك هنا..." disabled></textarea>
+                    <button class="btn btn-primary send-btn" id="sendBtn" disabled>إرسال</button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script type="module">
+        import { app, db } from "./assets/firebase-config.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import {
+            collection, doc, query, orderBy, onSnapshot, addDoc, updateDoc,
+            serverTimestamp, getDoc
+        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const auth = getAuth(app);
+
+        const ticketsList = document.getElementById("ticketsList");
+        const chatTitle = document.getElementById("chatTitle");
+        const chatSub = document.getElementById("chatSub");
+        const messagesBox = document.getElementById("messagesBox");
+        const msgInput = document.getElementById("msgInput");
+        const sendBtn = document.getElementById("sendBtn");
+        const closeTicketBtn = document.getElementById("closeTicketBtn");
+        const refreshBtn = document.getElementById("refreshBtn");
+        const statusSelector = document.getElementById("statusSelector");
+
+        let currentTicketId = null;
+        let currentTicketData = null;
+        let currentFilter = "all";
+        let ticketsCache = [];
+        let unsubscribeTickets = null;
+        let unsubscribeMessages = null;
+        let adminUser = null;
+
+        function escapeHtml(str = "") {
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function formatDate(dateValue) {
+            if (!dateValue) return "الآن";
+            try {
+                const dateObj = dateValue?.toDate ? dateValue.toDate() : new Date(dateValue);
+                return dateObj.toLocaleString("ar-EG", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+            } catch {
+                return "الآن";
+            }
+        }
+
+        function setInputState(enabled) {
+            msgInput.disabled = !enabled;
+            sendBtn.disabled = !enabled;
+            closeTicketBtn.disabled = !enabled;
+        }
+
+        function getStatusLabel(status = "open") {
+            if (status === "closed") return { text: "تم الحل", className: "closed" };
+            if (status === "pending") return { text: "قيد المراجعة", className: "pending" };
+            return { text: "مفتوحة", className: "open" };
+        }
+
+        function createTicketElement(item) {
+            const { id, ticket } = item;
+            const div = document.createElement("div");
+            div.className = `ticket-item ${id === currentTicketId ? "active" : ""}`;
+
+            const subject = ticket.subject || "بدون عنوان";
+            const userName = ticket.userName || "مستخدم غير معروف";
+            const status = getStatusLabel(ticket.status || "open");
+            const category = ticket.category || ticket.ticket?.category || "other";
+            const categoryLabelMap = {
+                login: "تسجيل الدخول",
+                profile: "الملف الشخصي",
+                search: "البحث",
+                library: "المكتبة",
+                tests: "الاختبارات",
+                meetings: "الاجتماعات",
+                community: "المجتمع",
+                ui: "الواجهة",
+                other: "أخرى"
+            };
+            const categoryLabel = categoryLabelMap[category] || "أخرى";
+
+            div.innerHTML = `
+                <div class="ticket-top">
+                    <div class="ticket-title">${escapeHtml(subject)}</div>
+                </div>
+                <div class="ticket-meta">
+                    <span class="badge ${status.className}">${status.text}</span>
+                    <span class="badge" style="background:#5c7cfa;">${escapeHtml(categoryLabel)}</span>
+                    <span>${escapeHtml(userName)}</span>
+                </div>
+                <div class="ticket-preview">تاريخ: ${formatDate(ticket.createdAt)}</div>
+            `;
+            div.addEventListener("click", () => openChat(id));
+            return div;
+        }
+
+        function renderTickets() {
+            ticketsList.innerHTML = "";
+            const filteredTickets = ticketsCache;
+
+            if (!filteredTickets.length) {
+                ticketsList.innerHTML = '<div class="empty-state">لا توجد تذاكر في هذا التصنيف.</div>';
+                return;
+            }
+
+            filteredTickets.forEach((item) => ticketsList.appendChild(createTicketElement(item)));
+        }
+
+        function loadTickets() {
+            if (unsubscribeTickets) unsubscribeTickets();
+            document.getElementById("firebaseStatus").innerText = "جاري تحميل التذاكر...";
+
+            unsubscribeTickets = onSnapshot(
+                query(collection(db, "support_tickets"), orderBy("createdAt", "desc")),
+                (snapshot) => {
+                    ticketsCache = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ticket: docSnap.data() }));
+                    renderTickets();
+                    document.getElementById("firebaseStatus").innerText = `متصل • ${ticketsCache.length} تذاكر`;
+                },
+                (error) => {
+                    console.error(error);
+                    document.getElementById("firebaseStatus").innerText = "خطأ في تحميل التذاكر";
+                }
+            );
+        }
+
+        async function openChat(ticketId) {
+            const ticketObj = ticketsCache.find((t) => t.id === ticketId);
+            if (!ticketObj) return;
+
+            currentTicketId = ticketId;
+            currentTicketData = ticketObj.ticket;
+            statusSelector.value = currentTicketData.status || "open";
+
+            document.querySelectorAll(".ticket-item").forEach((el) => el.classList.remove("active"));
+            renderTickets();
+
+            const category = currentTicketData.category || currentTicketData.ticket?.category || "other";
+            const categoryLabelMap = {
+                login: "تسجيل الدخول",
+                profile: "الملف الشخصي",
+                search: "البحث",
+                library: "المكتبة",
+                tests: "الاختبارات",
+                meetings: "الاجتماعات",
+                community: "المجتمع",
+                ui: "الواجهة",
+                other: "أخرى"
+            };
+
+            chatTitle.textContent = currentTicketData.subject || "بدون عنوان";
+            chatSub.innerHTML = `
+                <span><b>صاحب التذكرة:</b> ${escapeHtml(currentTicketData.userName || currentTicketData.userEmail || "مستخدم")}</span>
+                <span><b>البريد:</b> ${escapeHtml(currentTicketData.userEmail || "-")}</span>
+                <span class="badge" style="background:#5c7cfa;">${escapeHtml(categoryLabelMap[category] || "أخرى")}</span>
+            `;
+
+            const isClosed = currentTicketData.status === "closed";
+            setInputState(!isClosed);
+            msgInput.placeholder = isClosed ? "التذكرة مغلقة" : "اكتب ردك هنا...";
+
+            messagesBox.innerHTML = '<div class="loading">جاري تحميل الرسائل...</div>';
+
+            if (unsubscribeMessages) unsubscribeMessages();
+
+            unsubscribeMessages = onSnapshot(
+                query(collection(db, "support_tickets", ticketId, "messages"), orderBy("createdAt", "asc")),
+                (snapshot) => {
+                    messagesBox.innerHTML = "";
+
+                    if (snapshot.empty) {
+                        messagesBox.innerHTML = '<div class="empty-chat"><p>لا توجد رسائل.</p></div>';
+                        return;
+                    }
+
+                    snapshot.forEach((docSnap) => {
+                        const msg = docSnap.data();
+                        const isAdmin = msg.senderType === "admin";
+                        const senderName = msg.senderName || (isAdmin ? "الدعم الفني" : currentTicketData.userName || "مستخدم");
+
+                        const row = document.createElement("div");
+                        row.className = `message-row ${isAdmin ? "admin" : "user"}`;
+                        row.innerHTML = `
+                            <div class="msg-sender">${escapeHtml(senderName)}</div>
+                            <div class="msg-bubble ${isAdmin ? "msg-admin" : "msg-user"}">${escapeHtml(msg.text || "")}</div>
+                            <div class="msg-time">${formatDate(msg.createdAt)}</div>
+                        `;
+                        messagesBox.appendChild(row);
+                    });
+
+                    messagesBox.scrollTop = messagesBox.scrollHeight;
+                }
+            );
+        }
+
+        async function sendMessage() {
+            const text = msgInput.value.trim();
+            if (!text || !currentTicketId) return;
+
+            sendBtn.disabled = true;
+            try {
+                await addDoc(collection(db, "support_tickets", currentTicketId, "messages"), {
+                    ticketId: currentTicketId,
+                    senderId: adminUser.uid,
+                    senderName: "الدعم الفني",
+                    senderType: "admin",
+                    text,
+                    createdAt: serverTimestamp()
+                });
+
+                await updateDoc(doc(db, "support_tickets", currentTicketId), {
+                    updatedAt: serverTimestamp(),
+                    status: "pending"
+                });
+
+                msgInput.value = "";
+                msgInput.focus();
+            } catch (error) {
+                console.error("حدث خطأ أثناء الإرسال:", error);
+                alert("حدث خطأ أثناء الإرسال.");
+            } finally {
+                sendBtn.disabled = false;
+            }
+        }
+
+        async function updateTicketStatus(newStatus) {
+            if (!currentTicketId) return;
+            try {
+                await updateDoc(doc(db, "support_tickets", currentTicketId), {
+                    status: newStatus,
+                    updatedAt: serverTimestamp()
+                });
+            } catch (error) {
+                console.error("حدث خطأ أثناء تحديث الحالة:", error);
+                alert("حدث خطأ أثناء تحديث الحالة");
+            }
+        }
+
+        async function closeCurrentTicket() {
+            if (!currentTicketId) return;
+            if (!confirm("تأكيد إغلاق التذكرة؟")) return;
+
+            closeTicketBtn.disabled = true;
+            try {
+                await updateDoc(doc(db, "support_tickets", currentTicketId), {
+                    status: "closed",
+                    updatedAt: serverTimestamp()
+                });
+                alert("تم الإغلاق بنجاح");
+            } catch (error) {
+                console.error("حدث خطأ أثناء الإغلاق:", error);
+                alert("حدث خطأ");
+            } finally {
+                closeTicketBtn.disabled = false;
+            }
+        }
+
+        sendBtn.addEventListener("click", sendMessage);
+        closeTicketBtn.addEventListener("click", closeCurrentTicket);
+        refreshBtn.addEventListener("click", loadTickets);
+        statusSelector.addEventListener("change", (event) => {
+            updateTicketStatus(event.target.value);
+        });
+
+        msgInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.replace("adlog.html");
+                return;
+            }
+
+            try {
+                const adminSnapshot = await getDoc(doc(db, "admins", user.uid));
+                if (!adminSnapshot.exists() || adminSnapshot.data().active === false) {
+                    await signOut(auth);
+                    window.location.replace("adlog.html");
+                    return;
+                }
+
+                adminUser = user;
+                document.getElementById("firebaseStatus").textContent = user.email || "مدير النظام";
+                loadTickets();
+            } catch (error) {
+                console.error("تعذر التحقق من صلاحيات الأدمن:", error);
+                window.location.replace("adlog.html");
+            }
+        });
+    </script>
+</body>
+</html>

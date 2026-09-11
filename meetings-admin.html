@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة الجلسات | Preventa Plus</title>
+  <style>
+    :root { --navy:#102f59; --blue:#1b6ca8; --mint:#5dc9bd; --gold:#e6a93a; --bg:#f3f8fa; --line:#dbe7ed; --muted:#6d7d8c; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; padding:24px; background:linear-gradient(135deg,#eef8f7,#f8f5ec); color:#183047; font-family:Tahoma,Arial,sans-serif; }
+    main { width:min(1120px,100%); margin:auto; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:18px; margin-bottom:24px; }
+    h1,h2,p { margin-top:0; } h1 { color:var(--navy); } h2 { margin-bottom:16px; color:var(--navy); font-size:1.15rem; }
+    .muted { color:var(--muted); font-size:.85rem; }
+    .back { padding:10px 15px; border:0; border-radius:8px; background:var(--navy); color:#fff; cursor:pointer; font:inherit; }
+    .layout { display:grid; grid-template-columns:minmax(310px,.8fr) minmax(0,1.2fr); gap:18px; }
+    .card { padding:22px; border:1px solid var(--line); border-radius:16px; background:rgba(255,255,255,.9); box-shadow:0 14px 30px rgba(16,47,89,.08); }
+    .field { display:grid; gap:7px; margin-bottom:14px; } label { color:var(--muted); font-size:.8rem; font-weight:bold; }
+    input[type=text], input[type=datetime-local] { width:100%; padding:12px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+    .check-row { display:flex; align-items:center; gap:8px; margin:12px 0 17px; color:var(--muted); font-size:.85rem; }
+    .users { display:grid; gap:8px; max-height:310px; overflow:auto; padding:2px; }
+    .user-option { display:flex; align-items:center; gap:10px; padding:9px; border:1px solid var(--line); border-radius:9px; background:#fff; cursor:pointer; }
+    .user-option:hover { border-color:var(--mint); background:#f0fbfa; }
+    .user-option img { width:34px; height:34px; border-radius:50%; object-fit:cover; }
+    .user-option span { min-width:0; overflow:hidden; } .user-option strong,.user-option small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .user-option small { color:var(--muted); font-size:.7rem; }
+    .primary { width:100%; padding:13px; border:0; border-radius:8px; background:var(--blue); color:#fff; cursor:pointer; font:inherit; font-weight:bold; }
+    .message { min-height:20px; margin:10px 0 0; color:var(--muted); font-size:.8rem; }
+    .meeting-list { display:grid; gap:11px; }
+    .meeting { padding:15px; border:1px solid var(--line); border-radius:11px; background:#fff; }
+    .meeting.ended { border-color:#e6caca; background:#fffafa; }
+    .meeting-head { display:flex; justify-content:space-between; gap:10px; } .meeting strong { color:var(--navy); } .meeting small { color:var(--muted); }
+    .meeting-meta { margin-top:9px; color:var(--muted); font-size:.78rem; line-height:1.8; }
+    .meeting-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .danger, .end-meeting { margin-top:10px; padding:7px 10px; border:1px solid #efcaca; border-radius:7px; background:#fff5f5; color:#a52e2e; cursor:pointer; font:inherit; font-size:.75rem; }
+    .end-meeting { border-color:#f0d49b; background:#fffaf0; color:#8a5d13; }
+    .end-meeting:disabled { opacity:.65; cursor:not-allowed; }
+    @media (max-width:800px) { body { padding:14px; } header { align-items:flex-start; flex-direction:column; } .layout { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header><div><h1>إدارة جلسات الاجتماعات</h1><p class="muted" id="adminEmail">جاري التحقق من صلاحيات المدير...</p></div></header>
+    <div class="layout">
+      <section class="card">
+        <h2>إنشاء جلسة جديدة</h2>
+        <form id="meetingForm">
+          <div class="field"><label for="meetingTitle">عنوان الاجتماع</label><input id="meetingTitle" type="text" required placeholder="مثال: اجتماع فريق التوعية"></div>
+          <div class="field"><label for="meetingRoom">اسم الغرفة الفريد</label><input id="meetingRoom" type="text" required placeholder="room-2026-health-team"></div>
+          <div class="field"><label for="meetingDate">موعد الاجتماع</label><input id="meetingDate" type="datetime-local" required></div>
+          <div class="field"><label for="meetingOrganizer">اسم المنظم</label><input id="meetingOrganizer" type="text" required placeholder="اسم المدير أو الفريق"></div>
+          <label class="check-row"><input id="waitingRoom" type="checkbox" checked> تفعيل غرفة الانتظار</label>
+          <label>المستخدمون المصرح لهم</label>
+          <div class="users" id="usersList">جاري تحميل المستخدمين...</div>
+          <button class="primary" type="submit">إنشاء وإظهار الجلسة للمختارين</button>
+          <p class="message" id="formMessage"></p>
+        </form>
+      </section>
+      <section class="card"><h2>الجلسات المنشورة</h2><div class="meeting-list" id="meetingsList">جاري تحميل الجلسات...</div></section>
+    </div>
+  </main>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { addDoc, collection, deleteDoc, doc, getDocs, getFirestore, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    const config = { apiKey:"AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo", authDomain:"wallet-tamer-adel.firebaseapp.com", projectId:"wallet-tamer-adel", storageBucket:"wallet-tamer-adel.firebasestorage.app", messagingSenderId:"51007948250", appId:"1:51007948250:web:e1f6eaaebb4202b8aface3" };
+    const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
+    let adminUser;
+    const escapeHtml = (value) => String(value || "").replace(/[&<>'"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+    const formatDate = (value) => value?.toDate ? value.toDate().toLocaleString("ar-EG") : new Date(value).toLocaleString("ar-EG");
+    function startAdminPage(user) {
+      adminUser = user;
+      document.getElementById("adminEmail").textContent = "الدخول المباشر مفعل";
+      loadUsers();
+      listenMeetings();
+    }
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        startAdminPage(user);
+        return;
+      }
+      try {
+        const result = await signInAnonymously(auth);
+        startAdminPage(result.user);
+      } catch (error) {
+        document.getElementById("adminEmail").textContent = "فعّل الدخول المجهول من إعدادات Firebase";
+        document.getElementById("usersList").textContent = "تعذر فتح الصفحة بدون تفعيل Anonymous Authentication.";
+      }
+    });
+    async function loadUsers() {
+      const snapshot = await getDocs(collection(db,"users")); const box = document.getElementById("usersList");
+      const users = snapshot.docs.filter((item) => item.data().isActive !== false);
+      box.innerHTML = users.length ? users.map((item) => { const user=item.data(); return `<label class="user-option"><input type="checkbox" value="${item.id}"><img src="${escapeHtml(user.photoData || user.photoURL || user.photo || "6384.png")}" alt=""><span><strong>${escapeHtml(user.name || "مستخدم")}</strong><small>${escapeHtml(user.email || "")}</small></span></label>`; }).join("") : "لا يوجد مستخدمون مفعلون.";
+    }
+    function listenMeetings() {
+      onSnapshot(query(collection(db,"meetings"), orderBy("createdAt","desc")), (snapshot) => { const box=document.getElementById("meetingsList"); box.innerHTML=snapshot.docs.length ? snapshot.docs.map((item) => { const m=item.data(); const ended=m.isEnded === true; return `<article class="meeting${ended ? " ended" : ""}"><div class="meeting-head"><strong>${escapeHtml(m.title || "اجتماع")}</strong><small>${ended ? "الجلسة منتهية" : (m.waitingRoom ? "غرفة انتظار مفعلة" : "دخول مباشر")}</small></div><div class="meeting-meta">المنظم: ${escapeHtml(m.organizer || "-")}<br>الموعد: ${formatDate(m.startAt)}<br>المصرح لهم: ${(m.participantIds || []).length} مستخدم</div><div class="meeting-actions">${ended ? "" : `<button class="end-meeting" data-end="${item.id}">إنهاء الجلسة</button>`}<button class="danger" data-delete="${item.id}">حذف الجلسة</button></div></article>`; }).join("") : "لا توجد جلسات منشورة."; box.querySelectorAll("[data-end]").forEach((button) => button.onclick=async () => { if(!confirm("إنهاء الجلسة وإغلاقها عند الجميع؟")) return; button.disabled=true; try { await updateDoc(doc(db,"meetings",button.dataset.end), { isEnded:true, endedAt:serverTimestamp() }); } catch(error) { button.disabled=false; console.error(error); } }); box.querySelectorAll("[data-delete]").forEach((button) => button.onclick=async () => { if(confirm("حذف هذه الجلسة؟")) await deleteDoc(doc(db,"meetings",button.dataset.delete)); }); });
+    }
+    document.getElementById("meetingForm").addEventListener("submit", async (event) => {
+      event.preventDefault(); const selected=[...document.querySelectorAll("#usersList input:checked")].map((input)=>input.value); const message=document.getElementById("formMessage");
+      if (!selected.length) { message.textContent="اختر مستخدمًا واحدًا على الأقل."; return; }
+      const startAt = new Date(document.getElementById("meetingDate").value); const roomName=document.getElementById("meetingRoom").value.trim().replace(/[^a-zA-Z0-9_-]/g,"-");
+      if (!adminUser) { message.textContent="جارٍ فتح الصفحة، حاول مرة أخرى."; return; }
+      try { await addDoc(collection(db,"meetings"), { title:document.getElementById("meetingTitle").value.trim(), roomName, startAt, organizer:document.getElementById("meetingOrganizer").value.trim(), waitingRoom:document.getElementById("waitingRoom").checked, participantIds:selected, createdBy:adminUser.uid, createdAt:serverTimestamp(), isCancelled:false, isEnded:false }); event.target.reset(); document.getElementById("waitingRoom").checked=true; message.textContent="تم إنشاء الجلسة وإظهارها للمستخدمين المختارين."; } catch(error) { console.error(error); message.textContent="تعذر إنشاء الجلسة. تأكد من قواعد Firestore."; }
+    });
+    document.getElementById("backButton").onclick=()=>location.replace("addash.html");
+  </script>
+</body>
+</html>
