@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 	<meta charset="UTF-8">
-<meta name="viewport" content="width=1250">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>لوحة التحكم | Preventa Plus</title>
 	<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -51,16 +51,16 @@
 		.mobile-sidebar-overlay {
 			position: fixed;
 			inset: 0;
-			z-index: 25;
+			z-index: 45;
 			background: rgba(8, 29, 54, .38);
 			opacity: 0;
 			pointer-events: none;
 			transition: opacity .22s ease;
 		}
-		.app-shell.sidebar-open + .mobile-sidebar-overlay {
-			opacity: 1;
-			pointer-events: auto;
-		}
+	.app-shell.sidebar-open .mobile-sidebar-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
 
 		.sidebar {
 			position: sticky;
@@ -77,6 +77,7 @@
 			overflow-y: auto;
 			overflow-x: hidden;
 			transition: width .3s ease, flex-basis .3s ease, padding .3s ease, opacity .2s ease, margin .3s ease, transform .22s ease;
+			z-index: 50;
 		}
 		.app-shell.sidebar-collapsed .sidebar {
 			width: 92px;
@@ -186,21 +187,31 @@
 
 		.main-content { flex: 1; min-width: 0; max-width: 1250px; padding: 18px clamp(20px, 5vw, 72px) 42px; }
 		.topbar {
-			position: sticky;
-			top: 18px;
-			z-index: 20;
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			min-height: 80px;
-			margin-bottom: 30px;
-			padding: 10px 20px;
-			border: 1px solid rgba(255, 255, 255, .13);
-			border-radius: 20px;
-			background: linear-gradient(135deg, #102f59, #174b79);
-			box-shadow: 0 12px 30px rgba(16, 47, 89, .2);
-			backdrop-filter: blur(12px);
-		}
+    position: sticky; 
+    top: 0; /* إزالة المسافة العلوية ليلتصق بالشاشة */
+    z-index: 45; 
+    
+    /* تخطي الـ padding الخاص بالـ main-content ليمتد للطرفين */
+    margin-top: 0;
+    margin-bottom: 20px;
+    margin-left: -12px; /* نفس قيمة الـ padding الجانبي للـ main-content */
+    margin-right: -12px;
+    width: calc(100% + 24px); /* تعويض مساحة الهوامش السلبية */
+    
+    padding: 10px 15px; 
+    min-height: 65px;
+    
+    /* إزالة الزوايا الدائرية والحدود الجانبية/العلوية */
+    border-radius: 0; 
+    border-bottom: 1px solid rgba(255,255,255,.2); 
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    
+    background: linear-gradient(135deg, #0d315c 0%, #174b79 68%, #1a6688 100%);
+    box-shadow: 0 14px 30px rgba(16,47,89,.24), inset 0 -1px 0 rgba(255,255,255,.16);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px;
+}
 		.topbar-right, .topbar-left { display: flex; align-items: center; gap: 14px; }
 		.topbar-right { min-width: 0; }
 		.topbar-left { flex-wrap: wrap; justify-content: flex-start; }
@@ -265,6 +276,7 @@
 		.test-prev-btn { border: 1px solid #dbe7ed; background: #fff; color: #183047; }
 		.test-prev-btn:disabled { opacity: .5; cursor: default; }
 		.test-next-btn { border: 0; background: linear-gradient(135deg, #1b6ca8, #125a92); color: #fff; box-shadow: 0 14px 25px rgba(27,108,168,0.22); }
+		
 		.profile-layout { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(220px, .7fr) minmax(0, 1.3fr); gap: 22px; margin-top: 32px; }
 		.profile-card, .profile-form { padding: 22px; border: 1px solid rgba(219, 231, 237, .9); border-radius: 16px; background: linear-gradient(145deg, #fff, #f8fcfd); box-shadow: 0 10px 25px rgba(16, 47, 89, .05); }
 		.profile-card { text-align: center; }
@@ -339,77 +351,10 @@
 		.support-reply-box button { padding: 12px 18px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #1b6ca8, #125a92); color: #fff; cursor: pointer; font: inherit; font-weight: 800; box-shadow: 0 14px 24px rgba(27,108,168,.18); }
 		.password-box { margin-top: 22px; }
 		.form-message { min-height: 18px; margin: 0; font-size: .82rem; }
-		.topbar-actions { display: flex; align-items: center; gap: 10px; }
-		.sidebar-toggle {
-		display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-		background: rgba(255,255,255,.1);
-		color: #fff;
-    cursor: pointer;
-    font-size: 1.2rem;
-		box-shadow: 0 4px 12px rgba(0,0,0,.08);
-		position: relative;
-		z-index: 50;
-		touch-action: manipulation;
-    transition: all 0.2s ease;
-}
-
-.sidebar-toggle:hover {
-		border-color: var(--mint);
-		color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(16,47,89,.1);
-}
-		.mobile-tools-toggle { display: none; }
-
+		
 		.topbar-brand { display: grid; place-items: center; width: 52px; height: 52px; flex: 0 0 52px; border: 1px solid rgba(255,255,255,.22); border-radius: 50%; background: rgba(255,255,255,.12); }
 		.topbar-brand img { width: 44px; height: 44px; object-fit: contain; }
 
-		.topbar-actions {
-    display: flex;
-    align-items: center;
-	    border-inline-start: 1px solid rgba(255,255,255,.2);
-	    padding-inline-start: 14px;
-}
-@media (max-width: 800px) {
-    /* ... التنسيقات الأخرى الخاصة بك ... */
-    
-	    .topbar {
-        top: 10px;
-        padding: 10px 14px;
-        border-radius: 16px;
-        margin-bottom: 20px;
-        min-height: 65px;
-	        display: flex;
-	        justify-content: space-between;
-	        align-items: center;
-    }
-	    .topbar-right { gap: 10px; }
-    .welcome { display: none; } /* إخفاء النص الترحيبي لتوفير المساحة */
-	    .topbar-brand { display: grid; }
-	    .topbar-actions { border: none; padding: 0; margin-top: 0; }
-    .user-badge { padding: 0; border: none; background: transparent; box-shadow: none; min-width: auto; }
-    .user-badge:hover { transform: none; box-shadow: none; }
-    .user-badge img { width: 42px; height: 42px; }
-	.user-badge-info { display: block; }
-	.user-badge strong { max-width: 78px; color: #fff; }
-	.desktop-only-control { display: none; }
-	.topbar-left { gap: 7px; }
-	.topbar .icon-action { width: 38px; height: 38px; font-size: .95rem; }
-	.language-button { min-width: 38px; height: 34px; padding: 0 7px; }
-.sidebar-toggle { 
-    width: 40px; 
-    height: 40px; 
-    font-size: 1.1rem; 
-    position: relative;
-    z-index: 60; 
-}    
-    /* ... باقي التنسيقات ... */
-}
 		.icon-action { position: relative; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.8); color: var(--navy); cursor: pointer; font-size: 1.1rem; box-shadow: 0 8px 18px rgba(16,47,89,.06); }
 		.icon-action:hover { border-color: var(--mint); background: #fff; transform: translateY(-2px); }
 		.topbar .icon-action { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.1); color: #fff; box-shadow: none; }
@@ -417,11 +362,37 @@
 		.notification-dot { position: absolute; top: 6px; left: 6px; width: 8px; height: 8px; border: 2px solid #174b79; border-radius: 50%; background: var(--danger); }
 		.language-button { min-width: 44px; height: 36px; padding: 0 10px; border: 1px solid rgba(255,255,255,.45); border-radius: 8px; background: transparent; color: #fff; cursor: pointer; font: inherit; font-size: .75rem; font-weight: 800; }
 		.language-button:hover { border-color: var(--gold); color: var(--gold); }
+		
+		.sidebar-toggle {
+			display: grid;
+			place-items: center;
+			width: 44px;
+			height: 44px;
+			border: 1px solid rgba(255,255,255,.22);
+			border-radius: 12px;
+			background: rgba(255,255,255,.1);
+			color: #fff;
+			cursor: pointer;
+			font-size: 1.2rem;
+			box-shadow: none;
+			position: relative;
+			z-index: 50;
+			touch-action: manipulation;
+			transition: all 0.2s ease;
+		}
+		.sidebar-toggle:hover {
+			border-color: var(--mint);
+			background: rgba(255,255,255,.18);
+			color: #fff;
+			transform: translateY(-2px);
+		}
+
 		.user-badge { display: flex; align-items: center; gap: 10px; min-width: 165px; padding: 6px 9px 6px 13px; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.84); color: var(--navy); text-decoration: none; box-shadow: 0 8px 18px rgba(16,47,89,.06); transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
 		.user-badge:hover { border-color: var(--mint); box-shadow: 0 12px 25px rgba(16,47,89,.12); transform: translateY(-2px); }
 		.user-badge img { width: 34px; height: 34px; border: 2px solid #d8eef3; border-radius: 50%; object-fit: cover; }
 		.user-badge strong { display: block; max-width: 115px; overflow: hidden; font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
 		.user-badge span { display: block; margin-top: 3px; color: var(--muted); font-size: .68rem; }
+		
 		.home-dashboard { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(275px, .65fr); gap: 18px; margin-top: 28px; }
 		.home-card { border: 1px solid rgba(219,231,237,.9); border-radius: 16px; background: rgba(255,255,255,.76); box-shadow: 0 10px 25px rgba(16,47,89,.055); }
 		.meeting-card { position: relative; min-height: 260px; padding: 25px; overflow: hidden; background: linear-gradient(135deg, #102f59, #1c6d91); color: #fff; }
@@ -467,7 +438,7 @@
 		.news-progress button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.42); cursor: pointer; }
 		.news-progress button.active { width: 25px; border-radius: 5px; background: var(--gold); }
 		@keyframes newsReveal { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
-		.news-modal { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(8, 29, 54, .7); backdrop-filter: blur(7px); }
+		.news-modal { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; background: rgba(8, 29, 54, .7); backdrop-filter: blur(7px); }
 		.news-modal[hidden] { display: none; }
 		.news-modal-box { position: relative; width: min(760px, 100%); max-height: 90vh; overflow: auto; border: 1px solid rgba(255,255,255,.25); border-radius: 18px; background: #fff; box-shadow: 0 25px 80px rgba(0,0,0,.3); animation: modalReveal .25s ease both; }
 		.news-modal-box img { display: block; width: 100%; max-height: 390px; background: #081d36; object-fit: contain; }
@@ -477,13 +448,15 @@
 		.news-modal-close { position: absolute; top: 14px; left: 14px; display: grid; place-items: center; width: 35px; height: 35px; border: 0; border-radius: 50%; background: rgba(8,29,54,.8); color: #fff; cursor: pointer; font-size: 1.25rem; }
 		.news-modal-close:hover { background: var(--gold); color: var(--navy); }
 		@keyframes modalReveal { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-		.search-panel { display: none; position: fixed; z-index: 40; width: min(360px, calc(100vw - 24px)); padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; box-shadow: var(--shadow-soft); }
+		
+		.search-panel { display: none; position: fixed; z-index: 60; width: min(360px, calc(100vw - 24px)); padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; box-shadow: var(--shadow-soft); }
 		.search-panel.open { display: block; }
 		.search-panel input { width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
 		.search-results { max-height: 180px; overflow: auto; margin-top: 7px; color: var(--muted); font-size: .78rem; }
 		.search-results button { display: block; width: 100%; padding: 8px; border: 0; background: transparent; color: var(--navy); cursor: pointer; font: inherit; text-align: right; }
 		.search-results button:hover { background: var(--cyan); }
-		.notifications-panel { display: none; position: fixed; z-index: 40; width: min(360px, calc(100vw - 24px)); overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: var(--shadow-soft); }
+		
+		.notifications-panel { display: none; position: fixed; z-index: 60; width: min(360px, calc(100vw - 24px)); overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: var(--shadow-soft); }
 		.notifications-panel.open { display: block; }
 		.notifications-panel h3 { margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--line); color: var(--navy); font-size: .95rem; }
 		.notifications-list { display: grid; max-height: 300px; overflow-y: auto; }
@@ -494,6 +467,7 @@
 		.notification-item strong { color: var(--navy); font-size: .78rem; }
 		.notification-item small { margin-top: 3px; color: var(--muted); font-size: .7rem; line-height: 1.5; }
 		.notifications-empty { padding: 22px 16px; color: var(--muted); font-size: .78rem; text-align: center; }
+		
 		.search-page-box { position: relative; z-index: 1; max-width: 820px; margin-top: 32px; }
 		.search-page-box > input { width: 100%; padding: 16px 18px; border: 2px solid var(--line); border-radius: 12px; outline: 0; background: #fff; color: var(--ink); font: inherit; box-shadow: 0 10px 22px rgba(16,47,89,.06); }
 		.search-page-box > input:focus { border-color: var(--mint); box-shadow: 0 0 0 4px rgba(93,201,189,.13); }
@@ -504,6 +478,7 @@
 		.page-search-result strong, .page-search-result small { display: block; }
 		.page-search-result strong { color: var(--navy); }
 		.page-search-result small { margin-top: 4px; overflow: hidden; color: var(--muted); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+		
 		.chat-shell { position: relative; z-index: 1; display: grid; grid-template-rows: minmax(280px, 1fr) auto; min-height: 570px; margin-top: 28px; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #f7fbfc; }
 		.chat-messages { display: flex; flex-direction: column; gap: 15px; min-height: 280px; max-height: 570px; overflow-y: auto; padding: 24px; }
 		.chat-empty { margin: auto; color: var(--muted); text-align: center; }
@@ -536,6 +511,7 @@
 		.chat-send { padding: 0 17px; background: var(--navy); color: #fff; }
 		.chat-send:disabled { opacity: .55; cursor: wait; }
 		.chat-file-name { margin: 7px 0 0; color: var(--muted); font-size: .7rem; }
+		
 		.meetings-layout { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(220px, .7fr) minmax(0, 1.3fr); gap: 16px; margin-top: 28px; }
 		.meeting-list { display: grid; align-content: start; gap: 9px; }
 		.meeting-list button { padding: 15px; border: 1px solid var(--line); border-radius: 11px; background: #fff; color: var(--navy); cursor: pointer; font: inherit; text-align: right; box-shadow: 0 7px 16px rgba(16,47,89,.05); }
@@ -550,6 +526,7 @@
 		.meet-container { width: 100%; height: min(620px, 70vh); min-height: 430px; }
 		.meeting-empty { padding: 45px 25px; color: #c7e5ed; text-align: center; }
 		.meeting-notice { margin-top: 13px; color: #b7d9e8; font-size: .72rem; line-height: 1.7; }
+		
 		.library-file-grid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 30px; }
 		.library-file { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; box-shadow: 0 8px 18px rgba(16,47,89,.05); }
 		.library-file strong { overflow: hidden; color: var(--navy); text-overflow: ellipsis; white-space: nowrap; }
@@ -578,197 +555,166 @@
 		.library-generic-preview strong { display: block; color: var(--navy); }
 		.library-generic-preview small { color: var(--muted); }
 		.library-empty-search { display: grid; place-items: center; min-height: 160px; padding: 24px; color: var(--muted); }
+		
+		.nav-icon { position: relative; }
+		.nav-badge { position: absolute; top: -3px; right: -3px; width: 11px; height: 11px; background-color: var(--danger); border: 2px solid var(--navy); border-radius: 50%; display: none; z-index: 10; box-shadow: 0 0 6px rgba(184, 50, 50, 0.6); }
+
 		@keyframes pageEnter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 		@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
-		@media (max-width: 800px) {
-			.app-shell {
-				display: block;
-				position: relative;
-			}
-			.app-shell::before {
-				content: "";
-				position: fixed;
-				inset: 0;
-				z-index: 24;
-				background: rgba(8, 29, 54, .38);
-				opacity: 0;
-				pointer-events: none;
-				transition: opacity .22s ease;
-			}
-			.app-shell.sidebar-open::before {
-				opacity: 1;
-				pointer-events: auto;
-			}
-			.sidebar {
-				position: fixed;
-				top: 0;
-				right: 0;
-				bottom: 0;
-				width: min(82vw, 290px);
-				height: 100vh;
-				min-height: 100vh;
-				padding: 22px 14px;
-				border-radius: 0 0 0 24px;
-				transform: translateX(110%);
-				z-index: 35;
-			}
-			.app-shell.sidebar-open .sidebar {
-				transform: translateX(0);
-			}
-			.app-shell.sidebar-collapsed .sidebar { width: min(82vw, 290px); padding: 22px 14px; height: 100vh; min-height: 100vh; margin: 0; }
-			.sidebar-toggle { display: grid; position: relative; z-index: 60; }
-			.brand { padding: 0 10px 16px; }
-			.side-nav { margin-top: 15px; }
-			.sidebar-footer { margin-top: 18px; padding: 14px 10px 0; }
-			.main-content { padding: 25px 16px 35px; }
-			.topbar {
-				min-height: 78px;
-				margin-bottom: 24px;
-				padding: 10px 14px 10px 68px;
-				border: 1px solid rgba(255,255,255,.2);
-				border-radius: 20px;
-				background: linear-gradient(135deg, #0d315c 0%, #174b79 68%, #1a6688 100%);
-				box-shadow: 0 14px 30px rgba(16,47,89,.24), inset 0 1px 0 rgba(255,255,255,.16);
-			}
-			.topbar-right {
-				width: 100%;
-				justify-content: flex-start;
-				gap: 10px;
-			}
-			.topbar-heading { min-width: 0; }
-			.topbar-heading h1 {
-				font-size: clamp(1.15rem, 5vw, 1.5rem);
-				font-weight: 800;
-				white-space: nowrap;
-			}
-			.topbar-brand {
-				width: 46px;
-				height: 46px;
-				flex-basis: 46px;
-				border-color: rgba(255,255,255,.28);
-				background: rgba(255,255,255,.1);
-			}
-			.topbar-brand img { width: 38px; height: 38px; }
-			.topbar-left {
-				display: none;
-				position: fixed;
-				left: 8px;
-				top: 20px;
-				z-index: 60;
-				width: 48px;
-				transform: none;
-				flex-direction: column;
-				flex-wrap: nowrap;
-				gap: 7px;
-				padding: 8px 5px;
-				border: 1px solid rgba(255,255,255,.25);
-				border-radius: 16px;
-				background: linear-gradient(180deg, rgba(16,47,89,.98), rgba(23,75,121,.96));
-				box-shadow: 0 12px 28px rgba(16,47,89,.3), inset 0 1px 0 rgba(255,255,255,.16);
-				backdrop-filter: blur(12px);
-			}
-			.app-shell:not(.mobile-tools-open) .topbar-left { display: none !important; }
-			.app-shell.mobile-tools-open .topbar-left { display: flex !important; }
-			.mobile-tools-toggle {
-				display: grid;
-				place-items: center;
-				position: fixed;
-				left: 8px;
-				top: 20px;
-				z-index: 61;
-				width: 48px;
-				height: 48px;
-				border: 1px solid rgba(255,255,255,.28);
-				border-radius: 14px;
-				background: linear-gradient(135deg, #102f59, #1a6688);
-				color: #fff;
-				cursor: pointer;
-				font-size: 1.1rem;
-				box-shadow: 0 12px 28px rgba(16,47,89,.3), inset 0 1px 0 rgba(255,255,255,.16);
-		}
-			.mobile-tools-toggle:hover { border-color: var(--gold); color: var(--gold); }
-			.app-shell.mobile-tools-open .mobile-tools-toggle { left: 64px; }
-			.topbar-left .icon-action,
-			.topbar-left .language-button,
-			.topbar-left .sidebar-toggle {
-				width: 38px;
-				height: 38px;
-				min-width: 38px;
-				padding: 0;
-				border-radius: 10px;
-			}
-			.topbar-left .sidebar-toggle { order: -1; }
-			.topbar-left .user-badge {
-				width: 38px;
-				min-width: 38px;
-				height: 38px;
-				padding: 0;
-				justify-content: center;
-				border: 1px solid rgba(255,255,255,.22);
-				background: rgba(255,255,255,.1);
-				box-shadow: none;
-			}
-			.topbar-left .user-badge-info { display: none; }
-			.topbar-left .user-badge img { width: 30px; height: 30px; }
-			.status { display: inline-block; margin-top: 16px; }
-			.profile-layout { grid-template-columns: 1fr; }
-			.meetings-layout { grid-template-columns: 1fr; }
-			.topbar-actions { margin-top: 18px; flex-wrap: wrap; }
-			.home-dashboard { grid-template-columns: 1fr; }
-			.news-grid { min-height: 390px; }
-			.news-item { grid-template-columns: 1fr; grid-template-rows: 190px 1fr; }
-			.news-item img { height: 190px; }
-			.news-copy { padding: 20px 22px 38px; }
+		/* ==========================================================
+		   Mobile Responsive Design
+		   ========================================================== */
+		/* ==========================================================
+		   Mobile Responsive Design
+		   ========================================================== */
+		/* =========================================
+   تنسيقات القائمة الجانبية الأساسية (للشاشات الكبيرة)
+   ========================================= */
+
+/* العرض الافتراضي للقائمة */
+.sidebar {
+    width: 260px;
+    transition: width 0.3s ease; /* حركة ناعمة عند التصغير */
+    background-color: #f8f9fa;
+    height: 100vh;
+}
+
+/* ترتيب اللوجو، الاسم، والزر على نفس الخط */
+.brand {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+}
+
+.brand-content {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* المسافة بين اللوجو والاسم */
+}
+
+/* --- حالة التصغير (اختفاء اللوجو والاسم) --- */
+.sidebar.collapsed {
+    width: 70px; /* عرض القائمة ليناسب الأيقونات فقط */
+}
+
+/* إخفاء اللوجو والاسم بالكامل */
+.sidebar.collapsed .brand-content {
+    display: none;
+}
+
+/* توسيط زر القائمة عند اختفاء باقي العناصر */
+.sidebar.collapsed .brand {
+    justify-content: center;
+}
+
+
+/* =========================================
+   تنسيقات الموبايل والشاشات الصغيرة
+   ========================================= */
+
+@media (max-width: 800px) {
+    .app-shell { display: block; position: relative; }
+    
+    /* القائمة الجانبية للموبايل */
+    .sidebar {
+        position: fixed; top: 0; right: 0; bottom: 0;
+        width: min(82vw, 290px); height: 100vh; min-height: 100vh;
+        padding: 22px 14px; border-radius: 0 0 0 24px;
+        transform: translateX(110%); z-index: 100;
+    }
+    
+    .app-shell.sidebar-open .sidebar { transform: translateX(0); }
+    .app-shell.sidebar-collapsed .sidebar { width: min(82vw, 290px); padding: 22px 14px; height: 100vh; min-height: 100vh; margin: 0; }
+    .mobile-sidebar-overlay { z-index: 90; }
+    
+    .brand { padding: 0 10px 16px; }
+    .side-nav { margin-top: 15px; }
+    .sidebar-footer { margin-top: 18px; padding: 14px 10px 0; }
+.main-content { 
+    padding: 0 0 35px 0; /* إزالة الفراغات الجانبية والعلوية من الحاوية بالكامل */
+}    
+    /* الهيدر العلوي */
+    .topbar {
+        position: sticky; top: 10px; z-index: 45; margin-bottom: 20px;
+        padding: 10px 12px; min-height: 65px;
+        border: 1px solid rgba(255,255,255,.2); border-radius: 16px;
+        background: linear-gradient(135deg, #0d315c 0%, #174b79 68%, #1a6688 100%);
+        box-shadow: 0 14px 30px rgba(16,47,89,.24), inset 0 1px 0 rgba(255,255,255,.16);
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px;
+    }
+    
+    .topbar-right { width: auto; flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+    .topbar-brand { width: 36px; height: 36px; flex-basis: 36px; flex-shrink: 0; border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.1); }
+    .topbar-brand img { width: 24px; height: 24px; }
+    
+    .topbar-heading { min-width: 0; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    .topbar-heading h1 { font-size: clamp(1rem, 3.5vw, 1.15rem); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+    .welcome { display: none; }
+    
+    .topbar-left { display: flex !important; position: static; width: auto; padding: 0; gap: 5px; align-items: center; flex-shrink: 0; }
+    .topbar-left .icon-action, .topbar-left .language-button, .sidebar-toggle { width: 34px; height: 34px; min-width: 34px; padding: 0; border-radius: 10px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; }
+    .sidebar-toggle { order: 99; margin-right: 2px; }
+    .desktop-only-control { display: none !important; }
+    .topbar-left .user-badge { display: none; }
+}
+
+			/* 🔥 إصلاحات المحتوى الداخلي لترتيب النصوص والكروت 🔥 */
+			
+			/* 1. إعطاء مساحة للنص وتقليل الحواف البيضاء الكبيرة */
+			.content-panel { padding: 22px 16px !important; }
+			
+			/* 2. تظبيط حجم أيقونة القسم والعنوان */
+			.panel-heading { gap: 12px; }
+			.panel-icon { width: 48px; height: 48px; flex: 0 0 48px; font-size: 1.4rem; border-radius: 14px; }
+			.content-panel h2 { font-size: 1.3rem; margin-bottom: 6px; }
+			.content-panel p { font-size: 0.9rem; line-height: 1.7; }
+			
+			/* 3. منع الكروت من الانضغاط (جعلها عمود واحد بدلاً من عمودين) */
+			.panel-tools { grid-template-columns: 1fr !important; margin-top: 24px; gap: 14px; }
+			.quick-actions { grid-template-columns: 1fr; margin-top: 20px; }
+			
+			/* 4. تظبيط مقاسات صفحة الرئيسية */
+			.home-dashboard { grid-template-columns: 1fr; margin-top: 18px; }
+			.news-grid { min-height: 360px; }
+			.news-item { grid-template-columns: 1fr; grid-template-rows: 180px 1fr; }
+			.news-item img { height: 180px; }
+			.news-copy { padding: 20px 18px 35px; }
+			.meeting-card { padding: 20px 16px; }
+			.countdown { justify-content: flex-start; margin: 18px 0; }
+			.stats-grid { gap: 6px; }
+			.mini-stat { padding: 10px 5px; }
+			.mini-stat strong { font-size: 1.15rem; }
+			.mini-stat span { font-size: 0.65rem; }
+			
+			/* 5. المقالات، الاختبارات، والمكتبة */
+			.articles-grid, .tests-grid, .library-file-grid { grid-template-columns: 1fr; }
+			.article-card-body, .test-card-body, .library-file { padding: 16px; }
+			
+			/* 6. الدعم الفني والملف الشخصي */
+			.profile-layout, .meetings-layout, .support-shell, .support-user-form-grid { grid-template-columns: 1fr; gap: 16px; }
+			.profile-card, .profile-form, .support-user-panel, .support-user-form-panel { padding: 16px; }
 			.chat-form { grid-template-columns: 1fr; }
 			.chat-composer { padding: 12px; }
-			.profile-layout, .meetings-layout { grid-template-columns: 1fr; }
-			.search-panel { left: 16px; right: 16px; width: auto; }
-			.notifications-panel { top: 122px; left: 16px; right: 16px; width: auto; }
-		}
-
-		.nav-icon {
-			position: relative; /* ضروري لضبط مكان النقطة الحمراء */
-		}
-
-		.nav-badge {
-			position: absolute;
-			top: -3px;
-			right: -3px;
-			width: 11px;
-			height: 11px;
-			background-color: var(--danger);
-			border: 2px solid var(--navy);
-			border-radius: 50%;
-			display: none;
-			z-index: 10;
-			box-shadow: 0 0 6px rgba(184, 50, 50, 0.6);
-		}
-		@media screen and (orientation: portrait) and (max-width: 800px) {
-  body {
-    transform: rotate(-90deg);
-    transform-origin: top left;
-    width: 100vh;
-    height: 100vw;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    overflow-x: hidden;
-  }
-}
+		
 	</style>
 </head>
 <body class="is-loading">
 	<div id="authLoading">جاري التحقق من تسجيل الدخول...</div>
 
 	<div id="app" class="app-shell">
-		<aside class="sidebar" aria-label="القائمة الرئيسية">
-			<div class="brand">
-				<img src="Gemini_Generated_Image_sqbqqysqbqqysqbq.png" alt="Preventa Plus">
-				<div class="brand-copy">
-					<strong>Preventa Plus</strong>
-				</div>
-			</div>
+		<aside class="sidebar" id="sidebar" aria-label="القائمة الرئيسية">
+        <div class="brand">
+            <div class="brand-content">
+                <img src="Gemini_Generated_Image_sqbqqysqbqqysqbq.png" alt="Preventa Plus">
+                <strong>Preventa Plus</strong>
+            </div>
+            
+            <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="إخفاء/إظهار القائمة">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
 
 			<nav class="side-nav">
 				<button class="nav-button active" data-page="home" title="الرئيسية"><span class="nav-icon"><i class="fa-solid fa-house"></i></span><span class="nav-label" data-i18n="home">الرئيسية</span></button>
@@ -807,9 +753,6 @@
 		</aside>
 
 		<main class="main-content">
-			<button class="mobile-tools-toggle" id="mobileToolsToggle" type="button" aria-label="إظهار أدوات الهيدر" aria-expanded="false" title="إظهار أدوات الهيدر">
-				<i class="fa-solid fa-sliders"></i>
-			</button>
 			<header class="topbar">
 				<div class="topbar-right">
 					<div class="topbar-brand" aria-label="شعار Preventa Plus">
@@ -830,13 +773,13 @@
 						<img id="userBadgeImage" src="6384.png" alt="الصورة الشخصية">
 						<div class="user-badge-info"><strong id="userBadgeName">المستخدم</strong></div>
 					</a>
-					<button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="إظهار القائمة الجانبية" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
 				</div>
 			</header>
 			<div class="search-panel" id="searchPanel">
 				<input id="globalSearch" type="search" placeholder="ابحث في الأخبار والأقسام..." autocomplete="off">
 				<div class="search-results" id="searchResults">اكتب كلمة للبحث</div>
 			</div>
+			<div class="mobile-sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
 			<div class="notifications-panel" id="notificationsPanel" role="status" aria-live="polite">
 				<h3>الإشعارات</h3>
 				<div class="notifications-list" id="notificationsList"><div class="notifications-empty">لا توجد إشعارات جديدة.</div></div>
@@ -844,7 +787,7 @@
 			<section class="content-panel" id="contentPanel"></section>
 		</main>
 	</div>
-		<div class="mobile-sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+	
 	<div class="news-modal" id="newsModal" hidden role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
 		<div class="news-modal-box">
 			<button class="news-modal-close" id="newsModalClose" type="button" aria-label="إغلاق">×</button>
@@ -924,12 +867,22 @@
 		function positionDropdown(panel, button) {
 			if (!panel || !button) return;
 			const buttonRect = button.getBoundingClientRect();
-			const panelWidth = Math.min(360, window.innerWidth - 24);
-			const left = Math.max(12, Math.min(buttonRect.left + (buttonRect.width / 2) - (panelWidth / 2), window.innerWidth - panelWidth - 12));
-			panel.style.left = `${left}px`;
-			panel.style.right = "auto";
-			panel.style.width = `${panelWidth}px`;
-			panel.style.top = `${buttonRect.bottom + 8}px`;
+			
+			if (window.innerWidth <= 800) {
+				// Mobile logic: Expand full width nicely under the sticky header
+				panel.style.top = `${buttonRect.bottom + 12}px`;
+				panel.style.left = '16px';
+				panel.style.right = '16px';
+				panel.style.width = 'auto';
+			} else {
+				// Desktop logic: Standard tooltip styling
+				const panelWidth = Math.min(360, window.innerWidth - 24);
+				const left = Math.max(12, Math.min(buttonRect.left + (buttonRect.width / 2) - (panelWidth / 2), window.innerWidth - panelWidth - 12));
+				panel.style.left = `${left}px`;
+				panel.style.right = "auto";
+				panel.style.width = `${panelWidth}px`;
+				panel.style.top = `${buttonRect.bottom + 8}px`;
+			}
 		}
 
 		if (!sessionUser?.uid) {
@@ -960,11 +913,8 @@
 				applyLanguage();
 				renderPage("home");
 				setupNavigation();
-                
-				// التعديل هنا: تم نقل تشغيل التنبيهات ليكون داخل عملية تسجيل الدخول
 				updateNotificationBadges(); 
 				setInterval(updateNotificationBadges, 30000); 
-                
 			} catch (error) {
 				console.error("تعذر التحقق من المستخدم:", error);
 				sessionStorage.removeItem(sessionKey);
@@ -2520,7 +2470,7 @@
 					console.error("Photo update failed:", error);
 					message.textContent = "تعذر حفظ الصورة. حاول مرة أخرى.";
 				}
-				});
+			});
 			document.getElementById("profileDetailsForm").addEventListener("submit", async (event) => {
 				event.preventDefault();
 				const governorate = document.getElementById("profileGovernorate").value;
@@ -2580,11 +2530,11 @@
 				return;
 			}
 
-			const stripHtml = (value = "") => value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+			const stripHtml = (value = "") => value.replace(/<[^>]*>/g, " ").replace(/\\s+/g, " ").trim();
 
 			grid.innerHTML = articles.map((article, index) => {
 				const summaryText = stripHtml(article.summary || article.description || "");
-				const previewText = summaryText.length > 180 ? `${summaryText.slice(0, 180)}...` : summaryText;
+				const previewText = summaryText.length > 180 ? summaryText.slice(0, 180) + '...' : summaryText;
 
 				return `
 					<article class="article-card" data-article-index="${index}">
@@ -2618,7 +2568,7 @@
 			image.alt = article.title || "مقال";
 			title.textContent = article.title || "مقال";
 			const articleDescription = article.description || "لا يوجد نص للمقال.";
-			description.innerHTML = articleDescription.replace(/\n/g, "<br><br>");
+			description.innerHTML = articleDescription.replace(/\\n/g, "<br><br>");
 			modal.hidden = false;
 		}
 
@@ -2712,7 +2662,6 @@
 				panel.appendChild(actionButton);
 			}
 			
-			// إخفاء النقطة الحمراء عند الدخول للقسم
 			const currentBadge = document.getElementById(`badge-${page}`);
 			if (currentBadge) currentBadge.style.display = 'none';
 			applyLanguage();
@@ -2722,7 +2671,6 @@
 			const libraryToggle = document.getElementById("libraryToggle");
 			const libraryItems = document.getElementById("libraryItems");
 			const sidebarToggle = document.getElementById("sidebarToggle");
-			const mobileToolsToggle = document.getElementById("mobileToolsToggle");
 			const sidebarOverlay = document.getElementById("sidebarOverlay");
 			const sidebar = document.querySelector(".sidebar");
 			const appShell = document.getElementById("app");
@@ -2737,6 +2685,7 @@
 			const notificationsPanel = document.getElementById("notificationsPanel");
 			const headerNotificationDot = document.getElementById("headerNotificationDot");
 			const languageButton = document.getElementById("languageButton");
+			
 			const closeSidebar = () => {
 				appShell.classList.remove("sidebar-open");
 				document.body.classList.remove("sidebar-open");
@@ -2749,13 +2698,7 @@
 				sidebarToggle.setAttribute("aria-expanded", "true");
 				sidebarToggle.setAttribute("aria-label", "إخفاء القائمة الجانبية");
 			};
-			mobileToolsToggle?.addEventListener("click", () => {
-				const isOpen = appShell.classList.toggle("mobile-tools-open");
-				mobileToolsToggle.innerHTML = `<i class="fa-solid ${isOpen ? "fa-xmark" : "fa-sliders"}"></i>`;
-				mobileToolsToggle.setAttribute("aria-expanded", String(isOpen));
-				mobileToolsToggle.setAttribute("aria-label", isOpen ? "إخفاء أدوات الهيدر" : "إظهار أدوات الهيدر");
-				mobileToolsToggle.setAttribute("title", isOpen ? "إخفاء أدوات الهيدر" : "إظهار أدوات الهيدر");
-			});
+			
 			const closeNewsModal = () => { newsModal.hidden = true; };
 			const closeLibraryModal = () => {
 				libraryModal.hidden = true;
@@ -2765,43 +2708,51 @@
 					activeLibraryBlobUrl = null;
 				}
 			};
+			
 			document.getElementById("newsModalClose").addEventListener("click", closeNewsModal);
 			document.getElementById("libraryModalClose").addEventListener("click", closeLibraryModal);
 			newsModal.addEventListener("click", (event) => { if (event.target === newsModal) closeNewsModal(); });
 			libraryModal.addEventListener("click", (event) => { if (event.target === libraryModal) closeLibraryModal(); });
 			sidebarOverlay?.addEventListener("click", closeSidebar);
 			document.addEventListener("keydown", (event) => { if (event.key === "Escape") { closeSidebar(); closeNewsModal(); closeLibraryModal(); } });
+			
 			searchToggle?.addEventListener("click", () => {
 				if (currentPage === "home") return;
 				searchPanel.classList.remove("open");
 				notificationsPanel?.classList.remove("open");
 				renderPage("search");
 			});
+			
 			refreshButton?.addEventListener("click", () => window.location.reload());
 			lockButton?.addEventListener("click", () => {
 				sessionStorage.removeItem(sessionKey);
 				window.location.replace("index.html");
 			});
+			
 			notificationToggle?.addEventListener("click", () => {
 				searchPanel.classList.remove("open");
 				notificationsPanel?.classList.toggle("open");
 				if (notificationsPanel?.classList.contains("open")) positionDropdown(notificationsPanel, notificationToggle);
 				if (headerNotificationDot) headerNotificationDot.style.display = "none";
 			});
+			
 			window.addEventListener("resize", () => {
 				if (searchPanel.classList.contains("open")) positionDropdown(searchPanel, searchToggle);
 				if (notificationsPanel?.classList.contains("open")) positionDropdown(notificationsPanel, notificationToggle);
 			});
+			
 			window.addEventListener("scroll", () => {
 				if (searchPanel.classList.contains("open")) positionDropdown(searchPanel, searchToggle);
 				if (notificationsPanel?.classList.contains("open")) positionDropdown(notificationsPanel, notificationToggle);
 			}, { passive: true });
+			
 			languageButton?.addEventListener("click", () => {
 				currentLanguage = currentLanguage === "ar" ? "en" : "ar";
 				localStorage.setItem("dashboardLanguage", currentLanguage);
 				applyLanguage();
 				renderPage(currentPage);
 			});
+			
 			sidebarToggle.onclick = () => {
 				if (window.innerWidth <= 800) {
 					if (appShell.classList.contains("sidebar-open")) {
@@ -2815,6 +2766,7 @@
 				sidebarToggle.setAttribute("aria-expanded", String(!isCollapsed));
 				sidebarToggle.setAttribute("aria-label", isCollapsed ? "إظهار القائمة الجانبية" : "إخفاء القائمة الجانبية");
 			};
+			
 			libraryToggle.addEventListener("click", () => {
 				const isOpen = libraryItems.classList.toggle("open");
 				libraryToggle.classList.toggle("open", isOpen);
@@ -2832,7 +2784,7 @@
 				renderPage(button.dataset.page);
 			});
 
-			document.getElementById("userBadge").addEventListener("click", (event) => {
+			document.getElementById("userBadge")?.addEventListener("click", (event) => {
 				event.preventDefault();
 				renderPage("profile");
 				document.querySelectorAll("[data-page]").forEach((item) => item.classList.toggle("active", item.dataset.page === "profile"));
@@ -2855,13 +2807,12 @@
 			try {
 				const notifications = [];
 				const addNotification = (type, title, message, page, icon) => notifications.push({ type, title, message, page, icon });
-				// 1. التحقق من وجود اجتماع قادم
+				
 				const nextMeeting = await loadNextMeeting();
 				const badgeMeetings = document.getElementById('badge-meetings');
 				if (badgeMeetings) badgeMeetings.style.display = nextMeeting ? 'block' : 'none';
 				if (nextMeeting) addNotification('meeting', 'اجتماع قادم', nextMeeting.title || nextMeeting.name || 'لديك اجتماع قادم', 'meetings', 'fa-calendar-days');
 
-				// 2. التحقق من الاختبارات (إذا كان هناك اختبار مصرح له ولم يكمله المستخدم بعد)
 				const tests = await loadTestsList();
 				const attempts = await loadUserTestAttempts();
 				const hasUncompletedTests = tests.some(test => {
@@ -2872,7 +2823,6 @@
 				if (badgeTests) badgeTests.style.display = hasUncompletedTests ? 'block' : 'none';
 				if (hasUncompletedTests) addNotification('test', 'اختبار متاح', 'لديك اختبار لم تكمله بعد', 'tests', 'fa-clipboard-check');
 
-				// 3. التحقق من المقالات (هل يوجد مقال تم نشره في آخر 3 أيام؟)
 				const articlesObj = await loadArticles();
 				const threeDaysAgo = new Date();
 				threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
@@ -2884,7 +2834,6 @@
 				if (badgeArticles) badgeArticles.style.display = hasNewArticles ? 'block' : 'none';
 				if (hasNewArticles) addNotification('article', 'مقال جديد', 'تم نشر مقال جديد في المنصة', 'articles', 'fa-newspaper');
 
-				// 4. التحقق من رسائل المجتمع (هل آخر رسالة في المجتمع من شخص آخر غير المستخدم؟)
 				const msgsSnapshot = await getDocs(query(collection(db, "messages"), orderBy("createdAt", "desc"), limit(1)));
 				let hasNewMsg = false;
 				if (!msgsSnapshot.empty) {
@@ -2895,7 +2844,6 @@
 				if (badgeCommunity) badgeCommunity.style.display = hasNewMsg ? 'block' : 'none';
 				if (hasNewMsg) addNotification('community', 'رسالة جديدة', 'لديك رسالة جديدة من المجتمع', 'community', 'fa-users');
 
-				// 5. التحقق من تذاكر الدعم الفني (إذا كان هناك تذكرة مفتوحة أو قيد المراجعة)
 				const supportSnapshot = await getDocs(query(collection(db, "support_tickets")));
 				const myTickets = supportSnapshot.docs.map(d => d.data()).filter(t => t.userId === sessionUser.uid);
 				const hasActiveSupport = myTickets.some(t => t.status === 'open' || t.status === 'pending');
@@ -2903,15 +2851,17 @@
 				if (badgeSupport) badgeSupport.style.display = hasActiveSupport ? 'block' : 'none';
 				if (hasActiveSupport) addNotification('support', 'تحديث الدعم الفني', 'لديك تذكرة مفتوحة أو قيد المراجعة', 'support', 'fa-circle-question');
 
-				// 6. التحقق من المكتبة (تظهر إذا تم تخصيص ملفات للمستخدم)
 				const badgeLibrary = document.getElementById('badge-library');
 				if (badgeLibrary && typeof libraryPages !== 'undefined') {
 					const libraryFileCount = libraryPages.reduce((total, page) => total + (Array.isArray(page.files) ? page.files.length : 0), 0);
 					badgeLibrary.style.display = libraryFileCount > 0 ? 'block' : 'none';
 					if (libraryFileCount > 0) addNotification('library', 'ملفات جديدة', `تم تحميل ${libraryFileCount} ملف في المكتبة`, 'library', 'fa-folder-open');
 				}
+				
 				const hasNotification = [...document.querySelectorAll('.nav-badge')].some((badge) => getComputedStyle(badge).display !== 'none');
+				const headerNotificationDot = document.getElementById("headerNotificationDot");
 				if (headerNotificationDot) headerNotificationDot.style.display = hasNotification ? 'block' : 'none';
+				
 				const notificationsList = document.getElementById('notificationsList');
 				if (notificationsList) {
 					notificationsList.innerHTML = notifications.length
@@ -2933,6 +2883,14 @@
 				console.warn("حدث خطأ أثناء جلب إشعارات القائمة الجانبية:", error);
 			}
 		}
+		document.addEventListener("DOMContentLoaded", function() {
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+
+    toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('collapsed');
+    });
+});
 	</script>
 </body>
 </html>
