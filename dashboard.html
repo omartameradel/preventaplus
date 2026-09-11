@@ -91,7 +91,8 @@
 		.sidebar::before { content: ""; position: absolute; top: -90px; left: -110px; width: 250px; height: 250px; border: 1px solid rgba(93, 201, 189, .28); border-radius: 50%; box-shadow: 0 0 0 22px rgba(93, 201, 189, .04), 0 0 0 44px rgba(93, 201, 189, .035); }
 		.sidebar > * { position: relative; z-index: 1; }
 
-		.brand { display: flex; align-items: center; gap: 11px; padding: 0 14px 28px; border-bottom: 1px solid rgba(255,255,255,.16); }
+		.brand { display: flex; align-items: center; justify-content: space-between; gap: 11px; padding: 0 14px 28px; border-bottom: 1px solid rgba(255,255,255,.16); }
+		.brand-content { display: flex; align-items: center; gap: 11px; min-width: 0; }
 		.brand img { width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 5px 8px rgba(0,0,0,.18)); }
 		.brand-copy { min-width: 0; }
 		.brand strong { display: block; color: #fff; font-size: 1.18rem; letter-spacing: .2px; white-space: nowrap; }
@@ -386,6 +387,7 @@
 			color: #fff;
 			transform: translateY(-2px);
 		}
+		.mobile-toggle { display: none; }
 
 		.user-badge { display: flex; align-items: center; gap: 10px; min-width: 165px; padding: 6px 9px 6px 13px; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.84); color: var(--navy); text-decoration: none; box-shadow: 0 8px 18px rgba(16,47,89,.06); transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
 		.user-badge:hover { border-color: var(--mint); box-shadow: 0 12px 25px rgba(16,47,89,.12); transform: translateY(-2px); }
@@ -568,9 +570,11 @@
 		/* ==========================================================
 		   Mobile Responsive Design
 		   ========================================================== */
-		/* =========================================
-   تنسيقات القائمة الجانبية الأساسية (للشاشات الكبيرة)
-   ========================================= */
+		@media (max-width: 800px) {
+			.app-shell { display: block; position: relative; }
+		}
+			
+
 
 /* العرض الافتراضي للقائمة */
 .sidebar {
@@ -659,59 +663,259 @@
     .desktop-only-control { display: none !important; }
     .topbar-left .user-badge { display: none; }
 }
+/* =========================================
+   تنسيقات الشاشات الكبيرة (الكمبيوتر)
+   ========================================= */
+.sidebar {
+    width: 260px;
+    transition: width 0.3s ease;
+    background-color: #f8f9fa;
+    height: 100vh;
+}
 
-			/* 🔥 إصلاحات المحتوى الداخلي لترتيب النصوص والكروت 🔥 */
-			
-			/* 1. إعطاء مساحة للنص وتقليل الحواف البيضاء الكبيرة */
-			.content-panel { padding: 22px 16px !important; }
-			
-			/* 2. تظبيط حجم أيقونة القسم والعنوان */
-			.panel-heading { gap: 12px; }
-			.panel-icon { width: 48px; height: 48px; flex: 0 0 48px; font-size: 1.4rem; border-radius: 14px; }
-			.content-panel h2 { font-size: 1.3rem; margin-bottom: 6px; }
-			.content-panel p { font-size: 0.9rem; line-height: 1.7; }
-			
-			/* 3. منع الكروت من الانضغاط (جعلها عمود واحد بدلاً من عمودين) */
-			.panel-tools { grid-template-columns: 1fr !important; margin-top: 24px; gap: 14px; }
-			.quick-actions { grid-template-columns: 1fr; margin-top: 20px; }
-			
-			/* 4. تظبيط مقاسات صفحة الرئيسية */
-			.home-dashboard { grid-template-columns: 1fr; margin-top: 18px; }
-			.news-grid { min-height: 360px; }
-			.news-item { grid-template-columns: 1fr; grid-template-rows: 180px 1fr; }
-			.news-item img { height: 180px; }
-			.news-copy { padding: 20px 18px 35px; }
-			.meeting-card { padding: 20px 16px; }
-			.countdown { justify-content: flex-start; margin: 18px 0; }
-			.stats-grid { gap: 6px; }
-			.mini-stat { padding: 10px 5px; }
-			.mini-stat strong { font-size: 1.15rem; }
-			.mini-stat span { font-size: 0.65rem; }
-			
-			/* 5. المقالات، الاختبارات، والمكتبة */
-			.articles-grid, .tests-grid, .library-file-grid { grid-template-columns: 1fr; }
-			.article-card-body, .test-card-body, .library-file { padding: 16px; }
-			
-			/* 6. الدعم الفني والملف الشخصي */
-			.profile-layout, .meetings-layout, .support-shell, .support-user-form-grid { grid-template-columns: 1fr; gap: 16px; }
-			.profile-card, .profile-form, .support-user-panel, .support-user-form-panel { padding: 16px; }
-			.chat-form { grid-template-columns: 1fr; }
-			.chat-composer { padding: 12px; }
-		
+.brand {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+}
+
+.brand-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* إخفاء زر الموبايل في شاشات الكمبيوتر */
+.mobile-toggle {
+    display: none !important;
+}
+
+/* حالة التصغير للكمبيوتر */
+.sidebar.collapsed {
+    width: 70px;
+}
+.sidebar.collapsed .brand-content {
+    display: none;
+}
+.sidebar.collapsed .brand {
+    justify-content: center;
+}
+
+/* =========================================
+   تنسيقات الموبايل (أصغر من 800px)
+   ========================================= */
+@media (max-width: 800px) {
+    /* إخفاء زر الكمبيوتر وإظهار زر الموبايل في الهيدر */
+    .desktop-toggle { display: none !important; }
+    .mobile-toggle { display: flex !important; }
+    
+    .app-shell { display: block; position: relative; }
+    
+    /* إعدادات القائمة المنزلقة للموبايل */
+    .sidebar {
+        position: fixed; top: 0; right: 0; bottom: 0;
+        width: min(82vw, 290px); height: 100vh; min-height: 100vh;
+        padding: 22px 14px; border-radius: 0 0 0 24px;
+        transform: translateX(110%); z-index: 100;
+        transition: transform 0.3s ease; /* حركة فتح القائمة */
+    }
+    
+    /* كلاس الفتح للموبايل (بدلاً من التصغير) */
+    .app-shell.sidebar-open .sidebar { 
+        transform: translateX(0); 
+    }
+}
+
+/* Final sidebar and header states */
+.desktop-toggle { display: grid; }
+.mobile-toggle { display: none; }
+.app-shell.sidebar-collapsed .sidebar { width: 92px; flex-basis: 92px; padding: 22px 10px; }
+.app-shell.sidebar-collapsed .brand-content { display: none; }
+.app-shell.sidebar-collapsed .brand { justify-content: center; padding: 0 8px 18px; }
+
+@media (max-width: 800px) {
+	.desktop-toggle { display: none !important; }
+	.mobile-toggle { display: grid !important; }
+	.app-shell.sidebar-collapsed .sidebar { width: min(82vw, 290px); flex-basis: auto; padding: 22px 14px; }
+	.topbar {
+		top: 0;
+		margin: 0 0 20px;
+		width: 100%;
+		border-top: 0;
+		border-right: 0;
+		border-left: 0;
+		border-radius: 0;
+	}
+	.main-content { width: 100%; max-width: none; padding: 0 12px 35px; overflow: hidden; }
+	.content-panel { min-height: 0; padding: 22px 14px 30px; border-radius: 16px; }
+	.panel-heading { gap: 12px; }
+	.panel-icon { flex-basis: 48px; width: 48px; height: 48px; border-radius: 14px; font-size: 1.35rem; box-shadow: 5px 5px 0 rgba(230, 169, 58, .75); }
+	.content-panel h2 { font-size: 1.35rem; }
+	.home-dashboard { grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 20px; }
+	.meeting-card { min-height: 0; padding: 19px 16px; }
+	.countdown { gap: 5px; margin: 18px 0 16px; }
+	.time-unit { min-width: 0; flex: 1; padding: 7px 3px; }
+	.time-unit strong { font-size: 1.1rem; }
+	.home-side { gap: 14px; }
+	.stats-card, .agenda-card { padding: 16px; }
+	.articles-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 18px; }
+	.news-card { padding: 12px; }
+	.news-grid { min-height: 0; height: auto; aspect-ratio: 1 / 1.08; }
+	.news-item { grid-template-columns: 1fr; grid-template-rows: minmax(170px, 52%) 1fr; }
+	.news-item img { width: 100%; height: 100%; min-height: 0; }
+	.news-copy { min-width: 0; padding: 16px 18px 28px; }
+	.news-item strong { font-size: 1.05rem; }
+	.news-item p { margin-top: 8px; font-size: .78rem; line-height: 1.7; }
+	.news-progress { right: 14px; bottom: 10px; }
+	.feature-card, .stat-card { min-width: 0; }
+	.quick-actions { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Navigation visual treatment */
+.side-nav {
+	gap: 9px;
+	margin-top: 24px;
+}
+.nav-button, .library-toggle {
+	min-height: 52px;
+	padding: 9px 12px;
+	border: 1px solid transparent;
+	border-radius: 15px;
+	background: rgba(255,255,255,.045);
+	color: #d9edf3;
+	font-size: .95rem;
+	font-weight: 700;
+	box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+	transition: background .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.nav-button .nav-icon, .library-toggle .nav-icon, .logout .nav-icon {
+	display: grid;
+	place-items: center;
+	width: 34px;
+	height: 34px;
+	flex: 0 0 34px;
+	border-radius: 10px;
+	background: rgba(93,201,189,.13);
+	color: #8ee0d4;
+	font-size: 1rem;
+}
+.nav-button:hover, .library-toggle:hover {
+	padding-right: 12px;
+	border-color: rgba(93,201,189,.35);
+	background: rgba(93,201,189,.13);
+	box-shadow: 0 8px 18px rgba(4,20,40,.12);
+	transform: translateX(-3px);
+}
+.nav-button.active {
+	border-color: rgba(230,169,58,.38);
+	background: linear-gradient(100deg, rgba(230,169,58,.2), rgba(93,201,189,.2));
+	box-shadow: inset -3px 0 var(--gold), 0 9px 20px rgba(4,20,40,.13);
+}
+.nav-button.active .nav-icon {
+	background: var(--gold);
+	color: var(--navy);
+}
+.library-toggle.open {
+	border-color: rgba(93,201,189,.3);
+	background: rgba(93,201,189,.12);
+}
+.library-toggle .arrow {
+	width: 25px;
+	height: 25px;
+	margin-right: auto;
+}
+.library-items {
+	gap: 6px;
+	margin: 1px 7px 5px 0;
+	padding-right: 13px;
+	border-right: 2px solid rgba(93,201,189,.28);
+}
+.library-items .nav-button {
+	min-height: 43px;
+	padding: 7px 10px;
+	background: rgba(255,255,255,.025);
+	font-size: .85rem;
+}
+.library-items .nav-button::before {
+	width: 23px;
+	height: 23px;
+	margin-left: 6px;
+	background: rgba(255,255,255,.06);
+}
+.sidebar-footer {
+	margin-top: 32px;
+}
+.logout {
+	min-height: 47px;
+	margin-top: 10px;
+	padding: 7px 10px;
+	border: 1px solid transparent;
+	border-radius: 14px;
+	color: #ffc0c0;
+	font-weight: 700;
+}
+.logout:hover {
+	border-color: rgba(255,180,180,.2);
+	background: rgba(184,50,50,.16);
+}
+
+@media (max-width: 800px) {
+	.sidebar {
+		width: min(86vw, 330px);
+		padding: 24px 16px;
+		border-radius: 0 0 0 26px;
+		box-shadow: -18px 0 45px rgba(4,20,40,.3);
+	}
+	.brand {
+		padding: 0 4px 20px;
+	}
+	.side-nav {
+		gap: 8px;
+		margin-top: 20px;
+	}
+	.nav-button, .library-toggle {
+		min-height: 55px;
+		padding: 10px 13px;
+		border-radius: 16px;
+		font-size: .98rem;
+	}
+	.nav-button .nav-icon, .library-toggle .nav-icon, .logout .nav-icon {
+		width: 36px;
+		height: 36px;
+		flex-basis: 36px;
+		font-size: 1.05rem;
+	}
+	.nav-button:hover, .library-toggle:hover {
+		padding-right: 13px;
+		transform: none;
+	}
+	.library-items .nav-button {
+		min-height: 45px;
+	}
+	.sidebar-footer {
+		margin-top: 24px;
+	}
+}
 	</style>
+
 </head>
 <body class="is-loading">
 	<div id="authLoading">جاري التحقق من تسجيل الدخول...</div>
 
 	<div id="app" class="app-shell">
 		<aside class="sidebar" id="sidebar" aria-label="القائمة الرئيسية">
-        <div class="brand">
+		<div class="brand">
             <div class="brand-content">
                 <img src="Gemini_Generated_Image_sqbqqysqbqqysqbq.png" alt="Preventa Plus">
-                <strong>Preventa Plus</strong>
+				<div class="brand-copy">
+					<strong>Preventa Plus</strong>
+					<span>منصتك الصحية</span>
+				</div>
             </div>
             
-            <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="إخفاء/إظهار القائمة">
+            <!-- زر الكمبيوتر (يظهر في القائمة الجانبية فقط) -->
+			<button class="sidebar-toggle desktop-toggle" id="sidebarToggle" type="button" aria-expanded="true" aria-label="تصغير القائمة الجانبية">
                 <i class="fa-solid fa-bars"></i>
             </button>
         </div>
@@ -773,6 +977,9 @@
 						<img id="userBadgeImage" src="6384.png" alt="الصورة الشخصية">
 						<div class="user-badge-info"><strong id="userBadgeName">المستخدم</strong></div>
 					</a>
+					<button class="sidebar-toggle mobile-toggle" id="mobileSidebarToggle" type="button" aria-expanded="false" aria-label="فتح القائمة الجانبية">
+						<i class="fa-solid fa-bars"></i>
+					</button>
 				</div>
 			</header>
 			<div class="search-panel" id="searchPanel">
@@ -2670,7 +2877,8 @@
 		function setupNavigation() {
 			const libraryToggle = document.getElementById("libraryToggle");
 			const libraryItems = document.getElementById("libraryItems");
-			const sidebarToggle = document.getElementById("sidebarToggle");
+			const desktopSidebarToggle = document.getElementById("sidebarToggle");
+			const mobileSidebarToggle = document.getElementById("mobileSidebarToggle");
 			const sidebarOverlay = document.getElementById("sidebarOverlay");
 			const sidebar = document.querySelector(".sidebar");
 			const appShell = document.getElementById("app");
@@ -2689,14 +2897,14 @@
 			const closeSidebar = () => {
 				appShell.classList.remove("sidebar-open");
 				document.body.classList.remove("sidebar-open");
-				sidebarToggle.setAttribute("aria-expanded", "false");
-				sidebarToggle.setAttribute("aria-label", "إظهار القائمة الجانبية");
+				mobileSidebarToggle?.setAttribute("aria-expanded", "false");
+				mobileSidebarToggle?.setAttribute("aria-label", "فتح القائمة الجانبية");
 			};
 			const openSidebar = () => {
 				appShell.classList.add("sidebar-open");
 				document.body.classList.add("sidebar-open");
-				sidebarToggle.setAttribute("aria-expanded", "true");
-				sidebarToggle.setAttribute("aria-label", "إخفاء القائمة الجانبية");
+				mobileSidebarToggle?.setAttribute("aria-expanded", "true");
+				mobileSidebarToggle?.setAttribute("aria-label", "إغلاق القائمة الجانبية");
 			};
 			
 			const closeNewsModal = () => { newsModal.hidden = true; };
@@ -2753,19 +2961,15 @@
 				renderPage(currentPage);
 			});
 			
-			sidebarToggle.onclick = () => {
-				if (window.innerWidth <= 800) {
-					if (appShell.classList.contains("sidebar-open")) {
-						closeSidebar();
-					} else {
-						openSidebar();
-					}
-					return;
-				}
+			desktopSidebarToggle?.addEventListener("click", () => {
 				const isCollapsed = appShell.classList.toggle("sidebar-collapsed");
-				sidebarToggle.setAttribute("aria-expanded", String(!isCollapsed));
-				sidebarToggle.setAttribute("aria-label", isCollapsed ? "إظهار القائمة الجانبية" : "إخفاء القائمة الجانبية");
-			};
+				desktopSidebarToggle.setAttribute("aria-expanded", String(!isCollapsed));
+				desktopSidebarToggle.setAttribute("aria-label", isCollapsed ? "توسيع القائمة الجانبية" : "تصغير القائمة الجانبية");
+			});
+			mobileSidebarToggle?.addEventListener("click", () => {
+				if (appShell.classList.contains("sidebar-open")) closeSidebar();
+				else openSidebar();
+			});
 			
 			libraryToggle.addEventListener("click", () => {
 				const isOpen = libraryItems.classList.toggle("open");
@@ -2883,14 +3087,7 @@
 				console.warn("حدث خطأ أثناء جلب إشعارات القائمة الجانبية:", error);
 			}
 		}
-		document.addEventListener("DOMContentLoaded", function() {
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('sidebarToggle');
-
-    toggleBtn.addEventListener('click', function() {
-        sidebar.classList.toggle('collapsed');
-    });
-});
+		
 	</script>
 </body>
 </html>
