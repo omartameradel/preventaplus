@@ -68,5 +68,9 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create, update, delete: if isAdmin();
     }
+    match /formsPages/{pageId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
   }
 }
