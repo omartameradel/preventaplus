@@ -3,7 +3,10 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function isAdmin() {
-      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)) && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active != false;
+      return signedIn() && request.auth.token.email == 'tamer.adel.1981@gmail.com';
+    }
+    function isPrimaryAdmin() {
+      return isAdmin() && request.auth.token.email == 'tamer.adel.1981@gmail.com';
     }
 
     match /admins/{uid} {
@@ -25,11 +28,25 @@ service cloud.firestore {
       allow update, delete: if signedIn() && resource.data.senderId == request.auth.uid;
     }
     match /meetings/{meetingId} {
-      allow read, write: if signedIn();
+      allow read: if signedIn();
+      allow create: if isPrimaryAdmin() && request.resource.data.hostUid == request.auth.uid;
+      allow update: if isPrimaryAdmin() && request.resource.data.hostUid == request.auth.uid && (resource.data.hostUid == request.auth.uid || !resource.data.keys().hasAny(['hostUid']));
+      allow delete: if isPrimaryAdmin() && (resource.data.hostUid == request.auth.uid || !resource.data.keys().hasAny(['hostUid']));
     }
     match /tests/{testId} {
       allow read: if signedIn();
       allow write: if isAdmin();
+    }
+    match /testAttempts/{attemptId} {
+      allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if signedIn() && resource.data.userId == request.auth.uid && request.resource.data.userId == resource.data.userId;
+      allow delete: if isAdmin();
+    }
+    match /meetingAttendance/{attendanceId} {
+      allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
     match /notifications/{notificationId} {
       allow read: if signedIn();
@@ -44,6 +61,10 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
     match /libraryPages/{pageId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+    match /ministerialPublications/{pageId} {
       allow read: if signedIn();
       allow create, update, delete: if isAdmin();
     }
