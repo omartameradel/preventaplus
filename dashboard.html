@@ -1250,6 +1250,12 @@
 				<div class="library-items" id="ministerialItems">
 					<span class="library-loading">جاري تحميل المنشورات الوزارية...</span>
 				</div>
+				<button class="library-toggle" id="formsToggle" aria-expanded="false" aria-controls="formsItems" title="نماذج">
+					<span class="nav-icon"><i class="fa-solid fa-file-signature"></i><span class="nav-badge" id="badge-forms"></span></span><span class="nav-label">نماذج</span><span class="arrow" aria-hidden="true"></span>
+				</button>
+				<div class="library-items" id="formsItems">
+					<span class="library-loading">جاري تحميل النماذج...</span>
+				</div>
 								<button class="nav-button" data-page="articles" title="مقالات"><span class="nav-icon"><i class="fa-solid fa-newspaper"></i><span class="nav-badge" id="badge-articles"></span></span><span class="nav-label" data-i18n="articles">مقالات</span></button>
 
 				<button class="nav-button" data-page="meetings" title="الاجتماعات"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i><span class="nav-badge" id="badge-meetings"></span></span><span class="nav-label" data-i18n="meetings">الاجتماعات</span></button>
@@ -1353,6 +1359,7 @@
 		let currentLanguage = localStorage.getItem("dashboardLanguage") || "ar";
 		let libraryPagesListener = null;
 		let ministerialPagesListener = null;
+		let formsPagesListener = null;
 		let userDataListener = null;
 		let pageHistory = [];
 
@@ -1442,6 +1449,7 @@
 				updateUserBadge(userData);
 				await loadLibraryPages();
 				await loadMinisterialPages();
+				await loadFormsPages();
 				setupLiveRefresh();
 				applyLanguage();
 				renderPage("home");
@@ -1470,10 +1478,12 @@
 			support: { title: "الدعم الفني", description: "نحن هنا لمساعدتك في أي مشكلة تواجهك داخل المنصة.", tag: "نحن معك", icon: "?", metric: "24/7", metricLabel: "دعم ومساعدة", feature: "لا تحمل المشكلة وحدك", featureDescription: "أرسل استفسارك وسنساعدك للوصول إلى الحل المناسب.", actions: [] },
 			profile: { title: "الملف الشخصي", description: "راجع بيانات حسابك وتأكد من تحديث معلوماتك.", tag: "بياناتك", icon: "♙", metric: "آمن", metricLabel: "ملفك الشخصي", feature: "ملفك يعكس رحلتك", featureDescription: "راجع معلوماتك الشخصية واجعل تجربتك داخل المنصة أكثر ملاءمة لك.", actions: [] },
 			ministerial: { title: "منشورات وزارية", description: "اطلع على الملفات والمنشورات الرسمية المتاحة لحسابك.", tag: "محتوى رسمي", icon: "▤", metric: "رسمي", metricLabel: "منشورات وزارية", feature: "المصدر الرسمي في مكان واحد", featureDescription: "تصفح المنشورات والملفات الوزارية التي خصصها لك الأدمن.", actions: [] }
+			,forms: { title: "نماذج", description: "تصفح النماذج والملفات المتاحة لحسابك.", tag: "نماذج رسمية", icon: "▤", metric: "متاح", metricLabel: "نماذج", feature: "كل النماذج في مكان واحد", featureDescription: "افتح صفحات النماذج والملفات التي خصصها لك الأدمن.", actions: [] }
 		};
 
 		let libraryPages = [];
 		let ministerialPages = [];
+		let formsPages = [];
 		let articles = [];
 		let supportTickets = [];
 		let supportSelectedTicketId = null;
@@ -1484,7 +1494,7 @@
 		const recordedMeetingAttendance = new Set();
 
 		function applyGeneralPagePermissions() {
-			const generalPageButtons = [...document.querySelectorAll(".side-nav .nav-button")].filter((button) => button.dataset.page && !button.dataset.page.startsWith("library:") && !button.dataset.page.startsWith("ministerial:"));
+			const generalPageButtons = [...document.querySelectorAll(".side-nav .nav-button")].filter((button) => button.dataset.page && !button.dataset.page.startsWith("library:") && !button.dataset.page.startsWith("ministerial:") && !button.dataset.page.startsWith("forms:"));
 			const hasAllowedPages = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedPages");
 			const hasLegacyAllowedPages = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedLibraryPages");
 			const allowedPages = Array.isArray(activeUserData?.allowedPages)
@@ -1499,6 +1509,8 @@
 			const libraryItems = document.getElementById("libraryItems");
 			const ministerialToggle = document.getElementById("ministerialToggle");
 			const ministerialItems = document.getElementById("ministerialItems");
+			const formsToggle = document.getElementById("formsToggle");
+			const formsItems = document.getElementById("formsItems");
 			const hasLibrarySelection = Array.isArray(activeUserData?.allowedPages) ? activeUserData.allowedPages.includes("library") : false;
 			const hasLegacyLibraryAccess = Array.isArray(activeUserData?.allowedLibraryPages) ? activeUserData.allowedLibraryPages.filter(Boolean).length > 0 : false;
 			const showLibrarySection = hasLibrarySelection || hasLegacyLibraryAccess;
@@ -1507,6 +1519,9 @@
 			const showMinisterial = hasAllowedPages ? visiblePages.includes("ministerial") : !hasLegacyAllowedPages;
 			if (ministerialToggle) ministerialToggle.style.display = showMinisterial ? "" : "none";
 			if (ministerialItems) ministerialItems.style.display = showMinisterial ? "" : "none";
+			const showForms = hasAllowedPages ? visiblePages.includes("forms") : !hasLegacyAllowedPages;
+			if (formsToggle) formsToggle.style.display = showForms ? "" : "none";
+			if (formsItems) formsItems.style.display = showForms ? "" : "none";
 		}
 
 		async function loadLibraryPages() {
@@ -1561,12 +1576,42 @@
 			ministerialItems.style.display = ministerialPages.length ? "" : "none";
 		}
 
+		async function loadFormsPages() {
+			try {
+				const snapshot = await getDocs(query(collection(db, "formsPages"), orderBy("createdAt", "asc")));
+				const allowed = Array.isArray(activeUserData?.allowedFormsPages) ? activeUserData.allowedFormsPages.filter(Boolean) : [];
+				const hasAllowList = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedFormsPages");
+				formsPages = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })).filter((page) => {
+					const pageUsers = Array.isArray(page.downloadAllowedUsers) ? page.downloadAllowedUsers : [];
+					return (!hasAllowList || allowed.includes(page.id)) && (!pageUsers.length || pageUsers.includes(sessionUser.uid) || pageUsers.includes(sessionUser.email) || pageUsers.includes(activeUserData?.email));
+				});
+			} catch (error) {
+				console.warn("تعذر تحميل النماذج:", error);
+				formsPages = [];
+			}
+			renderFormsNavigation();
+		}
+
+		function renderFormsNavigation() {
+			const formsItems = document.getElementById("formsItems");
+			const formsToggle = document.getElementById("formsToggle");
+			if (!formsItems || !formsToggle) return;
+			formsItems.innerHTML = formsPages.length
+				? formsPages.map((page, index) => `<button class="nav-button" data-page="forms:${escapeHtml(page.id)}" data-number="${String(index + 1).padStart(2, "0")}" title="${escapeHtml(page.name || "نموذج")}"><span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span><span class="nav-label">${escapeHtml(page.name || "نموذج")}</span></button>`).join("")
+				: "<span class=\"library-loading\">لا توجد نماذج متاحة لهذا المستخدم.</span>";
+			formsToggle.style.display = formsPages.length ? "" : "none";
+			formsItems.style.display = formsPages.length ? "" : "none";
+		}
+
 		function setupLiveRefresh() {
 			if (libraryPagesListener) {
 				libraryPagesListener();
 			}
 			if (ministerialPagesListener) {
 				ministerialPagesListener();
+			}
+			if (formsPagesListener) {
+				formsPagesListener();
 			}
 			if (userDataListener) {
 				userDataListener();
@@ -1612,6 +1657,19 @@
 				console.warn("تعذر الاستماع إلى المنشورات الوزارية:", error);
 			});
 
+			formsPagesListener = onSnapshot(query(collection(db, "formsPages"), orderBy("createdAt", "asc")), (snapshot) => {
+				const allowed = Array.isArray(activeUserData?.allowedFormsPages) ? activeUserData.allowedFormsPages.filter(Boolean) : [];
+				const hasAllowList = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedFormsPages");
+				formsPages = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })).filter((page) => {
+					const pageUsers = Array.isArray(page.downloadAllowedUsers) ? page.downloadAllowedUsers : [];
+					return (!hasAllowList || allowed.includes(page.id)) && (!pageUsers.length || pageUsers.includes(sessionUser.uid) || pageUsers.includes(sessionUser.email) || pageUsers.includes(activeUserData?.email));
+				});
+				renderFormsNavigation();
+				if (currentPage === "forms" || currentPage.startsWith("forms:")) renderPage(currentPage);
+			}, (error) => {
+				console.warn("تعذر الاستماع إلى النماذج:", error);
+			});
+
 			userDataListener = onSnapshot(doc(db, "users", sessionUser.uid), (snapshot) => {
 				if (!snapshot.exists()) {
 					sessionStorage.removeItem(sessionKey);
@@ -1628,6 +1686,7 @@
 				applyGeneralPagePermissions();
 				loadLibraryPages().catch((error) => console.warn("تعذر تحديث صلاحيات المكتبة:", error));
 				loadMinisterialPages().catch((error) => console.warn("تعذر تحديث المنشورات الوزارية:", error));
+				loadFormsPages().catch((error) => console.warn("تعذر تحديث النماذج:", error));
 				renderPage(currentPage);
 			}, (error) => {
 				console.warn("تعذر الاستماع إلى بيانات المستخدم:", error);
@@ -1918,6 +1977,16 @@
 				<div class="library-file-grid">${ministerialPages.map((page) => `<button type="button" class="library-file" data-page="ministerial:${escapeHtml(page.id)}"><strong>${escapeHtml(page.name || "منشور وزاري")}</strong><small>${escapeHtml(page.description || "لا يوجد وصف")}</small><span class="library-file-count">${Array.isArray(page.files) ? page.files.length : 0} ملف</span></button>`).join("") || `<div class="empty-state">لا توجد منشورات وزارية متاحة لحسابك حاليًا.</div>`}</div>`;
 		}
 
+		function renderFormsPage(panel, pageId) {
+			renderLibraryPage(panel, pageId, formsPages, "النماذج");
+		}
+
+		function renderFormsLanding(panel) {
+			panel.innerHTML = `
+				<div class="panel-heading"><div class="panel-icon" aria-hidden="true">▤</div><div><span class="panel-tag">نماذج رسمية</span><h2>نماذج</h2><p>اختر قسمًا لعرض النماذج والملفات المتاحة لك.</p></div></div>
+				<div class="library-file-grid">${formsPages.map((page) => `<button type="button" class="library-file" data-page="forms:${escapeHtml(page.id)}"><strong>${escapeHtml(page.name || "نموذج")}</strong><small>${escapeHtml(page.description || "لا يوجد وصف")}</small><span class="library-file-count">${Array.isArray(page.files) ? page.files.length : 0} ملف</span></button>`).join("") || `<div class="empty-state">لا توجد نماذج متاحة لحسابك حاليًا.</div>`}</div>`;
+		}
+
 		function downloadLibraryFile(file) {
 			if (!file?.url) return;
 			const name = file.name || "ملف المكتبة";
@@ -2067,6 +2136,7 @@
                     <option value="news">الأخبار</option>
                     <option value="library">المكتبة</option>
 					<option value="ministerial">منشورات وزارية</option>
+					<option value="forms">نماذج</option>
                     <option value="tests">الاختبارات</option>
                     <option value="meetings">الاجتماعات</option>
                 </select>
@@ -2172,6 +2242,10 @@
 					pushMatches(ministerialPages, "ministerial", (item) => `${item.name || ""} ${item.description || ""}`.trim(), "▤");
 				}
 
+				if (category === "all" || category === "forms") {
+					pushMatches(formsPages, "forms", (item) => `${item.name || ""} ${item.description || ""}`.trim(), "▤");
+				}
+
 				if (category === "all" || category === "tests") {
 					pushMatches(testsList, "tests", (item) => `${item.title || ""} ${item.description || ""}`.trim(), "✓");
 				}
@@ -2221,6 +2295,10 @@
 						}
 						if (match.category === "ministerial") {
 							renderPage("ministerial");
+							return;
+						}
+						if (match.category === "forms") {
+							renderPage("forms");
 							return;
 						}
 						if (match.action) match.action();
@@ -3489,6 +3567,18 @@
 				applyLanguage();
 				return;
 			}
+			if (page === "forms") {
+				document.getElementById("pageTitle").textContent = translateText(content.title);
+				renderFormsLanding(document.getElementById("contentPanel"));
+				applyLanguage();
+				return;
+			}
+			if (page.startsWith("forms:")) {
+				document.getElementById("pageTitle").textContent = translateText(formsPages.find((item) => item.id === page.slice(6))?.name || "نماذج");
+				renderFormsPage(document.getElementById("contentPanel"), page.slice(6));
+				applyLanguage();
+				return;
+			}
 			const { title, description, actions, tag, icon, metric, metricLabel, feature, featureDescription } = content;
 			document.getElementById("pageTitle").textContent = translateText(title);
 			const panel = document.getElementById("contentPanel");
@@ -3530,6 +3620,8 @@
 		function setupNavigation() {
 			const libraryToggle = document.getElementById("libraryToggle");
 			const libraryItems = document.getElementById("libraryItems");
+			const formsToggle = document.getElementById("formsToggle");
+			const formsItems = document.getElementById("formsItems");
 			const desktopSidebarToggle = document.getElementById("sidebarToggle");
 			const mobileSidebarToggle = document.getElementById("mobileSidebarToggle");
 			const sidebarClose = document.getElementById("sidebarClose");
@@ -3646,10 +3738,15 @@
 				ministerialToggle.classList.toggle("open", isOpen);
 				ministerialToggle.setAttribute("aria-expanded", String(isOpen));
 			});
+			formsToggle?.addEventListener("click", () => {
+				const isOpen = formsItems.classList.toggle("open");
+				formsToggle.classList.toggle("open", isOpen);
+				formsToggle.setAttribute("aria-expanded", String(isOpen));
+			});
 
 			sidebar?.addEventListener("click", (event) => {
 				const button = event.target.closest("[data-page]");
-				if (!button || button.closest("#libraryToggle, #ministerialToggle")) return;
+				if (!button || button.closest("#libraryToggle, #ministerialToggle, #formsToggle")) return;
 				event.preventDefault();
 				event.stopPropagation();
 				document.querySelectorAll("[data-page]").forEach((item) => item.classList.remove("active"));
@@ -3760,6 +3857,10 @@
 				const ministerialFileCount = ministerialPages.reduce((total, page) => total + (Array.isArray(page.files) ? page.files.length : 0), 0);
 				if (badgeMinisterial) badgeMinisterial.style.display = ministerialFileCount > 0 ? 'block' : 'none';
 				if (ministerialFileCount > 0) addNotification('ministerial', 'منشورات وزارية جديدة', `لديك ${ministerialFileCount} ملف رسمي متاح`, 'ministerial', 'fa-building-columns');
+				const badgeForms = document.getElementById('badge-forms');
+				const formsFileCount = formsPages.reduce((total, page) => total + (Array.isArray(page.files) ? page.files.length : 0), 0);
+				if (badgeForms) badgeForms.style.display = formsFileCount > 0 ? 'block' : 'none';
+				if (formsFileCount > 0) addNotification('forms', 'نماذج جديدة', `لديك ${formsFileCount} نموذج أو ملف متاح`, 'forms', 'fa-file-signature');
 				
 				const hasNotification = [...document.querySelectorAll('.nav-badge')].some((badge) => getComputedStyle(badge).display !== 'none');
 				const headerNotificationDot = document.getElementById("headerNotificationDot");
