@@ -217,6 +217,8 @@
       line-height: 1.8;
     }
     .question-preview strong { color: var(--navy); }
+    .test-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .test-actions button { flex:1; min-width:110px; }
     .empty {
       padding: 22px;
       background: #fff;
@@ -245,6 +247,7 @@
       <section class="card">
         <h2>إنشاء اختبار جديد</h2>
         <form id="createTestForm">
+          <input id="editingTestId" type="hidden">
           <div class="field">
             <label for="testTitle">عنوان الاختبار</label>
             <input id="testTitle" type="text" maxlength="120" required placeholder="مثال: اختبار التوعية الوقائية">
@@ -256,6 +259,16 @@
           <div class="field">
             <label for="testDuration">مدة الاختبار بالدقائق</label>
             <input id="testDuration" type="number" min="1" max="180" value="10" required>
+          </div>
+          <div class="option-grid">
+            <div class="field">
+              <label for="testAvailableFrom">يظهر الاختبار من</label>
+              <input id="testAvailableFrom" type="datetime-local">
+            </div>
+            <div class="field">
+              <label for="testAvailableUntil">ينتهي الاختبار في</label>
+              <input id="testAvailableUntil" type="datetime-local">
+            </div>
           </div>
 
           <div class="field">
@@ -271,7 +284,8 @@
 
           <div style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
             <button class="secondary" type="button" id="addQuestionBtn">+ إضافة سؤال جديد</button>
-            <button class="primary" type="submit">حفظ الاختبار</button>
+            <button class="primary" id="saveTestBtn" type="submit">حفظ الاختبار</button>
+            <button class="secondary" id="cancelEditBtn" type="button" hidden>إلغاء التعديل</button>
           </div>
           <p class="message" id="formMessage"></p>
         </form>
@@ -287,7 +301,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     const config = {
       apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo",
@@ -304,6 +318,7 @@
     const cloudinaryCloudName = "dorrpdul5";
     const cloudinaryUploadPreset = "ml_default";
     let adminUser = null;
+    let availableUsers = [];
 
     const escapeHtml = (value) => String(value || "").replace(/[&<>\"']/g, (character) => ({
       "&": "&amp;",
@@ -318,6 +333,15 @@
       const date = typeof value.toDate === "function" ? value.toDate() : new Date(value);
       if (Number.isNaN(date.getTime())) return "غير محدد";
       return new Intl.DateTimeFormat("ar-EG", { dateStyle: "medium", timeStyle: "short" }).format(date);
+    }
+
+    function formatDateTimeInput(value) {
+      if (!value) return "";
+      if (typeof value === "string") return value.slice(0, 16);
+      const date = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      const offset = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - offset).toISOString().slice(0, 16);
     }
 
     function buildQuestionCard(question = {}, index = 0) {
@@ -362,6 +386,7 @@
         <div class="field">
           <label>صورة اختيارية للسؤال</label>
           <input type="file" class="question-image" accept="image/*">
+          ${question.imageUrl ? `<small class="muted existing-question-image" data-image-url="${escapeHtml(question.imageUrl)}">الصورة الحالية محفوظة، ارفع صورة جديدة لاستبدالها.</small>` : ""}
         </div>
       `;
 
@@ -417,11 +442,11 @@
           return;
         }
 
-        usersList.innerHTML = snapshot.docs.map((item) => {
-          const user = item.data();
+        availableUsers = snapshot.docs.map((item) => ({ id: item.id, ...(item.data() || {}) }));
+        usersList.innerHTML = availableUsers.map((user) => {
           return `
             <label>
-              <input type="checkbox" value="${item.id}">
+              <input type="checkbox" value="${user.id}">
               <span>${escapeHtml(user.name || user.email || "مستخدم")}</span>
             </label>
           `;
@@ -430,6 +455,42 @@
         console.error("تعذر تحميل المستخدمين للتحديد:", error);
         document.getElementById("testUsersList").innerHTML = '<span class="muted">تعذر تحميل قائمة المستخدمين.</span>';
       }
+    }
+
+    function setSelectedUsers(userIds = []) {
+      const selected = new Set(Array.isArray(userIds) ? userIds : []);
+      document.querySelectorAll("#testUsersList input[type=checkbox]").forEach((input) => {
+        input.checked = selected.has(input.value);
+      });
+    }
+
+    function resetTestForm() {
+      const form = document.getElementById("createTestForm");
+      form.reset();
+      document.getElementById("editingTestId").value = "";
+      document.getElementById("testDuration").value = 10;
+      document.getElementById("saveTestBtn").textContent = "حفظ الاختبار";
+      document.getElementById("cancelEditBtn").hidden = true;
+      setSelectedUsers();
+      resetQuestionCards();
+    }
+
+    function startEditingTest(test) {
+      document.getElementById("editingTestId").value = test.id;
+      document.getElementById("testTitle").value = test.title || "";
+      document.getElementById("testDescription").value = test.description || "";
+      document.getElementById("testDuration").value = Number(test.durationMinutes || 10);
+      document.getElementById("testAvailableFrom").value = formatDateTimeInput(test.availableFrom);
+      document.getElementById("testAvailableUntil").value = formatDateTimeInput(test.availableUntil);
+      setSelectedUsers(test.assignedUserIds);
+      const container = document.getElementById("questionsContainer");
+      container.innerHTML = "";
+      (Array.isArray(test.questions) ? test.questions : []).forEach((question) => addQuestionCard(question));
+      if (!container.children.length) addQuestionCard();
+      document.getElementById("saveTestBtn").textContent = "حفظ تعديلات الاختبار";
+      document.getElementById("cancelEditBtn").hidden = false;
+      document.getElementById("formMessage").textContent = `تعديل الاختبار: ${test.title || "بدون عنوان"}`;
+      document.querySelector("#createTestForm").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     async function loadTests() {
@@ -487,6 +548,12 @@
                 <span class="badge">المدة: ${Number(test.durationMinutes || 0)} دقيقة</span>
                 <span class="badge">الأسئلة: ${questions.length}</span>
                 <span class="badge">${assignedCount ? `مخصص لـ ${assignedCount} مستخدم` : "لكافة المستخدمين"}</span>
+                ${test.availableFrom ? `<span class="badge">يظهر: ${escapeHtml(formatAttemptDate(test.availableFrom))}</span>` : ""}
+                ${test.availableUntil ? `<span class="badge">ينتهي: ${escapeHtml(formatAttemptDate(test.availableUntil))}</span>` : ""}
+              </div>
+              <div class="test-actions">
+                <button class="secondary" type="button" data-edit-test="${item.id}">تعديل الاختبار</button>
+                <button class="danger" type="button" data-delete-test="${item.id}">حذف</button>
               </div>
               <div class="question-preview">
                 <strong style="display:block; margin-bottom:8px; color:var(--navy);">النتائج الحالية:</strong>
@@ -502,6 +569,13 @@
             if (!confirm("هل أنت متأكد من حذف هذا الاختبار؟")) return;
             await deleteDoc(doc(db, "tests", id));
             await loadTests();
+          });
+        });
+
+        list.querySelectorAll("[data-edit-test]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const test = snapshot.docs.find((item) => item.id === button.dataset.editTest);
+            if (test) startEditingTest({ id: test.id, ...test.data() });
           });
         });
 
@@ -562,6 +636,9 @@
       const title = document.getElementById("testTitle").value.trim();
       const description = document.getElementById("testDescription").value.trim();
       const durationMinutes = Number(document.getElementById("testDuration").value);
+      const availableFrom = document.getElementById("testAvailableFrom").value;
+      const availableUntil = document.getElementById("testAvailableUntil").value;
+      const editingTestId = document.getElementById("editingTestId").value;
       const selectedUserIds = [...document.querySelectorAll("#testUsersList input:checked")].map((input) => input.value);
       const cards = [...document.querySelectorAll("#questionsContainer .question-card")];
 
@@ -573,6 +650,11 @@
 
       if (!title || !durationMinutes || cards.length === 0) {
         message.textContent = "يرجى ملء عنوان الاختبار، مدة الاختبار، وإضافة سؤال واحد على الأقل.";
+        message.style.color = "red";
+        return;
+      }
+      if (availableFrom && availableUntil && new Date(availableUntil) <= new Date(availableFrom)) {
+        message.textContent = "يجب أن يكون وقت انتهاء الاختبار بعد وقت ظهوره.";
         message.style.color = "red";
         return;
       }
@@ -588,6 +670,7 @@
           const options = Array.from(card.querySelectorAll(".option-input")).map((input) => input.value.trim());
           const correctIndex = Number(card.querySelector(".correct-index").value);
           const file = card.querySelector(".question-image").files[0];
+          const existingImageUrl = card.querySelector(".existing-question-image")?.dataset.imageUrl || "";
 
           if (!text || options.some((option) => !option)) {
             throw new Error("كل سؤال يجب أن يحتوي على نص السؤال وأربعة خيارات مكتوبة.");
@@ -597,7 +680,7 @@
             text,
             options,
             correctIndex,
-            imageUrl: ""
+            imageUrl: existingImageUrl
           };
 
           if (file) {
@@ -607,27 +690,40 @@
           questions.push(question);
         }
 
-        await addDoc(collection(db, "tests"), {
+        const testData = {
           title,
           description,
           durationMinutes,
+          availableFrom: availableFrom || "",
+          availableUntil: availableUntil || "",
           questions,
-          assignedUserIds: selectedUserIds,
-          createdBy: adminUser.uid,
-          createdAt: serverTimestamp()
-        });
+          assignedUserIds: selectedUserIds
+        };
 
-        message.textContent = "تم حفظ الاختبار بنجاح!";
+        if (editingTestId) {
+          await updateDoc(doc(db, "tests", editingTestId), testData);
+        } else {
+          await addDoc(collection(db, "tests"), {
+            ...testData,
+            createdBy: adminUser.uid,
+            createdAt: serverTimestamp()
+          });
+        }
+
+        message.textContent = editingTestId ? "تم حفظ تعديلات الاختبار بنجاح!" : "تم حفظ الاختبار بنجاح!";
         message.style.color = "green";
-        event.target.reset();
-        document.getElementById("testDuration").value = 10;
-        resetQuestionCards();
+        resetTestForm();
         await loadTests();
       } catch (error) {
         console.error("حدث خطأ أثناء حفظ الاختبار:", error);
         message.textContent = error.message || "حدث خطأ أثناء حفظ الاختبار.";
         message.style.color = "red";
       }
+    });
+
+    document.getElementById("cancelEditBtn").addEventListener("click", () => {
+      resetTestForm();
+      document.getElementById("formMessage").textContent = "تم إلغاء التعديل.";
     });
 
     document.getElementById("logout").addEventListener("click", async () => {
