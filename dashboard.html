@@ -43,7 +43,12 @@
 			color: var(--navy);
 			font-size: 1.1rem;
 		}
-
+body {
+    user-select: none; 
+    -webkit-user-select: none; /* لمتصفحات سفاري وكروم */
+    -moz-user-select: none; /* لمتصفح فايرفوكس */
+    -ms-user-select: none; /* لمتصفحات إنترنت إكسبلورر وإيدج */
+}
 		body:not(.is-loading) #authLoading { display: none; }
 
 		.app-shell { position: relative; min-height: 100vh; display: flex; animation: pageEnter .65s ease both; }
@@ -1214,6 +1219,7 @@
 	</style>
 
 </head>
+<body oncontextmenu="return false;"></body>
 <body class="is-loading">
 	<div id="authLoading">جاري التحقق من تسجيل الدخول...</div>
 
