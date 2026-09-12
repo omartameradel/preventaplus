@@ -420,6 +420,8 @@
 		.join-meeting.ready { background: var(--gold); color: var(--navy); pointer-events: auto; box-shadow: 0 8px 18px rgba(230,169,58,.25); }
 		.home-side { display: grid; gap: 18px; }
 		.stats-card, .agenda-card { padding: 20px; }
+		.profile-activity { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 22px; }
+		.profile-meeting-card { position: relative; z-index: 1; margin-top: 22px; }
 		.home-card-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 17px; color: var(--navy); font-size: 1rem; }
 		.home-card-title a { color: var(--blue); font-size: .72rem; text-decoration: none; }
 		.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -822,6 +824,8 @@
 	.time-unit strong { font-size: 1.1rem; }
 	.home-side { gap: 14px; }
 	.stats-card, .agenda-card { padding: 16px; }
+	.profile-activity { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+	.profile-meeting-card { margin-top: 14px; }
 	.articles-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 18px; }
 	.news-card { padding: 12px; }
 	.news-grid { min-height: 0; height: auto; aspect-ratio: 1 / 1.08; }
@@ -1352,7 +1356,6 @@
 			if (currentLanguage === "ar") return value;
 			return translations[value]?.en || value;
 		}
-
 		function applyLanguage() {
 			document.documentElement.lang = currentLanguage;
 			document.documentElement.dir = currentLanguage === "en" ? "ltr" : "rtl";
@@ -2584,13 +2587,17 @@
 			return `<a class="chat-attachment" href="${url}" target="_blank" rel="noopener">📎 ${name}</a><a class="chat-download" href="${url}" download="${name}">⬇ تحميل الملف</a>`;
 		}
 
-		function setupMeetingCountdown(meeting) {
-			const title = document.getElementById("meetingTitle");
-			const organizer = document.getElementById("meetingOrganizer");
-			const button = document.getElementById("joinMeeting");
+		function setupMeetingCountdown(meeting, prefix = "") {
+			const idPrefix = prefix ? `${prefix}Meeting` : "meeting";
+			const title = document.getElementById(`${idPrefix}Title`);
+			const organizer = document.getElementById(`${idPrefix}Organizer`);
+			const button = document.getElementById(prefix ? `${prefix}JoinMeeting` : "joinMeeting");
+			const countdown = document.getElementById(prefix ? `${prefix}Countdown` : "meetingCountdown") || document.querySelector(".countdown");
 			if (!title || !organizer || !button) return;
 			button.onclick = null;
-			if (!meeting) { title.textContent = "لا يوجد اجتماع قادم"; organizer.textContent = "ستظهر مواعيدك هنا عند إضافتها"; document.querySelector(".countdown").style.display = "none"; button.style.display = "none"; return; }
+			if (!meeting) { title.textContent = "لا يوجد اجتماع قادم"; organizer.textContent = "ستظهر مواعيدك هنا عند إضافتها"; if (countdown) countdown.style.display = "none"; button.style.display = "none"; return; }
+			if (countdown) countdown.style.display = "flex";
+			button.style.display = "inline-block";
 			title.textContent = meeting.title || meeting.name || "اجتماع Preventa Plus";
 			organizer.textContent = `المنظم: ${meeting.organizer || meeting.organizerName || "فريق Preventa Plus"}`;
 			button.href = "#meetings";
@@ -2600,12 +2607,15 @@
 				document.querySelectorAll("[data-page]").forEach((item) => item.classList.toggle("active", item.dataset.page === "meetings"));
 				renderPage("meetings");
 			};
+			const days = document.getElementById(prefix ? `${prefix}MeetingDays` : "meetingDays");
+			const hours = document.getElementById(prefix ? `${prefix}MeetingHours` : "meetingHours");
+			const minutes = document.getElementById(prefix ? `${prefix}MeetingMinutes` : "meetingMinutes");
 			const update = () => {
 				const remaining = Math.max(0, meeting.date.getTime() - Date.now());
 				const totalMinutes = Math.floor(remaining / 60000);
-				document.getElementById("meetingDays").textContent = String(Math.floor(totalMinutes / 1440)).padStart(2, "0");
-				document.getElementById("meetingHours").textContent = String(Math.floor((totalMinutes % 1440) / 60)).padStart(2, "0");
-				document.getElementById("meetingMinutes").textContent = String(totalMinutes % 60).padStart(2, "0");
+				if (days) days.textContent = String(Math.floor(totalMinutes / 1440)).padStart(2, "0");
+				if (hours) hours.textContent = String(Math.floor((totalMinutes % 1440) / 60)).padStart(2, "0");
+				if (minutes) minutes.textContent = String(totalMinutes % 60).padStart(2, "0");
 				if (remaining <= 15 * 60 * 1000) button.classList.add("ready");
 			};
 			update();
@@ -2968,13 +2978,52 @@
 							<button type="submit">تغيير كلمة المرور</button><p class="form-message" id="passwordMessage"></p>
 						</form>
 					</div>
+				</div>
+				<section class="home-card meeting-card profile-meeting-card" id="profileMeetingCard">
+					<span class="card-kicker">الاجتماع القادم</span>
+					<h3 id="profileMeetingTitle">جاري البحث عن أقرب اجتماع...</h3>
+					<p class="meeting-organizer" id="profileMeetingOrganizer"></p>
+					<div class="countdown" id="profileCountdown"><div class="time-unit"><strong id="profileMeetingDays">--</strong><span>يوم</span></div><div class="time-unit"><strong id="profileMeetingHours">--</strong><span>ساعة</span></div><div class="time-unit"><strong id="profileMeetingMinutes">--</strong><span>دقيقة</span></div></div>
+					<a class="join-meeting" id="profileJoinMeeting" href="#meetings">انضم الآن</a>
+				</section>
+				<div class="profile-activity">
+					<section class="home-card stats-card" aria-labelledby="profileActivityTitle">
+						<h3 class="home-card-title" id="profileActivityTitle">ملخص نشاطك <span>هذا الأسبوع</span></h3>
+						<div class="stats-grid">
+							<div class="mini-stat"><strong id="profileWeeklyMeetings">0</strong><span>اجتماعات</span></div>
+							<div class="mini-stat"><strong id="profileAvailableTests">0</strong><span>اختبارات</span></div>
+							<div class="mini-stat"><strong id="profileUnreadNotifications">0</strong><span>تنبيهات</span></div>
+						</div>
+					</section>
+					<section class="home-card agenda-card">
+						<h3 class="home-card-title">أجندة اليوم <a href="#meetings">عرض الكل</a></h3>
+						<ul class="agenda-list" id="profileDailyAgenda"><li><span>جاري تحميل مواعيدك...</span></li></ul>
+					</section>
 				</div>`;
 			setupProfileEvents();
+			loadProfileActivity();
 			if (profilePasswordMessage && profilePasswordMessage.expiresAt > Date.now()) {
 				const passwordMessage = document.getElementById("passwordMessage");
 				passwordMessage.textContent = profilePasswordMessage.text;
 				passwordMessage.style.color = profilePasswordMessage.color;
 			}
+		}
+
+		async function loadProfileActivity() {
+			const [activity, meeting] = await Promise.all([loadActivity(), loadNextMeeting()]);
+			const weeklyMeetings = document.getElementById("profileWeeklyMeetings");
+			const availableTests = document.getElementById("profileAvailableTests");
+			const unreadNotifications = document.getElementById("profileUnreadNotifications");
+			const dailyAgenda = document.getElementById("profileDailyAgenda");
+			if (!weeklyMeetings || !availableTests || !unreadNotifications || !dailyAgenda) return;
+			weeklyMeetings.textContent = activity.meetings;
+			availableTests.textContent = activity.tests;
+			unreadNotifications.textContent = activity.notifications;
+			dailyAgenda.innerHTML = activity.agenda.length
+				? activity.agenda.map((item) => `<li><time>${escapeHtml(item.time)}</time><i></i><span>${escapeHtml(item.title)}</span></li>`).join("")
+				: "<li><span>لا توجد مواعيد أو مهام اليوم.</span></li>";
+			setupMeetingCountdown(meeting, "profile");
+			applyLanguage();
 		}
 
 		function governorateOptions(selected) {
