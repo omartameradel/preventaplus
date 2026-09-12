@@ -1256,6 +1256,12 @@
 				<div class="library-items" id="formsItems">
 					<span class="library-loading">جاري تحميل النماذج...</span>
 				</div>
+				<button class="library-toggle" id="preventionDesignsToggle" aria-expanded="false" aria-controls="preventionDesignsItems" title="تصاميم وقائية">
+					<span class="nav-icon"><i class="fa-solid fa-palette"></i><span class="nav-badge" id="badge-prevention-designs"></span></span><span class="nav-label">تصاميم وقائية</span><span class="arrow" aria-hidden="true"></span>
+				</button>
+				<div class="library-items" id="preventionDesignsItems">
+					<span class="library-loading">جاري تحميل التصاميم الوقائية...</span>
+				</div>
 								<button class="nav-button" data-page="articles" title="مقالات"><span class="nav-icon"><i class="fa-solid fa-newspaper"></i><span class="nav-badge" id="badge-articles"></span></span><span class="nav-label" data-i18n="articles">مقالات</span></button>
 
 				<button class="nav-button" data-page="meetings" title="الاجتماعات"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i><span class="nav-badge" id="badge-meetings"></span></span><span class="nav-label" data-i18n="meetings">الاجتماعات</span></button>
@@ -1360,6 +1366,7 @@
 		let libraryPagesListener = null;
 		let ministerialPagesListener = null;
 		let formsPagesListener = null;
+		let preventionDesignsPagesListener = null;
 		let userDataListener = null;
 		let pageHistory = [];
 
@@ -1450,6 +1457,7 @@
 				await loadLibraryPages();
 				await loadMinisterialPages();
 				await loadFormsPages();
+				await loadPreventionDesignsPages();
 				setupLiveRefresh();
 				applyLanguage();
 				renderPage("home");
@@ -1478,12 +1486,14 @@
 			support: { title: "الدعم الفني", description: "نحن هنا لمساعدتك في أي مشكلة تواجهك داخل المنصة.", tag: "نحن معك", icon: "?", metric: "24/7", metricLabel: "دعم ومساعدة", feature: "لا تحمل المشكلة وحدك", featureDescription: "أرسل استفسارك وسنساعدك للوصول إلى الحل المناسب.", actions: [] },
 			profile: { title: "الملف الشخصي", description: "راجع بيانات حسابك وتأكد من تحديث معلوماتك.", tag: "بياناتك", icon: "♙", metric: "آمن", metricLabel: "ملفك الشخصي", feature: "ملفك يعكس رحلتك", featureDescription: "راجع معلوماتك الشخصية واجعل تجربتك داخل المنصة أكثر ملاءمة لك.", actions: [] },
 			ministerial: { title: "منشورات وزارية", description: "اطلع على الملفات والمنشورات الرسمية المتاحة لحسابك.", tag: "محتوى رسمي", icon: "▤", metric: "رسمي", metricLabel: "منشورات وزارية", feature: "المصدر الرسمي في مكان واحد", featureDescription: "تصفح المنشورات والملفات الوزارية التي خصصها لك الأدمن.", actions: [] }
-			,forms: { title: "نماذج", description: "تصفح النماذج والملفات المتاحة لحسابك.", tag: "نماذج رسمية", icon: "▤", metric: "متاح", metricLabel: "نماذج", feature: "كل النماذج في مكان واحد", featureDescription: "افتح صفحات النماذج والملفات التي خصصها لك الأدمن.", actions: [] }
+			,forms: { title: "نماذج", description: "تصفح النماذج والملفات المتاحة لحسابك.", tag: "نماذج رسمية", icon: "▤", metric: "متاح", metricLabel: "نماذج", feature: "كل النماذج في مكان واحد", featureDescription: "افتح صفحات النماذج والملفات التي خصصها لك الأدمن.", actions: [] },
+			preventionDesigns: { title: "تصاميم وقائية", description: "تصفح التصاميم والملفات الوقائية المتاحة لحسابك.", tag: "تصاميم توعوية", icon: "▤", metric: "متاح", metricLabel: "تصاميم وقائية", feature: "التصميم الوقائي في مكان واحد", featureDescription: "افتح صفحات التصاميم والملفات التي خصصها لك الأدمن.", actions: [] }
 		};
 
 		let libraryPages = [];
 		let ministerialPages = [];
 		let formsPages = [];
+		let preventionDesignsPages = [];
 		let articles = [];
 		let supportTickets = [];
 		let supportSelectedTicketId = null;
@@ -1494,7 +1504,7 @@
 		const recordedMeetingAttendance = new Set();
 
 		function applyGeneralPagePermissions() {
-			const generalPageButtons = [...document.querySelectorAll(".side-nav .nav-button")].filter((button) => button.dataset.page && !button.dataset.page.startsWith("library:") && !button.dataset.page.startsWith("ministerial:") && !button.dataset.page.startsWith("forms:"));
+			const generalPageButtons = [...document.querySelectorAll(".side-nav .nav-button")].filter((button) => button.dataset.page && !button.dataset.page.startsWith("library:") && !button.dataset.page.startsWith("ministerial:") && !button.dataset.page.startsWith("forms:") && !button.dataset.page.startsWith("prevention-designs:"));
 			const hasAllowedPages = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedPages");
 			const hasLegacyAllowedPages = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedLibraryPages");
 			const allowedPages = Array.isArray(activeUserData?.allowedPages)
@@ -1511,6 +1521,8 @@
 			const ministerialItems = document.getElementById("ministerialItems");
 			const formsToggle = document.getElementById("formsToggle");
 			const formsItems = document.getElementById("formsItems");
+			const preventionDesignsToggle = document.getElementById("preventionDesignsToggle");
+			const preventionDesignsItems = document.getElementById("preventionDesignsItems");
 			const hasLibrarySelection = Array.isArray(activeUserData?.allowedPages) ? activeUserData.allowedPages.includes("library") : false;
 			const hasLegacyLibraryAccess = Array.isArray(activeUserData?.allowedLibraryPages) ? activeUserData.allowedLibraryPages.filter(Boolean).length > 0 : false;
 			const showLibrarySection = hasLibrarySelection || hasLegacyLibraryAccess;
@@ -1522,6 +1534,9 @@
 			const showForms = hasAllowedPages ? visiblePages.includes("forms") : !hasLegacyAllowedPages;
 			if (formsToggle) formsToggle.style.display = showForms ? "" : "none";
 			if (formsItems) formsItems.style.display = showForms ? "" : "none";
+			const showPreventionDesigns = hasAllowedPages ? visiblePages.includes("prevention-designs") : !hasLegacyAllowedPages;
+			if (preventionDesignsToggle) preventionDesignsToggle.style.display = showPreventionDesigns ? "" : "none";
+			if (preventionDesignsItems) preventionDesignsItems.style.display = showPreventionDesigns ? "" : "none";
 		}
 
 		async function loadLibraryPages() {
@@ -1603,6 +1618,33 @@
 			formsItems.style.display = formsPages.length ? "" : "none";
 		}
 
+		async function loadPreventionDesignsPages() {
+			try {
+				const snapshot = await getDocs(query(collection(db, "preventionDesignsPages"), orderBy("createdAt", "asc")));
+				const allowed = Array.isArray(activeUserData?.allowedPreventionDesignsPages) ? activeUserData.allowedPreventionDesignsPages.filter(Boolean) : [];
+				const hasAllowList = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedPreventionDesignsPages");
+				preventionDesignsPages = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })).filter((page) => {
+					const pageUsers = Array.isArray(page.downloadAllowedUsers) ? page.downloadAllowedUsers : [];
+					return (!hasAllowList || allowed.includes(page.id)) && (!pageUsers.length || pageUsers.includes(sessionUser.uid) || pageUsers.includes(sessionUser.email) || pageUsers.includes(activeUserData?.email));
+				});
+			} catch (error) {
+				console.warn("تعذر تحميل التصاميم الوقائية:", error);
+				preventionDesignsPages = [];
+			}
+			renderPreventionDesignsNavigation();
+		}
+
+		function renderPreventionDesignsNavigation() {
+			const items = document.getElementById("preventionDesignsItems");
+			const toggle = document.getElementById("preventionDesignsToggle");
+			if (!items || !toggle) return;
+			items.innerHTML = preventionDesignsPages.length
+				? preventionDesignsPages.map((page, index) => `<button class="nav-button" data-page="prevention-designs:${escapeHtml(page.id)}" data-number="${String(index + 1).padStart(2, "0")}" title="${escapeHtml(page.name || "تصميم وقائي")}"><span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span><span class="nav-label">${escapeHtml(page.name || "تصميم وقائي")}</span></button>`).join("")
+				: "<span class=\"library-loading\">لا توجد تصاميم وقائية متاحة لهذا المستخدم.</span>";
+			toggle.style.display = preventionDesignsPages.length ? "" : "none";
+			items.style.display = preventionDesignsPages.length ? "" : "none";
+		}
+
 		function setupLiveRefresh() {
 			if (libraryPagesListener) {
 				libraryPagesListener();
@@ -1612,6 +1654,9 @@
 			}
 			if (formsPagesListener) {
 				formsPagesListener();
+			}
+			if (preventionDesignsPagesListener) {
+				preventionDesignsPagesListener();
 			}
 			if (userDataListener) {
 				userDataListener();
@@ -1670,6 +1715,19 @@
 				console.warn("تعذر الاستماع إلى النماذج:", error);
 			});
 
+			preventionDesignsPagesListener = onSnapshot(query(collection(db, "preventionDesignsPages"), orderBy("createdAt", "asc")), (snapshot) => {
+				const allowed = Array.isArray(activeUserData?.allowedPreventionDesignsPages) ? activeUserData.allowedPreventionDesignsPages.filter(Boolean) : [];
+				const hasAllowList = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedPreventionDesignsPages");
+				preventionDesignsPages = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })).filter((page) => {
+					const pageUsers = Array.isArray(page.downloadAllowedUsers) ? page.downloadAllowedUsers : [];
+					return (!hasAllowList || allowed.includes(page.id)) && (!pageUsers.length || pageUsers.includes(sessionUser.uid) || pageUsers.includes(sessionUser.email) || pageUsers.includes(activeUserData?.email));
+				});
+				renderPreventionDesignsNavigation();
+				if (currentPage === "prevention-designs" || currentPage.startsWith("prevention-designs:")) renderPage(currentPage);
+			}, (error) => {
+				console.warn("تعذر الاستماع إلى التصاميم الوقائية:", error);
+			});
+
 			userDataListener = onSnapshot(doc(db, "users", sessionUser.uid), (snapshot) => {
 				if (!snapshot.exists()) {
 					sessionStorage.removeItem(sessionKey);
@@ -1687,6 +1745,7 @@
 				loadLibraryPages().catch((error) => console.warn("تعذر تحديث صلاحيات المكتبة:", error));
 				loadMinisterialPages().catch((error) => console.warn("تعذر تحديث المنشورات الوزارية:", error));
 				loadFormsPages().catch((error) => console.warn("تعذر تحديث النماذج:", error));
+				loadPreventionDesignsPages().catch((error) => console.warn("تعذر تحديث التصاميم الوقائية:", error));
 				renderPage(currentPage);
 			}, (error) => {
 				console.warn("تعذر الاستماع إلى بيانات المستخدم:", error);
@@ -1987,6 +2046,16 @@
 				<div class="library-file-grid">${formsPages.map((page) => `<button type="button" class="library-file" data-page="forms:${escapeHtml(page.id)}"><strong>${escapeHtml(page.name || "نموذج")}</strong><small>${escapeHtml(page.description || "لا يوجد وصف")}</small><span class="library-file-count">${Array.isArray(page.files) ? page.files.length : 0} ملف</span></button>`).join("") || `<div class="empty-state">لا توجد نماذج متاحة لحسابك حاليًا.</div>`}</div>`;
 		}
 
+		function renderPreventionDesignsPage(panel, pageId) {
+			renderLibraryPage(panel, pageId, preventionDesignsPages, "تصاميم وقائية");
+		}
+
+		function renderPreventionDesignsLanding(panel) {
+			panel.innerHTML = `
+				<div class="panel-heading"><div class="panel-icon" aria-hidden="true">▤</div><div><span class="panel-tag">تصاميم توعوية</span><h2>تصاميم وقائية</h2><p>اختر قسمًا لعرض التصاميم والملفات الوقائية المتاحة لك.</p></div></div>
+				<div class="library-file-grid">${preventionDesignsPages.map((page) => `<button type="button" class="library-file" data-page="prevention-designs:${escapeHtml(page.id)}"><strong>${escapeHtml(page.name || "تصميم وقائي")}</strong><small>${escapeHtml(page.description || "لا يوجد وصف")}</small><span class="library-file-count">${Array.isArray(page.files) ? page.files.length : 0} ملف</span></button>`).join("") || `<div class="empty-state">لا توجد تصاميم وقائية متاحة لحسابك حاليًا.</div>`}</div>`;
+		}
+
 		function downloadLibraryFile(file) {
 			if (!file?.url) return;
 			const name = file.name || "ملف المكتبة";
@@ -2137,6 +2206,7 @@
                     <option value="library">المكتبة</option>
 					<option value="ministerial">منشورات وزارية</option>
 					<option value="forms">نماذج</option>
+					<option value="prevention-designs">تصاميم وقائية</option>
                     <option value="tests">الاختبارات</option>
                     <option value="meetings">الاجتماعات</option>
                 </select>
@@ -2246,6 +2316,10 @@
 					pushMatches(formsPages, "forms", (item) => `${item.name || ""} ${item.description || ""}`.trim(), "▤");
 				}
 
+				if (category === "all" || category === "prevention-designs") {
+					pushMatches(preventionDesignsPages, "prevention-designs", (item) => `${item.name || ""} ${item.description || ""}`.trim(), "▤");
+				}
+
 				if (category === "all" || category === "tests") {
 					pushMatches(testsList, "tests", (item) => `${item.title || ""} ${item.description || ""}`.trim(), "✓");
 				}
@@ -2299,6 +2373,10 @@
 						}
 						if (match.category === "forms") {
 							renderPage("forms");
+							return;
+						}
+						if (match.category === "prevention-designs") {
+							renderPage("prevention-designs");
 							return;
 						}
 						if (match.action) match.action();
@@ -3579,6 +3657,18 @@
 				applyLanguage();
 				return;
 			}
+			if (page === "prevention-designs") {
+				document.getElementById("pageTitle").textContent = translateText(content.title);
+				renderPreventionDesignsLanding(document.getElementById("contentPanel"));
+				applyLanguage();
+				return;
+			}
+			if (page.startsWith("prevention-designs:")) {
+				document.getElementById("pageTitle").textContent = translateText(preventionDesignsPages.find((item) => item.id === page.slice(19))?.name || "تصاميم وقائية");
+				renderPreventionDesignsPage(document.getElementById("contentPanel"), page.slice(19));
+				applyLanguage();
+				return;
+			}
 			const { title, description, actions, tag, icon, metric, metricLabel, feature, featureDescription } = content;
 			document.getElementById("pageTitle").textContent = translateText(title);
 			const panel = document.getElementById("contentPanel");
@@ -3622,6 +3712,8 @@
 			const libraryItems = document.getElementById("libraryItems");
 			const formsToggle = document.getElementById("formsToggle");
 			const formsItems = document.getElementById("formsItems");
+			const preventionDesignsToggle = document.getElementById("preventionDesignsToggle");
+			const preventionDesignsItems = document.getElementById("preventionDesignsItems");
 			const desktopSidebarToggle = document.getElementById("sidebarToggle");
 			const mobileSidebarToggle = document.getElementById("mobileSidebarToggle");
 			const sidebarClose = document.getElementById("sidebarClose");
@@ -3743,10 +3835,15 @@
 				formsToggle.classList.toggle("open", isOpen);
 				formsToggle.setAttribute("aria-expanded", String(isOpen));
 			});
+			preventionDesignsToggle?.addEventListener("click", () => {
+				const isOpen = preventionDesignsItems.classList.toggle("open");
+				preventionDesignsToggle.classList.toggle("open", isOpen);
+				preventionDesignsToggle.setAttribute("aria-expanded", String(isOpen));
+			});
 
 			sidebar?.addEventListener("click", (event) => {
 				const button = event.target.closest("[data-page]");
-				if (!button || button.closest("#libraryToggle, #ministerialToggle, #formsToggle")) return;
+				if (!button || button.closest("#libraryToggle, #ministerialToggle, #formsToggle, #preventionDesignsToggle")) return;
 				event.preventDefault();
 				event.stopPropagation();
 				document.querySelectorAll("[data-page]").forEach((item) => item.classList.remove("active"));
@@ -3861,6 +3958,10 @@
 				const formsFileCount = formsPages.reduce((total, page) => total + (Array.isArray(page.files) ? page.files.length : 0), 0);
 				if (badgeForms) badgeForms.style.display = formsFileCount > 0 ? 'block' : 'none';
 				if (formsFileCount > 0) addNotification('forms', 'نماذج جديدة', `لديك ${formsFileCount} نموذج أو ملف متاح`, 'forms', 'fa-file-signature');
+				const badgePreventionDesigns = document.getElementById('badge-prevention-designs');
+				const preventionDesignsFileCount = preventionDesignsPages.reduce((total, page) => total + (Array.isArray(page.files) ? page.files.length : 0), 0);
+				if (badgePreventionDesigns) badgePreventionDesigns.style.display = preventionDesignsFileCount > 0 ? 'block' : 'none';
+				if (preventionDesignsFileCount > 0) addNotification('prevention-designs', 'تصاميم وقائية جديدة', `لديك ${preventionDesignsFileCount} تصميم أو ملف متاح`, 'prevention-designs', 'fa-palette');
 				
 				const hasNotification = [...document.querySelectorAll('.nav-badge')].some((badge) => getComputedStyle(badge).display !== 'none');
 				const headerNotificationDot = document.getElementById("headerNotificationDot");
