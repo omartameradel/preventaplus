@@ -76,9 +76,12 @@
 			box-shadow: -10px 0 36px rgba(16, 47, 89, .2);
 			overflow-y: auto;
 			overflow-x: hidden;
+			scrollbar-width: none;
+			-ms-overflow-style: none;
 			transition: width .3s ease, flex-basis .3s ease, padding .3s ease, opacity .2s ease, margin .3s ease, transform .22s ease;
 			z-index: 50;
 		}
+		.sidebar::-webkit-scrollbar { display: none; width: 0; height: 0; }
 		.app-shell.sidebar-collapsed .sidebar {
 			width: 92px;
 			flex-basis: 92px;
@@ -156,6 +159,7 @@
 			padding-right: 0;
 			border-right: 0;
 		}
+		.app-shell.sidebar-collapsed .library-items.open { display: grid; }
 		.app-shell.sidebar-collapsed .library-toggle .arrow {
 			display: none;
 		}
@@ -1669,20 +1673,36 @@
 		}
 
 		async function loadActivity() {
-			const [meetings, tests, notifications, tasks] = await Promise.all([
+			const [meetings, tests, notifications, tasks, attempts] = await Promise.all([
 				loadUserCollection("meetings"),
-				loadUserCollection("tests"),
+				loadTestsList(),
 				loadUserCollection("notifications"),
-				loadUserCollection("tasks")
+				loadUserCollection("tasks"),
+				loadUserTestAttempts()
 			]);
 			const meetingDates = meetings.map((item) => ({ ...item, date: firestoreDate(item.startAt || item.date || item.startTime) }));
+			const availableTests = tests.filter((test) => {
+				const attempt = attempts.find((item) => item.testId === test.id);
+				return !attempt || attempt.isCompleted !== true;
+			});
+			const testAgenda = availableTests
+				.map((item) => ({ ...item, date: firestoreDate(item.availableFrom || item.createdAt) }))
+				.filter((item) => isToday(item.date))
+				.map((item) => ({ time: formatClock(item.date), title: `اختبار متاح: ${item.title || "اختبار"}` }));
+			const notificationAgenda = notifications
+				.filter((item) => item.read !== true && item.isRead !== true)
+				.map((item) => ({ ...item, date: firestoreDate(item.scheduledAt || item.date || item.createdAt) }))
+				.filter((item) => !item.date || isToday(item.date))
+				.map((item) => ({ time: item.date ? formatClock(item.date) : "الآن", title: item.title || item.message || "تنبيه جديد" }));
 			return {
 				meetings: meetingDates.filter((item) => isThisWeek(item.date) && item.isCancelled !== true && item.isEnded !== true).length,
-				tests: tests.filter((item) => item.completed === true || item.isCompleted === true || item.completedAt).length,
+				tests: availableTests.length,
 				notifications: notifications.filter((item) => item.read !== true && item.isRead !== true).length,
 				agenda: [
 					...meetingDates.filter((item) => isToday(item.date) && item.isCancelled !== true && item.isEnded !== true).map((item) => ({ time: formatClock(item.date), title: item.title || item.name || "اجتماع" })),
-					...tasks.filter((item) => isToday(firestoreDate(item.dueAt || item.date || item.scheduledAt)) && item.completed !== true).map((item) => ({ time: formatClock(firestoreDate(item.dueAt || item.date || item.scheduledAt)), title: item.title || item.name || "مهمة اليوم" }))
+					...tasks.filter((item) => isToday(firestoreDate(item.dueAt || item.date || item.scheduledAt)) && item.completed !== true).map((item) => ({ time: formatClock(firestoreDate(item.dueAt || item.date || item.scheduledAt)), title: item.title || item.name || "مهمة اليوم" })),
+					...testAgenda,
+					...notificationAgenda
 				].sort((first, second) => first.time.localeCompare(second.time, "ar-EG"))
 			};
 		}
@@ -2598,13 +2618,6 @@
 			const input = document.getElementById("globalSearch");
 			const results = document.getElementById("searchResults");
 			if (!toggle || !panel || !input || !results) return;
-			toggle.onclick = () => {
-				panel.classList.toggle("open");
-				if (panel.classList.contains("open")) {
-					positionDropdown(panel, toggle);
-					input.focus();
-				}
-			};
 			input.oninput = () => {
 				const term = input.value.trim().toLowerCase();
 				const matches = term ? news.filter((item) => `${item.title || ""} ${item.description || ""}`.toLowerCase().includes(term)) : [];
@@ -3291,10 +3304,13 @@
 			document.addEventListener("keydown", (event) => { if (event.key === "Escape") { closeSidebar(); closeNewsModal(); closeLibraryModal(); } });
 			
 			searchToggle?.addEventListener("click", () => {
-				if (currentPage === "home") return;
-				searchPanel.classList.remove("open");
+				const isOpen = searchPanel.classList.contains("open");
+				searchPanel.classList.toggle("open", !isOpen);
 				notificationsPanel?.classList.remove("open");
-				renderPage("search");
+				if (!isOpen) {
+					positionDropdown(searchPanel, searchToggle);
+					document.getElementById("globalSearch")?.focus();
+				}
 			});
 			
 			refreshButton?.addEventListener("click", () => window.location.reload());
@@ -3308,6 +3324,13 @@
 				notificationsPanel?.classList.toggle("open");
 				if (notificationsPanel?.classList.contains("open")) positionDropdown(notificationsPanel, notificationToggle);
 				if (headerNotificationDot) headerNotificationDot.style.display = "none";
+			});
+
+			document.addEventListener("click", (event) => {
+				const target = event.target;
+				if (!target.closest("#searchPanel, #searchToggle")) searchPanel.classList.remove("open");
+				if (!target.closest("#notificationsPanel, #notificationToggle")) notificationsPanel?.classList.remove("open");
+				if (window.innerWidth <= 800 && appShell.classList.contains("sidebar-open") && !target.closest("#sidebar, #mobileSidebarToggle")) closeSidebar();
 			});
 			
 			window.addEventListener("resize", () => {
