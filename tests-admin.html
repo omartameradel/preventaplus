@@ -507,13 +507,40 @@
         }
 
         const attempts = attemptsSnapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+        const now = Date.now();
+        for (const testDoc of snapshot.docs) {
+          const test = testDoc.data();
+          const endsAt = test.availableUntil ? new Date(test.availableUntil).getTime() : null;
+          if (!endsAt || Number.isNaN(endsAt) || now <= endsAt) continue;
+          const assignedIds = Array.isArray(test.assignedUserIds) && test.assignedUserIds.length
+            ? test.assignedUserIds
+            : availableUsers.map((user) => user.id);
+          for (const userId of assignedIds) {
+            if (attempts.some((attempt) => attempt.testId === testDoc.id && attempt.userId === userId)) continue;
+            const user = availableUsers.find((item) => item.id === userId);
+            const missedAttempt = {
+              testId: testDoc.id,
+              userId,
+              userName: user?.name || user?.email || "مستخدم",
+              status: "missed",
+              isCompleted: false,
+              missedAt: new Date(),
+              createdAt: new Date(),
+              correctCount: 0,
+              totalQuestions: Array.isArray(test.questions) ? test.questions.length : 0,
+              totalAnswered: 0
+            };
+            const missedRef = await addDoc(collection(db, "testAttempts"), missedAttempt);
+            attempts.push({ id: missedRef.id, ...missedAttempt });
+          }
+        }
 
         list.innerHTML = snapshot.docs.map((item) => {
           const test = item.data();
           const questions = Array.isArray(test.questions) ? test.questions : [];
           const assignedCount = Array.isArray(test.assignedUserIds) ? test.assignedUserIds.filter(Boolean).length : 0;
           const completedAttempts = attempts
-            .filter((attempt) => attempt.testId === item.id && attempt.isCompleted)
+            .filter((attempt) => attempt.testId === item.id && (attempt.isCompleted || attempt.status === "missed"))
             .sort((first, second) => {
               const firstTime = typeof first.completedAt?.toDate === "function" ? first.completedAt.toDate().getTime() : new Date(first.completedAt || 0).getTime();
               const secondTime = typeof second.completedAt?.toDate === "function" ? second.completedAt.toDate().getTime() : new Date(second.completedAt || 0).getTime();
@@ -523,15 +550,18 @@
           const resultHtml = completedAttempts.length
             ? completedAttempts.map((attempt) => {
                 const wrongQuestions = Array.isArray(attempt.wrongQuestions) ? attempt.wrongQuestions : [];
-                const scoreText = `${attempt.correctCount ?? 0}/${attempt.totalQuestions || questions.length}`;
+                const scoreText = attempt.status === "missed" ? "لم يؤدِ الاختبار" : `${attempt.correctCount ?? 0}/${attempt.totalQuestions || questions.length}`;
                 return `
                   <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line);">
                     <div style="min-width:0; flex:1;">
                       <strong style="display:block; color:var(--navy);">${escapeHtml(attempt.userName || attempt.userEmail || "مستخدم")}</strong>
-                      <small style="color:var(--muted);">${escapeHtml(formatAttemptDate(attempt.completedAt))}</small>
+                      <small style="color:var(--muted);">${escapeHtml(formatAttemptDate(attempt.completedAt || attempt.missedAt))}</small>
                     </div>
                     <div style="font-weight:bold; color:var(--navy); white-space:nowrap;">${scoreText}</div>
-                    <button class="secondary" type="button" data-show-errors="${attempt.id}" style="padding:7px 10px; font-size:.75rem;">عرض الأخطاء</button>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+                      ${attempt.status === "missed" ? "" : `<button class="secondary" type="button" data-show-errors="${attempt.id}" style="padding:7px 10px; font-size:.75rem;">عرض الأخطاء</button>`}
+                      <button class="secondary" type="button" data-retake-test="${attempt.id}" style="padding:7px 10px; font-size:.75rem; color:var(--blue);">إعادة الاختبار</button>
+                    </div>
                   </div>
                 `;
               }).join("")
@@ -593,6 +623,24 @@
               .join("\n");
 
             alert(message);
+          });
+        });
+
+        list.querySelectorAll("[data-retake-test]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const attempt = attempts.find((item) => item.id === button.dataset.retakeTest);
+            if (!attempt) return;
+            const userName = attempt.userName || attempt.userEmail || "هذا المستخدم";
+            if (!confirm(`هل تريد السماح بإعادة الاختبار للمستخدم ${userName}؟ سيتم حذف نتيجته الحالية.`)) return;
+            button.disabled = true;
+            try {
+              await deleteDoc(doc(db, "testAttempts", attempt.id));
+              await loadTests();
+            } catch (error) {
+              console.error("تعذر إعادة الاختبار:", error);
+              button.disabled = false;
+              alert("تعذر إعادة الاختبار. تأكد من صلاحيات Firestore.");
+            }
           });
         });
       } catch (error) {
