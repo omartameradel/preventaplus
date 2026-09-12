@@ -258,6 +258,7 @@
 		.test-start-btn { margin-top: auto; padding: 12px 16px; border: 0; border-radius: 10px; background: linear-gradient(135deg, var(--blue), #125d8e); color: #fff; cursor: pointer; font: inherit; font-weight: bold; box-shadow: 0 12px 22px rgba(27,108,168,.18); }
 		.test-start-btn:hover { transform: translateY(-2px); }
 		.test-modal-shell { position: relative; width: min(980px, calc(100vw - 40px)); max-height: min(88vh, 900px); display: flex; flex-direction: column; padding: 20px; border-radius: 26px; background: linear-gradient(180deg, #f6fbff 0%, #edf5f7 100%); box-shadow: 0 20px 60px rgba(16,47,89,.18); }
+		.test-modal-shell, .test-modal-shell h2, .test-modal-shell p, .test-modal-shell h3, .test-modal-shell span { user-select: none; -webkit-user-select: none; }
 		.test-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; padding: 20px 76px 18px 20px; border: 1px solid rgba(139, 177, 191, .45); border-radius: 20px; background: linear-gradient(135deg, #ffffff, #edf8fb); box-shadow: inset 0 0 0 1px rgba(20, 92, 125, .05); }
 		.test-modal-title { margin: 0; color: #102f59; font-size: clamp(1.7rem, 3vw, 2.2rem); letter-spacing: -.5px; }
 		.test-modal-description { margin: 10px 0 0; color: #5f788a; font-size: 1rem; line-height: 1.8; }
@@ -1243,22 +1244,26 @@
 				<div class="library-items" id="libraryItems">
 					<span class="library-loading">جاري تحميل المكتبة...</span>
 				</div>
-				
+				<button class="library-toggle" id="ministerialToggle" aria-expanded="false" aria-controls="ministerialItems" title="منشورات وزارية">
+					<span class="nav-icon"><i class="fa-solid fa-building-columns"></i><span class="nav-badge" id="badge-ministerial"></span></span><span class="nav-label">منشورات وزارية</span><span class="arrow" aria-hidden="true"></span>
+				</button>
+				<div class="library-items" id="ministerialItems">
+					<span class="library-loading">جاري تحميل المنشورات الوزارية...</span>
+				</div>
+								<button class="nav-button" data-page="articles" title="مقالات"><span class="nav-icon"><i class="fa-solid fa-newspaper"></i><span class="nav-badge" id="badge-articles"></span></span><span class="nav-label" data-i18n="articles">مقالات</span></button>
+
 				<button class="nav-button" data-page="meetings" title="الاجتماعات"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i><span class="nav-badge" id="badge-meetings"></span></span><span class="nav-label" data-i18n="meetings">الاجتماعات</span></button>
 				
-				<button class="nav-button" data-page="search" title="البحث"><span class="nav-icon"><i class="fa-solid fa-magnifying-glass"></i></span><span class="nav-label" data-i18n="search">البحث</span></button>
-				
-				<button class="nav-button" data-page="tests" title="الاختبارات"><span class="nav-icon"><i class="fa-solid fa-clipboard-check"></i><span class="nav-badge" id="badge-tests"></span></span><span class="nav-label" data-i18n="tests">الاختبارات</span></button>
+					<button class="nav-button" data-page="tests" title="الاختبارات"><span class="nav-icon"><i class="fa-solid fa-clipboard-check"></i><span class="nav-badge" id="badge-tests"></span></span><span class="nav-label" data-i18n="tests">الاختبارات</span></button>
 				
 				<button class="nav-button" data-page="community" title="المجتمع"><span class="nav-icon"><i class="fa-solid fa-users"></i><span class="nav-badge" id="badge-community"></span></span><span class="nav-label" data-i18n="community">المجتمع</span></button>
 				
-				<button class="nav-button" data-page="articles" title="مقالات"><span class="nav-icon"><i class="fa-solid fa-newspaper"></i><span class="nav-badge" id="badge-articles"></span></span><span class="nav-label" data-i18n="articles">مقالات</span></button>
+				<button class="nav-button" data-page="search" title="البحث"><span class="nav-icon"><i class="fa-solid fa-magnifying-glass"></i></span><span class="nav-label" data-i18n="search">البحث</span></button>
 				
-				<button class="nav-button" data-page="dashboard" title="لوحة التحكم"><span class="nav-icon"><i class="fa-solid fa-table-columns"></i></span><span class="nav-label" data-i18n="dashboard">لوحة التحكم</span></button>
-				
-				<button class="nav-button" data-page="support" title="الدعم الفني"><span class="nav-icon"><i class="fa-solid fa-circle-question"></i><span class="nav-badge" id="badge-support"></span></span><span class="nav-label" data-i18n="support">الدعم الفني</span></button>
-				
+							<button class="nav-button" data-page="support" title="الدعم الفني"><span class="nav-icon"><i class="fa-solid fa-circle-question"></i><span class="nav-badge" id="badge-support"></span></span><span class="nav-label" data-i18n="support">الدعم الفني</span></button>
 				<button class="nav-button" data-page="profile" title="الملف الشخصي"><span class="nav-icon"><i class="fa-solid fa-user"></i></span><span class="nav-label" data-i18n="profile">الملف الشخصي</span></button>
+								<button class="nav-button" data-page="dashboard" title="لوحة التحكم"><span class="nav-icon"><i class="fa-solid fa-table-columns"></i></span><span class="nav-label" data-i18n="dashboard">لوحة التحكم</span></button>
+
 			</nav>
 
 			<div class="sidebar-footer">
@@ -1347,6 +1352,7 @@
 		let currentPage = "home";
 		let currentLanguage = localStorage.getItem("dashboardLanguage") || "ar";
 		let libraryPagesListener = null;
+		let ministerialPagesListener = null;
 		let userDataListener = null;
 		let pageHistory = [];
 
@@ -1435,6 +1441,7 @@
 				document.getElementById("welcomeMessage").textContent = `أهلًا بك ${userData.name || "في منصتك الصحية"}`;
 				updateUserBadge(userData);
 				await loadLibraryPages();
+				await loadMinisterialPages();
 				setupLiveRefresh();
 				applyLanguage();
 				renderPage("home");
@@ -1461,10 +1468,12 @@
 			articles: { title: "مقالات", description: "اقرأ أحدث المقالات المبسطة في التوعية والطب الوقائي.", tag: "اقرأ وتعلّم", icon: "▤", metric: "36", metricLabel: "مقالًا منشورًا", feature: "المعلومة الصحيحة قرار أذكى", featureDescription: "مقالات واضحة ومبسطة تساعدك على اتخاذ قرارات صحية أفضل.", actions: [] },
 			dashboard: { title: "لوحة التحكم", description: "أدر تفضيلاتك وتابع نشاطك داخل المنصة.", tag: "تحكم كامل", icon: "▦", metric: "100%", metricLabel: "حسابك تحت سيطرتك", feature: "نظّم تجربتك", featureDescription: "تابع نشاطك واضبط تفضيلاتك من لوحة واحدة سهلة الاستخدام.", actions: [] },
 			support: { title: "الدعم الفني", description: "نحن هنا لمساعدتك في أي مشكلة تواجهك داخل المنصة.", tag: "نحن معك", icon: "?", metric: "24/7", metricLabel: "دعم ومساعدة", feature: "لا تحمل المشكلة وحدك", featureDescription: "أرسل استفسارك وسنساعدك للوصول إلى الحل المناسب.", actions: [] },
-			profile: { title: "الملف الشخصي", description: "راجع بيانات حسابك وتأكد من تحديث معلوماتك.", tag: "بياناتك", icon: "♙", metric: "آمن", metricLabel: "ملفك الشخصي", feature: "ملفك يعكس رحلتك", featureDescription: "راجع معلوماتك الشخصية واجعل تجربتك داخل المنصة أكثر ملاءمة لك.", actions: [] }
+			profile: { title: "الملف الشخصي", description: "راجع بيانات حسابك وتأكد من تحديث معلوماتك.", tag: "بياناتك", icon: "♙", metric: "آمن", metricLabel: "ملفك الشخصي", feature: "ملفك يعكس رحلتك", featureDescription: "راجع معلوماتك الشخصية واجعل تجربتك داخل المنصة أكثر ملاءمة لك.", actions: [] },
+			ministerial: { title: "منشورات وزارية", description: "اطلع على الملفات والمنشورات الرسمية المتاحة لحسابك.", tag: "محتوى رسمي", icon: "▤", metric: "رسمي", metricLabel: "منشورات وزارية", feature: "المصدر الرسمي في مكان واحد", featureDescription: "تصفح المنشورات والملفات الوزارية التي خصصها لك الأدمن.", actions: [] }
 		};
 
 		let libraryPages = [];
+		let ministerialPages = [];
 		let articles = [];
 		let supportTickets = [];
 		let supportSelectedTicketId = null;
@@ -1475,7 +1484,7 @@
 		const recordedMeetingAttendance = new Set();
 
 		function applyGeneralPagePermissions() {
-			const generalPageButtons = [...document.querySelectorAll(".side-nav .nav-button")].filter((button) => button.dataset.page && !button.dataset.page.startsWith("library:"));
+			const generalPageButtons = [...document.querySelectorAll(".side-nav .nav-button")].filter((button) => button.dataset.page && !button.dataset.page.startsWith("library:") && !button.dataset.page.startsWith("ministerial:"));
 			const hasAllowedPages = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedPages");
 			const hasLegacyAllowedPages = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedLibraryPages");
 			const allowedPages = Array.isArray(activeUserData?.allowedPages)
@@ -1488,11 +1497,16 @@
 
 			const libraryToggle = document.getElementById("libraryToggle");
 			const libraryItems = document.getElementById("libraryItems");
+			const ministerialToggle = document.getElementById("ministerialToggle");
+			const ministerialItems = document.getElementById("ministerialItems");
 			const hasLibrarySelection = Array.isArray(activeUserData?.allowedPages) ? activeUserData.allowedPages.includes("library") : false;
 			const hasLegacyLibraryAccess = Array.isArray(activeUserData?.allowedLibraryPages) ? activeUserData.allowedLibraryPages.filter(Boolean).length > 0 : false;
 			const showLibrarySection = hasLibrarySelection || hasLegacyLibraryAccess;
 			libraryToggle.style.display = showLibrarySection ? "" : "none";
 			libraryItems.style.display = showLibrarySection ? "" : "none";
+			const showMinisterial = hasAllowedPages ? visiblePages.includes("ministerial") : !hasLegacyAllowedPages;
+			if (ministerialToggle) ministerialToggle.style.display = showMinisterial ? "" : "none";
+			if (ministerialItems) ministerialItems.style.display = showMinisterial ? "" : "none";
 		}
 
 		async function loadLibraryPages() {
@@ -1519,9 +1533,40 @@
 			}
 		}
 
+		async function loadMinisterialPages() {
+			try {
+				const snapshot = await getDocs(query(collection(db, "ministerialPublications"), orderBy("createdAt", "asc")));
+				const allowed = Array.isArray(activeUserData?.allowedMinisterialPages) ? activeUserData.allowedMinisterialPages.filter(Boolean) : [];
+				const hasAllowList = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedMinisterialPages");
+				ministerialPages = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })).filter((page) => {
+					const pageUsers = Array.isArray(page.downloadAllowedUsers) ? page.downloadAllowedUsers : [];
+					const pageAllowed = !pageUsers.length || pageUsers.includes(sessionUser.uid) || pageUsers.includes(sessionUser.email) || pageUsers.includes(activeUserData?.email);
+					return (!hasAllowList || allowed.includes(page.id)) && pageAllowed;
+				});
+			} catch (error) {
+				console.warn("تعذر تحميل المنشورات الوزارية:", error);
+				ministerialPages = [];
+			}
+			renderMinisterialNavigation();
+		}
+
+		function renderMinisterialNavigation() {
+			const ministerialItems = document.getElementById("ministerialItems");
+			const ministerialToggle = document.getElementById("ministerialToggle");
+			if (!ministerialItems || !ministerialToggle) return;
+			ministerialItems.innerHTML = ministerialPages.length
+				? ministerialPages.map((page, index) => `<button class="nav-button" data-page="ministerial:${escapeHtml(page.id)}" data-number="${String(index + 1).padStart(2, "0")}" title="${escapeHtml(page.name || "منشور وزاري")}"><span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span><span class="nav-label">${escapeHtml(page.name || "منشور وزاري")}</span></button>`).join("")
+				: "<span class=\"library-loading\">لا توجد منشورات وزارية متاحة لهذا المستخدم.</span>";
+			ministerialToggle.style.display = ministerialPages.length ? "" : "none";
+			ministerialItems.style.display = ministerialPages.length ? "" : "none";
+		}
+
 		function setupLiveRefresh() {
 			if (libraryPagesListener) {
 				libraryPagesListener();
+			}
+			if (ministerialPagesListener) {
+				ministerialPagesListener();
 			}
 			if (userDataListener) {
 				userDataListener();
@@ -1554,6 +1599,19 @@
 				console.warn("تعذر الاستماع إلى صفحات المكتبة:", error);
 			});
 
+			ministerialPagesListener = onSnapshot(query(collection(db, "ministerialPublications"), orderBy("createdAt", "asc")), (snapshot) => {
+				const allowed = Array.isArray(activeUserData?.allowedMinisterialPages) ? activeUserData.allowedMinisterialPages.filter(Boolean) : [];
+				const hasAllowList = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedMinisterialPages");
+				ministerialPages = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })).filter((page) => {
+					const pageUsers = Array.isArray(page.downloadAllowedUsers) ? page.downloadAllowedUsers : [];
+					return (!hasAllowList || allowed.includes(page.id)) && (!pageUsers.length || pageUsers.includes(sessionUser.uid) || pageUsers.includes(sessionUser.email) || pageUsers.includes(activeUserData?.email));
+				});
+				renderMinisterialNavigation();
+				if (currentPage === "ministerial" || currentPage.startsWith("ministerial:")) renderPage(currentPage);
+			}, (error) => {
+				console.warn("تعذر الاستماع إلى المنشورات الوزارية:", error);
+			});
+
 			userDataListener = onSnapshot(doc(db, "users", sessionUser.uid), (snapshot) => {
 				if (!snapshot.exists()) {
 					sessionStorage.removeItem(sessionKey);
@@ -1569,6 +1627,7 @@
 				activeUserData = userData;
 				applyGeneralPagePermissions();
 				loadLibraryPages().catch((error) => console.warn("تعذر تحديث صلاحيات المكتبة:", error));
+				loadMinisterialPages().catch((error) => console.warn("تعذر تحديث المنشورات الوزارية:", error));
 				renderPage(currentPage);
 			}, (error) => {
 				console.warn("تعذر الاستماع إلى بيانات المستخدم:", error);
@@ -1798,9 +1857,9 @@
 			return allowedUsers.some((value) => value === currentUid || value === activeUserData?.uid || value === activeUserData?.email || value === sessionUser?.email);
 		}
 
-		function renderLibraryPage(panel, pageId) {
-			const page = libraryPages.find((item) => item.id === pageId);
-			if (!page) { panel.innerHTML = `<div class="empty-state">صفحة المكتبة غير متاحة حاليًا.</div>`; return; }
+		function renderLibraryPage(panel, pageId, pages = libraryPages, sectionLabel = "المكتبة") {
+			const page = pages.find((item) => item.id === pageId);
+			if (!page) { panel.innerHTML = `<div class="empty-state">صفحة ${sectionLabel} غير متاحة حاليًا.</div>`; return; }
 			const visibleFiles = Array.isArray(page.files)
 				? page.files.filter((file) => canUserViewLibraryFile(page, file))
 				: [];
@@ -1817,7 +1876,7 @@
 			panel.innerHTML = `
 				<div class="panel-heading">
 					<div class="panel-icon" aria-hidden="true">▤</div>
-					<div><span class="panel-tag">المكتبة</span><h2>${escapeHtml(page.name || "صفحة مكتبة")}</h2><p>${escapeHtml(page.description || "لا يوجد وصف لهذه الصفحة.")}</p></div>
+					<div><span class="panel-tag">${sectionLabel}</span><h2>${escapeHtml(page.name || `صفحة ${sectionLabel}`)}</h2><p>${escapeHtml(page.description || `لا يوجد وصف لهذه الصفحة.`)}</p></div>
 				</div>
 				<div class="library-toolbar">
 					<div class="library-file-count" id="libraryFileCount">عدد الملفات: <span>${visibleFiles.length}</span></div>
@@ -1847,6 +1906,16 @@
 			grid.querySelectorAll("[data-library-file]").forEach((button) => {
 				button.addEventListener("click", () => openLibraryFile(visibleFiles[Number(button.dataset.libraryFile)], page));
 			});
+		}
+
+		function renderMinisterialPage(panel, pageId) {
+			renderLibraryPage(panel, pageId, ministerialPages, "المنشورات الوزارية");
+		}
+
+		function renderMinisterialLanding(panel) {
+			panel.innerHTML = `
+				<div class="panel-heading"><div class="panel-icon" aria-hidden="true">▤</div><div><span class="panel-tag">محتوى رسمي</span><h2>منشورات وزارية</h2><p>اختر قسمًا لعرض المنشورات والملفات الرسمية المتاحة لك.</p></div></div>
+				<div class="library-file-grid">${ministerialPages.map((page) => `<button type="button" class="library-file" data-page="ministerial:${escapeHtml(page.id)}"><strong>${escapeHtml(page.name || "منشور وزاري")}</strong><small>${escapeHtml(page.description || "لا يوجد وصف")}</small><span class="library-file-count">${Array.isArray(page.files) ? page.files.length : 0} ملف</span></button>`).join("") || `<div class="empty-state">لا توجد منشورات وزارية متاحة لحسابك حاليًا.</div>`}</div>`;
 		}
 
 		function downloadLibraryFile(file) {
@@ -1997,6 +2066,7 @@
                     <option value="articles">المقالات</option>
                     <option value="news">الأخبار</option>
                     <option value="library">المكتبة</option>
+					<option value="ministerial">منشورات وزارية</option>
                     <option value="tests">الاختبارات</option>
                     <option value="meetings">الاجتماعات</option>
                 </select>
@@ -2098,6 +2168,10 @@
 					matches.push(...libraryMatches);
 				}
 
+				if (category === "all" || category === "ministerial") {
+					pushMatches(ministerialPages, "ministerial", (item) => `${item.name || ""} ${item.description || ""}`.trim(), "▤");
+				}
+
 				if (category === "all" || category === "tests") {
 					pushMatches(testsList, "tests", (item) => `${item.title || ""} ${item.description || ""}`.trim(), "✓");
 				}
@@ -2143,6 +2217,10 @@
 						}
 						if (match.category === "meetings") {
 							renderPage("meetings");
+							return;
+						}
+						if (match.category === "ministerial") {
+							renderPage("ministerial");
 							return;
 						}
 						if (match.action) match.action();
@@ -2374,7 +2452,7 @@
 						</div>
 						<div class="test-question-nav">
 							<button type="button" id="prevQuestion" class="test-prev-btn" ${currentQuestionIndex === 0 ? "disabled" : ""}>السابق</button>
-							<button type="button" id="nextQuestion" class="test-next-btn">${currentQuestionIndex === test.questions.length - 1 ? "إنهاء الاختبار" : "التالي"}</button>
+							<button type="button" id="nextQuestion" class="test-next-btn" ${currentAnswers[currentQuestionIndex] === null || currentAnswers[currentQuestionIndex] === undefined ? "disabled" : ""}>${currentQuestionIndex === test.questions.length - 1 ? "إنهاء الاختبار" : "التالي"}</button>
 						</div>
 					</div>`;
 				modal.querySelectorAll(".test-option-btn").forEach((button) => {
@@ -2402,6 +2480,10 @@
 				}
 				const nextQuestion = modal.querySelector("#nextQuestion");
 				nextQuestion.addEventListener("click", async () => {
+					if (currentAnswers[currentQuestionIndex] === null || currentAnswers[currentQuestionIndex] === undefined) {
+						alert("اختر إجابة أولًا قبل الانتقال للسؤال التالي.");
+						return;
+					}
 					if (currentQuestionIndex < test.questions.length - 1) {
 						currentQuestionIndex += 1;
 						await updateDoc(doc(db, "testAttempts", attempt.id), {
@@ -2434,6 +2516,8 @@
 					modal.remove();
 				}
 			});
+			modal.addEventListener("contextmenu", (event) => event.preventDefault());
+			modal.addEventListener("copy", (event) => event.preventDefault());
 			renderQuestion();
 		}
 
@@ -2442,7 +2526,8 @@
 			modal.dataset.finished = "true";
 			const questions = Array.isArray(test.questions) ? test.questions : [];
 			const correctCount = questions.reduce((count, question, index) => {
-				return count + (Number(currentAnswers[index]) === Number(question.correctIndex) ? 1 : 0);
+				const answer = currentAnswers[index];
+				return count + (answer !== null && answer !== undefined && Number(answer) === Number(question.correctIndex) ? 1 : 0);
 			}, 0);
 			const wrongQuestions = questions
 				.filter((question, index) => Number(currentAnswers[index]) !== Number(question.correctIndex))
@@ -3076,9 +3161,9 @@
 						<form class="profile-form" id="profileDetailsForm">
 							<h3>بيانات الحساب</h3>
 							<div class="profile-field"><label for="profilePhone">رقم الهاتف (غير قابل للتعديل)</label><input id="profilePhone" value="${escapeHtml(user.phone || "غير مسجل")}" readonly></div>
-							<div class="profile-field"><label for="profileGovernorate">المحافظة</label><select id="profileGovernorate"><option value="">اختر المحافظة</option>${governorateOptions(governorate)}</select></div>
-							<div class="profile-field"><label for="profileJobTitle">الوظيفة</label><input id="profileJobTitle" value="${escapeHtml(jobTitle)}" placeholder="اكتب وظيفتك الحالية"></div>
-							<div class="profile-field"><label for="profileWorkplace">مكان العمل</label><input id="profileWorkplace" value="${escapeHtml(workplace)}" placeholder="اكتب مكان عملك"></div>
+							<div class="profile-field"><label for="profileGovernorate">المحافظة(اجباري)</label><select id="profileGovernorate" required><option value="">اختر المحافظة</option>${governorateOptions(governorate)}</select></div>
+							<div class="profile-field"><label for="profileJobTitle">الوظيفة (اجباري)</label><input id="profileJobTitle" value="${escapeHtml(jobTitle)}" placeholder="اكتب وظيفتك الحالية" required></div>
+							<div class="profile-field"><label for="profileWorkplace"> مكان العمل (اجباري)</label><input id="profileWorkplace" value="${escapeHtml(workplace)}" placeholder="اكتب مكان عملك" required></div>
 							<button type="submit">حفظ البيانات</button><p class="form-message" id="detailsMessage"></p>
 						</form>
 						<form class="profile-form password-box" id="passwordForm">
@@ -3392,6 +3477,18 @@
 				applyLanguage();
 				return;
 			}
+			if (page === "ministerial") {
+				document.getElementById("pageTitle").textContent = translateText(content.title);
+				renderMinisterialLanding(document.getElementById("contentPanel"));
+				applyLanguage();
+				return;
+			}
+			if (page.startsWith("ministerial:")) {
+				document.getElementById("pageTitle").textContent = translateText(ministerialPages.find((item) => item.id === page.slice(12))?.name || "منشورات وزارية");
+				renderMinisterialPage(document.getElementById("contentPanel"), page.slice(12));
+				applyLanguage();
+				return;
+			}
 			const { title, description, actions, tag, icon, metric, metricLabel, feature, featureDescription } = content;
 			document.getElementById("pageTitle").textContent = translateText(title);
 			const panel = document.getElementById("contentPanel");
@@ -3544,10 +3641,15 @@
 				libraryToggle.classList.toggle("open", isOpen);
 				libraryToggle.setAttribute("aria-expanded", String(isOpen));
 			});
+			ministerialToggle?.addEventListener("click", () => {
+				const isOpen = ministerialItems.classList.toggle("open");
+				ministerialToggle.classList.toggle("open", isOpen);
+				ministerialToggle.setAttribute("aria-expanded", String(isOpen));
+			});
 
 			sidebar?.addEventListener("click", (event) => {
 				const button = event.target.closest("[data-page]");
-				if (!button || button.closest("#libraryToggle")) return;
+				if (!button || button.closest("#libraryToggle, #ministerialToggle")) return;
 				event.preventDefault();
 				event.stopPropagation();
 				document.querySelectorAll("[data-page]").forEach((item) => item.classList.remove("active"));
@@ -3654,6 +3756,10 @@
 					badgeLibrary.style.display = libraryFileCount > 0 ? 'block' : 'none';
 					if (libraryFileCount > 0) addNotification('library', 'ملفات جديدة', `تم تحميل ${libraryFileCount} ملف في المكتبة`, 'library', 'fa-folder-open');
 				}
+				const badgeMinisterial = document.getElementById('badge-ministerial');
+				const ministerialFileCount = ministerialPages.reduce((total, page) => total + (Array.isArray(page.files) ? page.files.length : 0), 0);
+				if (badgeMinisterial) badgeMinisterial.style.display = ministerialFileCount > 0 ? 'block' : 'none';
+				if (ministerialFileCount > 0) addNotification('ministerial', 'منشورات وزارية جديدة', `لديك ${ministerialFileCount} ملف رسمي متاح`, 'ministerial', 'fa-building-columns');
 				
 				const hasNotification = [...document.querySelectorAll('.nav-badge')].some((badge) => getComputedStyle(badge).display !== 'none');
 				const headerNotificationDot = document.getElementById("headerNotificationDot");
