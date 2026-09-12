@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>إدارة المكتبة | Preventa Plus</title>
+  <title>إدارة المحتوى | Preventa Plus</title>
       <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 
   <style>
@@ -66,7 +66,7 @@
   <main>
     <header>
       <div>
-        <h1>إدارة المكتبة</h1>
+        <h1 id="contentAdminTitle">إدارة المكتبة</h1>
         <p class="muted" id="adminStatus">وضع التشغيل المباشر (بدون حماية)</p>
       </div>
     </header>
@@ -76,7 +76,7 @@
       <div class="side-forms">
         <!-- 1. نموذج إنشاء الصفحة -->
         <section class="card">
-          <h2>1. إنشاء صفحة مكتبة جديدة</h2>
+          <h2 id="createSectionTitle">1. إنشاء صفحة مكتبة جديدة</h2>
           <form id="createPageForm">
             <div class="field"><label for="pageName">اسم الصفحة</label><input id="pageName" type="text" required maxlength="80" placeholder="مثال: قسم الكيمياء"></div>
             <div class="field"><label for="pageDescription">وصف الصفحة</label><textarea id="pageDescription" maxlength="500" placeholder="اكتب وصفًا مختصرًا"></textarea></div>
@@ -87,7 +87,7 @@
 
         <!-- 2. نموذج رفع الملفات لصفحة موجودة -->
         <section class="card">
-          <h2>2. إضافة ملفات للصفحة</h2>
+          <h2 id="uploadSectionTitle">2. إضافة ملفات للصفحة</h2>
           <form id="uploadFilesForm">
             <div class="field">
               <label for="pageSelect">اختر الصفحة</label>
@@ -110,7 +110,7 @@
 
       <!-- 3. عرض الصفحات والملفات -->
       <section class="card">
-        <h2>3. صفحات المكتبة ومحتوياتها</h2>
+        <h2 id="listSectionTitle">3. صفحات المكتبة ومحتوياتها</h2>
         <div class="pages" id="pagesList">جاري تحميل البيانات...</div>
       </section>
     </div>
@@ -149,6 +149,9 @@
     const db = getFirestore(app); 
     const cloudinaryCloudName = "dorrpdul5";
     const cloudinaryUploadPreset = "ml_default";
+    const isMinisterialMode = new URLSearchParams(window.location.search).get("type") === "ministerial";
+    const contentCollection = isMinisterialMode ? "ministerialPublications" : "libraryPages";
+    const contentLabel = isMinisterialMode ? "المنشورات الوزارية" : "المكتبة";
     
     const escapeHtml = (value) => String(value || "").replace(/[&<>'"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
     const maxFileSize = 200 * 1024 * 1024;
@@ -160,6 +163,13 @@
     let allUsers = [];
     let libraryPagesCache = [];
 
+    document.title = `إدارة ${contentLabel} | Preventa Plus`;
+    document.getElementById("contentAdminTitle").textContent = `إدارة ${contentLabel}`;
+    document.getElementById("createSectionTitle").textContent = `1. إنشاء صفحة ${contentLabel}`;
+    document.getElementById("uploadSectionTitle").textContent = `2. إضافة ملفات لصفحة ${contentLabel}`;
+    document.getElementById("listSectionTitle").textContent = `3. صفحات ${contentLabel} ومحتوياتها`;
+    document.getElementById("pageName").placeholder = isMinisterialMode ? "مثال: منشورات وزارة الصحة" : "مثال: قسم الكيمياء";
+
     // دالة عرض الصفحات في القائمة وفي قائمة الاختيار (Dropdown)
     function renderPages(snapshot) {
       libraryPagesCache = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
@@ -170,7 +180,7 @@
       let selectOptions = '<option value="">-- اختر الصفحة --</option>';
 
       if (snapshot.docs.length === 0) {
-        box.innerHTML = "لا توجد صفحات مكتبة بعد.";
+        box.innerHTML = `لا توجد صفحات ${contentLabel} بعد.`;
         select.innerHTML = '<option value="">لا توجد صفحات متاحة</option>';
         return;
       }
@@ -280,7 +290,7 @@
       box.querySelectorAll("[data-delete]").forEach((button) => button.addEventListener("click", async () => { 
         if (!confirm("هل أنت متأكد من حذف الصفحة بالكامل؟ سيتم حذف بياناتها من قاعدة البيانات.")) return; 
         button.textContent = "جاري الحذف...";
-        await deleteDoc(doc(db, "libraryPages", button.dataset.delete)); 
+        await deleteDoc(doc(db, contentCollection, button.dataset.delete));
         await loadPages(); 
       }));
 
@@ -297,7 +307,7 @@
         if (!confirm(`هل أنت متأكد من حذف الملف المحدد؟\n${currentFiles[fileIndex].name || "الملف"}`)) return;
 
         const updatedFiles = currentFiles.filter((_, index) => index !== fileIndex);
-        await updateDoc(doc(db, "libraryPages", pageId), { files: updatedFiles });
+        await updateDoc(doc(db, contentCollection, pageId), { files: updatedFiles });
         await loadPages();
       }));
     }
@@ -353,7 +363,7 @@
         input.addEventListener("change", async () => {
           const selectedUsers = [...list.querySelectorAll("input:checked")].map((item) => item.dataset.userId);
           try {
-            await updateDoc(doc(db, "libraryPages", pageId), { downloadAllowedUsers: selectedUsers });
+            await updateDoc(doc(db, contentCollection, pageId), { downloadAllowedUsers: selectedUsers });
             await loadPages();
             renderDownloadUsersList(pageId);
           } catch (error) {
@@ -421,7 +431,7 @@
             ...currentFiles[fileIndex],
             downloadAllowedUsers: Array.from(new Set([...selectedUserIds, ...manualEmails]))
           };
-          await updateDoc(doc(db, "libraryPages", pageId), { files: currentFiles });
+          await updateDoc(doc(db, contentCollection, pageId), { files: currentFiles });
           await loadPages();
           renderFilePermissionsPanel(pageId, fileIndex);
           const updatedPanel = document.querySelector(`[data-file-panel-page-id="${pageId}"][data-file-panel-index="${fileIndex}"]`);
@@ -444,7 +454,7 @@
         if (!currentAllowedUsers.includes(email)) {
           currentAllowedUsers.push(email);
           currentFiles[fileIndex] = { ...currentFiles[fileIndex], downloadAllowedUsers: currentAllowedUsers };
-          await updateDoc(doc(db, "libraryPages", pageId), { files: currentFiles });
+          await updateDoc(doc(db, contentCollection, pageId), { files: currentFiles });
           await loadPages();
         }
       });
@@ -452,11 +462,11 @@
 
     async function loadPages() { 
       try {
-        const querySnapshot = await getDocs(query(collection(db, "libraryPages"), orderBy("createdAt", "desc")));
+        const querySnapshot = await getDocs(query(collection(db, contentCollection), orderBy("createdAt", "desc")));
         renderPages(querySnapshot);
       } catch (error) {
-        console.error("تعذر تحميل صفحات المكتبة:", error);
-        document.getElementById("pagesList").textContent = "تعذر تحميل المكتبة. تأكد من تسجيل دخول الأدمن ونشر قواعد Firestore.";
+        console.error(`تعذر تحميل صفحات ${contentLabel}:`, error);
+        document.getElementById("pagesList").textContent = `تعذر تحميل ${contentLabel}. تأكد من تسجيل دخول الأدمن ونشر قواعد Firestore.`;
       }
     }
 
@@ -490,7 +500,7 @@
         message.textContent = "جاري إنشاء الصفحة...";
         message.style.color = "var(--navy)";
         
-        await addDoc(collection(db, "libraryPages"), { 
+        await addDoc(collection(db, contentCollection), {
           name, 
           description, 
           files: [], 
@@ -526,7 +536,7 @@
       btn.disabled = true;
       
       try {
-        await updateDoc(doc(db, "libraryPages", id), { name, description });
+        await updateDoc(doc(db, contentCollection, id), { name, description });
         document.getElementById("editModal").classList.remove("open");
         await loadPages(); // إعادة تحميل القائمة لتحديث العرض
       } catch (error) {
@@ -588,7 +598,7 @@
           const formData = new FormData();
           formData.append("file", file);
           formData.append("upload_preset", cloudinaryUploadPreset);
-          formData.append("folder", "preventa-library");
+          formData.append("folder", isMinisterialMode ? "preventa-ministerial-publications" : "preventa-library");
           const resourceType = file.type.startsWith("image/") ? "image" : (file.type.startsWith("video/") ? "video" : "raw");
           const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/${resourceType}/upload`, { method: "POST", body: formData });          const result = await response.json();
           if (!response.ok || !result.secure_url) throw new Error(result.error?.message || "فشل رفع الملف إلى Cloudinary.");
@@ -604,7 +614,7 @@
         }
         
         // تحديث مستند الصفحة لإضافة الملفات الجديدة دون مسح القديمة
-        const pageRef = doc(db, "libraryPages", pageId);
+        const pageRef = doc(db, contentCollection, pageId);
         await updateDoc(pageRef, {
           files: arrayUnion(...uploadedFiles)
         });
