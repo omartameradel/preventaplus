@@ -43,6 +43,10 @@
     .permission-input-row { display:flex; gap:8px; margin-top:6px; }
     .permission-input-row input { flex:1; }
     .permission-add-button { padding:9px 12px; border:0; border-radius:8px; background:var(--blue); color:#fff; cursor:pointer; font:inherit; }
+    .permission-actions { display:flex; gap:8px; margin-top:8px; }
+    .permission-actions button { flex:1; padding:9px 12px; border:1px solid var(--line); border-radius:8px; cursor:pointer; font:inherit; font-weight:bold; }
+    .permission-select-all { background:#fff; color:var(--navy); }
+    .permission-save { background:var(--blue); color:#fff; border-color:var(--blue) !important; }
     .user-select-box { display:grid; gap:8px; max-height:220px; overflow:auto; padding:8px; border:1px solid var(--line); border-radius:10px; background:#f8fbfc; }
     .user-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; }
     .user-row input { width:auto; margin:0; }
@@ -377,6 +381,10 @@
           <input type="text" class="file-permission-email" data-page-id="${pageId}" data-file-index="${fileIndex}" placeholder="أضف بريد مستخدم يدويًا">
           <button type="button" class="permission-add-button" data-page-id="${pageId}" data-file-index="${fileIndex}">إضافة</button>
         </div>
+        <div class="permission-actions">
+          <button type="button" class="permission-select-all">تحديد الجميع</button>
+          <button type="button" class="permission-save">حفظ</button>
+        </div>
         <div class="user-select-box file-user-box">
           ${allUsers.map((user) => {
             const checked = allowedUsers.includes(user.id) || allowedUsers.includes(user.email);
@@ -393,23 +401,37 @@
         </div>
       `;
 
-      panel.querySelectorAll("input[type=checkbox]").forEach((input) => {
-        input.addEventListener("change", async () => {
-          const page = libraryPagesCache.find((item) => item.id === pageId);
-          const currentFiles = Array.isArray(page?.files) ? [...page.files] : [];
-          const existingAllowedUsers = normalizeAllowedUsers(currentFiles[fileIndex]?.downloadAllowedUsers);
-          const manualEmails = existingAllowedUsers.filter((value) => !allUsers.some((user) => user.id === value || user.email === value));
-          const checkedUsers = allUsers.filter((user) => panel.querySelector(`input[data-user-id="${user.id}"]:checked`));
-          const selectedUserIds = checkedUsers.map((user) => user.id);
+      panel.querySelector(".permission-select-all")?.addEventListener("click", () => {
+        panel.querySelectorAll(".file-user-box input[type=checkbox]").forEach((input) => input.checked = true);
+      });
 
+      panel.querySelector(".permission-save")?.addEventListener("click", async (event) => {
+        const page = libraryPagesCache.find((item) => item.id === pageId);
+        const currentFiles = Array.isArray(page?.files) ? [...page.files] : [];
+        const existingAllowedUsers = normalizeAllowedUsers(currentFiles[fileIndex]?.downloadAllowedUsers);
+        const manualEmails = existingAllowedUsers.filter((value) => !allUsers.some((user) => user.id === value || user.email === value));
+        const checkedUsers = allUsers.filter((user) => panel.querySelector(`input[data-user-id="${user.id}"]:checked`));
+        const selectedUserIds = checkedUsers.map((user) => user.id);
+        const saveButton = event.currentTarget;
+
+        saveButton.disabled = true;
+        saveButton.textContent = "جاري الحفظ...";
+        try {
           currentFiles[fileIndex] = {
             ...currentFiles[fileIndex],
             downloadAllowedUsers: Array.from(new Set([...selectedUserIds, ...manualEmails]))
           };
-
           await updateDoc(doc(db, "libraryPages", pageId), { files: currentFiles });
           await loadPages();
-        });
+          renderFilePermissionsPanel(pageId, fileIndex);
+          const updatedPanel = document.querySelector(`[data-file-panel-page-id="${pageId}"][data-file-panel-index="${fileIndex}"]`);
+          if (updatedPanel) updatedPanel.hidden = false;
+        } catch (error) {
+          console.error("تعذر حفظ صلاحيات الملف:", error);
+          saveButton.disabled = false;
+          saveButton.textContent = "حفظ";
+          alert("تعذر حفظ صلاحيات الملف.");
+        }
       });
 
       panel.querySelector(".permission-add-button")?.addEventListener("click", async () => {
