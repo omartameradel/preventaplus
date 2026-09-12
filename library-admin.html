@@ -149,9 +149,11 @@
     const db = getFirestore(app); 
     const cloudinaryCloudName = "dorrpdul5";
     const cloudinaryUploadPreset = "ml_default";
-    const isMinisterialMode = new URLSearchParams(window.location.search).get("type") === "ministerial";
-    const contentCollection = isMinisterialMode ? "ministerialPublications" : "libraryPages";
-    const contentLabel = isMinisterialMode ? "المنشورات الوزارية" : "المكتبة";
+    const contentType = new URLSearchParams(window.location.search).get("type") || "library";
+    const isMinisterialMode = contentType === "ministerial";
+    const isFormsMode = contentType === "forms";
+    const contentCollection = isMinisterialMode ? "ministerialPublications" : isFormsMode ? "formsPages" : "libraryPages";
+    const contentLabel = isMinisterialMode ? "المنشورات الوزارية" : isFormsMode ? "النماذج" : "المكتبة";
     
     const escapeHtml = (value) => String(value || "").replace(/[&<>'"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
     const maxFileSize = 200 * 1024 * 1024;
@@ -168,7 +170,7 @@
     document.getElementById("createSectionTitle").textContent = `1. إنشاء صفحة ${contentLabel}`;
     document.getElementById("uploadSectionTitle").textContent = `2. إضافة ملفات لصفحة ${contentLabel}`;
     document.getElementById("listSectionTitle").textContent = `3. صفحات ${contentLabel} ومحتوياتها`;
-    document.getElementById("pageName").placeholder = isMinisterialMode ? "مثال: منشورات وزارة الصحة" : "مثال: قسم الكيمياء";
+    document.getElementById("pageName").placeholder = isMinisterialMode ? "مثال: منشورات وزارة الصحة" : isFormsMode ? "مثال: نماذج التسجيل" : "مثال: قسم الكيمياء";
 
     // دالة عرض الصفحات في القائمة وفي قائمة الاختيار (Dropdown)
     function renderPages(snapshot) {
@@ -598,7 +600,7 @@
           const formData = new FormData();
           formData.append("file", file);
           formData.append("upload_preset", cloudinaryUploadPreset);
-          formData.append("folder", isMinisterialMode ? "preventa-ministerial-publications" : "preventa-library");
+          formData.append("folder", isMinisterialMode ? "preventa-ministerial-publications" : isFormsMode ? "preventa-forms" : "preventa-library");
           const resourceType = file.type.startsWith("image/") ? "image" : (file.type.startsWith("video/") ? "video" : "raw");
           const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/${resourceType}/upload`, { method: "POST", body: formData });          const result = await response.json();
           if (!response.ok || !result.secure_url) throw new Error(result.error?.message || "فشل رفع الملف إلى Cloudinary.");
