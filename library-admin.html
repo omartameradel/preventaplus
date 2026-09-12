@@ -101,6 +101,14 @@
               <div id="downloadUsersList" class="user-select-box">اختر صفحة أولاً.</div>
               <p class="muted" style="margin:0;">اترك القائمة فارغة للسماح للجميع بمشاهدة الملفات.</p>
             </div>
+            <div class="field">
+              <label for="fileTitle">عنوان الملف</label>
+              <input id="fileTitle" type="text" maxlength="80" placeholder="عنوان الملف">
+            </div>
+            <div class="field">
+              <label for="fileDescription">وصف الملف</label>
+              <textarea id="fileDescription" maxlength="500" placeholder="اكتب وصفًا مختصرًا للملف"></textarea>
+            </div>
             <div class="field"><label for="pageFiles">الملفات المراد رفعها</label><input id="pageFiles" type="file" multiple required></div>
             <button class="primary" type="submit">بدء رفع الملفات</button>
             <p class="message" id="uploadMessage"></p>
@@ -133,6 +141,29 @@
         <div class="modal-actions">
           <button class="primary" type="submit">حفظ التعديلات</button>
           <button class="back" type="button" id="closeEditModal" style="background: var(--muted)">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة تعديل ملف منفصلة -->
+  <div id="editFileModal" class="modal">
+    <div class="modal-content">
+      <h2>تعديل عنوان ووصف الملف</h2>
+      <form id="editFileForm">
+        <input type="hidden" id="editFilePageId">
+        <input type="hidden" id="editFileIndex">
+        <div class="field">
+          <label for="editFileTitle">عنوان الملف</label>
+          <input id="editFileTitle" type="text" required maxlength="80">
+        </div>
+        <div class="field">
+          <label for="editFileDescription">وصف الملف</label>
+          <textarea id="editFileDescription" maxlength="500"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="primary" type="submit">حفظ التعديلات</button>
+          <button class="back" type="button" id="closeEditFileModal" style="background: var(--muted)">إلغاء</button>
         </div>
       </form>
     </div>
@@ -232,6 +263,7 @@
                   <small class="muted">من يمكنه مشاهدة الملف: ${escapeHtml(summary)}</small>
                   <div class="file-actions">
                     <button class="file-permissions-toggle" type="button" data-page-id="${pageId}" data-file-index="${index}">تحديد من يمكنه مشاهدة الملف</button>
+                    <button class="edit-file" type="button" data-page-id="${pageId}" data-file-index="${index}" data-file-title="${escapeHtml(file.title || file.name || "")}" data-file-description="${escapeHtml(file.description || "")}">تعديل العنوان والوصف</button>
                     <button class="delete-file" type="button" data-page-id="${pageId}" data-file-index="${index}">حذف الملف</button>
                   </div>
                   <div class="file-permissions-panel" data-file-panel-page-id="${pageId}" data-file-panel-index="${index}" hidden></div>
@@ -298,6 +330,22 @@
       }));
 
       // تفعيل أزرار حذف الملف المحدد داخل الصفحة
+      box.querySelectorAll(".edit-file").forEach((button) => {
+        button.addEventListener("click", () => {
+          const pageId = button.dataset.pageId;
+          const fileIndex = Number(button.dataset.fileIndex);
+          const page = libraryPagesCache.find((item) => item.id === pageId);
+          const file = Array.isArray(page?.files) ? page.files[fileIndex] : null;
+          if (!file) return;
+
+          document.getElementById("editFilePageId").value = pageId;
+          document.getElementById("editFileIndex").value = String(fileIndex);
+          document.getElementById("editFileTitle").value = file.title || file.name || "";
+          document.getElementById("editFileDescription").value = file.description || "";
+          document.getElementById("editFileModal").classList.add("open");
+        });
+      });
+
       box.querySelectorAll(".delete-file").forEach((button) => button.addEventListener("click", async () => {
         const pageId = button.dataset.pageId;
         const fileIndex = Number(button.dataset.fileIndex);
@@ -527,6 +575,46 @@
       document.getElementById("editModal").classList.remove("open");
     });
 
+    document.getElementById("closeEditFileModal").addEventListener("click", () => {
+      document.getElementById("editFileModal").classList.remove("open");
+    });
+
+    document.getElementById("editFileForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pageId = document.getElementById("editFilePageId").value;
+      const fileIndex = Number(document.getElementById("editFileIndex").value);
+      const title = document.getElementById("editFileTitle").value.trim();
+      const description = document.getElementById("editFileDescription").value.trim();
+      const page = libraryPagesCache.find((item) => item.id === pageId);
+      const currentFiles = Array.isArray(page?.files) ? [...page.files] : [];
+      if (!page || fileIndex < 0 || fileIndex >= currentFiles.length) {
+        alert("تعذر تحديث الملف المطلوب.");
+        return;
+      }
+
+      const btn = e.target.querySelector("button[type='submit']");
+      const originalText = btn.textContent;
+      btn.textContent = "جاري الحفظ...";
+      btn.disabled = true;
+
+      try {
+        currentFiles[fileIndex] = {
+          ...currentFiles[fileIndex],
+          title: title || (currentFiles[fileIndex].name || "ملف"),
+          description
+        };
+        await updateDoc(doc(db, contentCollection, pageId), { files: currentFiles });
+        document.getElementById("editFileModal").classList.remove("open");
+        await loadPages();
+      } catch (error) {
+        console.error("تعذر تعديل بيانات الملف:", error);
+        alert("حدث خطأ أثناء حفظ تعديلات الملف.");
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    });
+
     document.getElementById("editPageForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const id = document.getElementById("editPageId").value;
@@ -566,6 +654,8 @@
       const pageId = document.getElementById("pageSelect").value;
       const filesInput = document.getElementById("pageFiles");
       const files = [...filesInput.files];
+      const fileTitle = document.getElementById("fileTitle").value.trim();
+      const fileDescription = document.getElementById("fileDescription").value.trim();
 
       if (!adminUser) {
         message.textContent = "جارٍ التحقق من صلاحيات الأدمن.";
@@ -608,6 +698,8 @@
           
           uploadedFiles.push({ 
             name: result.original_filename ? `${result.original_filename}${result.format ? `.${result.format}` : ""}` : file.name,
+            title: fileTitle || (result.original_filename ? `${result.original_filename}${result.format ? `.${result.format}` : ""}` : file.name),
+            description: fileDescription,
             type: file.type || result.resource_type || "application/octet-stream", 
             size: result.bytes || file.size, 
             url: result.secure_url,
