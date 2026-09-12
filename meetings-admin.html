@@ -24,6 +24,7 @@
     .user-option img { width:34px; height:34px; border-radius:50%; object-fit:cover; }
     .user-option span { min-width:0; overflow:hidden; } .user-option strong,.user-option small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .user-option small { color:var(--muted); font-size:.7rem; }
     .primary { width:100%; padding:13px; border:0; border-radius:8px; background:var(--blue); color:#fff; cursor:pointer; font:inherit; font-weight:bold; }
+    .secondary { flex:1; padding:13px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--navy); cursor:pointer; font:inherit; font-weight:bold; }
     .message { min-height:20px; margin:10px 0 0; color:var(--muted); font-size:.8rem; }
     .meeting-list { display:grid; gap:11px; }
     .meeting { padding:15px; border:1px solid var(--line); border-radius:11px; background:#fff; }
@@ -44,6 +45,7 @@
       <section class="card">
         <h2>إنشاء جلسة جديدة</h2>
         <form id="meetingForm">
+          <input id="editingMeetingId" type="hidden">
           <div class="field"><label for="meetingTitle">عنوان الاجتماع</label><input id="meetingTitle" type="text" required placeholder="مثال: اجتماع فريق التوعية"></div>
           <div class="field"><label for="meetingRoom">اسم الغرفة الفريد</label><input id="meetingRoom" type="text" required placeholder="room-2026-health-team"></div>
           <div class="field"><label for="meetingDate">موعد الاجتماع</label><input id="meetingDate" type="datetime-local" required></div>
@@ -51,7 +53,10 @@
           <label class="check-row"><input id="waitingRoom" type="checkbox" checked> تفعيل غرفة الانتظار</label>
           <label>المستخدمون المصرح لهم</label>
           <div class="users" id="usersList">جاري تحميل المستخدمين...</div>
-          <button class="primary" type="submit">إنشاء وإظهار الجلسة للمختارين</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="primary" id="meetingSubmitButton" type="submit">إنشاء وإظهار الجلسة للمختارين</button>
+            <button class="secondary" id="cancelMeetingEdit" type="button" hidden>إلغاء التعديل</button>
+          </div>
           <p class="message" id="formMessage"></p>
         </form>
       </section>
@@ -65,6 +70,7 @@
     const config = { apiKey:"AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo", authDomain:"wallet-tamer-adel.firebaseapp.com", projectId:"wallet-tamer-adel", storageBucket:"wallet-tamer-adel.firebasestorage.app", messagingSenderId:"51007948250", appId:"1:51007948250:web:e1f6eaaebb4202b8aface3" };
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
     let adminUser;
+    let meetingUsers = [];
     const escapeHtml = (value) => String(value || "").replace(/[&<>'"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
     const formatDate = (value) => value?.toDate ? value.toDate().toLocaleString("ar-EG") : new Date(value).toLocaleString("ar-EG");
     function startAdminPage(user) {
@@ -88,19 +94,68 @@
     });
     async function loadUsers() {
       const snapshot = await getDocs(collection(db,"users")); const box = document.getElementById("usersList");
-      const users = snapshot.docs.filter((item) => item.data().isActive !== false);
-      box.innerHTML = users.length ? users.map((item) => { const user=item.data(); return `<label class="user-option"><input type="checkbox" value="${item.id}"><img src="${escapeHtml(user.photoData || user.photoURL || user.photo || "6384.png")}" alt=""><span><strong>${escapeHtml(user.name || "مستخدم")}</strong><small>${escapeHtml(user.email || "")}</small></span></label>`; }).join("") : "لا يوجد مستخدمون مفعلون.";
+      meetingUsers = snapshot.docs.filter((item) => item.data().isActive !== false);
+      box.innerHTML = meetingUsers.length ? meetingUsers.map((item) => { const user=item.data(); return `<label class="user-option"><input type="checkbox" value="${item.id}"><img src="${escapeHtml(user.photoData || user.photoURL || user.photo || "6384.png")}" alt=""><span><strong>${escapeHtml(user.name || "مستخدم")}</strong><small>${escapeHtml(user.email || "")}</small></span></label>`; }).join("") : "لا يوجد مستخدمون مفعلون.";
+    }
+
+    function formatDateTimeInput(value) {
+      const date = value?.toDate ? value.toDate() : new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      const offset = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+    }
+
+    function setMeetingFormMode(meeting = null) {
+      const form = document.getElementById("meetingForm");
+      const submitButton = document.getElementById("meetingSubmitButton");
+      const cancelButton = document.getElementById("cancelMeetingEdit");
+      form.reset();
+      document.getElementById("editingMeetingId").value = meeting?.id || "";
+      document.getElementById("waitingRoom").checked = meeting ? meeting.waitingRoom === true : true;
+      document.querySelectorAll("#usersList input[type=checkbox]").forEach((input) => {
+        input.checked = meeting ? (meeting.participantIds || []).includes(input.value) : false;
+      });
+      if (meeting) {
+        document.getElementById("meetingTitle").value = meeting.title || "";
+        document.getElementById("meetingRoom").value = meeting.roomName || meeting.room || "";
+        document.getElementById("meetingDate").value = formatDateTimeInput(meeting.startAt);
+        document.getElementById("meetingOrganizer").value = meeting.organizer || "";
+        submitButton.textContent = "حفظ تعديلات الجلسة";
+        cancelButton.hidden = false;
+      } else {
+        submitButton.textContent = "إنشاء وإظهار الجلسة للمختارين";
+        cancelButton.hidden = true;
+      }
+    }
+
+    function editMeeting(meeting) {
+      setMeetingFormMode(meeting);
+      document.getElementById("meetingForm").scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("formMessage").textContent = "تعديل بيانات الجلسة المنشورة.";
     }
     function listenMeetings() {
-      onSnapshot(query(collection(db,"meetings"), orderBy("createdAt","desc")), (snapshot) => { const box=document.getElementById("meetingsList"); box.innerHTML=snapshot.docs.length ? snapshot.docs.map((item) => { const m=item.data(); const ended=m.isEnded === true; return `<article class="meeting${ended ? " ended" : ""}"><div class="meeting-head"><strong>${escapeHtml(m.title || "اجتماع")}</strong><small>${ended ? "الجلسة منتهية" : (m.waitingRoom ? "غرفة انتظار مفعلة" : "دخول مباشر")}</small></div><div class="meeting-meta">المنظم: ${escapeHtml(m.organizer || "-")}<br>الموعد: ${formatDate(m.startAt)}<br>المصرح لهم: ${(m.participantIds || []).length} مستخدم</div><div class="meeting-actions">${ended ? "" : `<button class="end-meeting" data-end="${item.id}">إنهاء الجلسة</button>`}<button class="danger" data-delete="${item.id}">حذف الجلسة</button></div></article>`; }).join("") : "لا توجد جلسات منشورة."; box.querySelectorAll("[data-end]").forEach((button) => button.onclick=async () => { if(!confirm("إنهاء الجلسة وإغلاقها عند الجميع؟")) return; button.disabled=true; try { await updateDoc(doc(db,"meetings",button.dataset.end), { isEnded:true, endedAt:serverTimestamp() }); } catch(error) { button.disabled=false; console.error(error); } }); box.querySelectorAll("[data-delete]").forEach((button) => button.onclick=async () => { if(confirm("حذف هذه الجلسة؟")) await deleteDoc(doc(db,"meetings",button.dataset.delete)); }); });
+      onSnapshot(query(collection(db,"meetings"), orderBy("createdAt","desc")), (snapshot) => { const box=document.getElementById("meetingsList"); box.innerHTML=snapshot.docs.length ? snapshot.docs.map((item) => { const m=item.data(); const ended=m.isEnded === true; return `<article class="meeting${ended ? " ended" : ""}"><div class="meeting-head"><strong>${escapeHtml(m.title || "اجتماع")}</strong><small>${ended ? "الجلسة منتهية" : (m.waitingRoom ? "غرفة انتظار مفعلة" : "دخول مباشر")}</small></div><div class="meeting-meta">المنظم: ${escapeHtml(m.organizer || "-")}<br>الموعد: ${formatDate(m.startAt)}<br>المصرح لهم: ${(m.participantIds || []).length} مستخدم</div><div class="meeting-actions"><button class="secondary" data-edit="${item.id}">تعديل الجلسة</button>${ended ? "" : `<button class="end-meeting" data-end="${item.id}">إنهاء الجلسة</button>`}<button class="danger" data-delete="${item.id}">حذف الجلسة</button></div></article>`; }).join("") : "لا توجد جلسات منشورة."; box.querySelectorAll("[data-edit]").forEach((button) => button.onclick=async () => { const meetingSnapshot = await getDocs(collection(db,"meetings")); const meetingDoc = meetingSnapshot.docs.find((item) => item.id === button.dataset.edit); if (meetingDoc) editMeeting({ id: meetingDoc.id, ...meetingDoc.data() }); }); box.querySelectorAll("[data-end]").forEach((button) => button.onclick=async () => { if(!confirm("إنهاء الجلسة وإغلاقها عند الجميع؟")) return; button.disabled=true; try { await updateDoc(doc(db,"meetings",button.dataset.end), { isEnded:true, endedAt:serverTimestamp() }); } catch(error) { button.disabled=false; console.error(error); } }); box.querySelectorAll("[data-delete]").forEach((button) => button.onclick=async () => { if(confirm("حذف هذه الجلسة؟")) await deleteDoc(doc(db,"meetings",button.dataset.delete)); }); });
     }
     document.getElementById("meetingForm").addEventListener("submit", async (event) => {
       event.preventDefault(); const selected=[...document.querySelectorAll("#usersList input:checked")].map((input)=>input.value); const message=document.getElementById("formMessage");
       if (!selected.length) { message.textContent="اختر مستخدمًا واحدًا على الأقل."; return; }
-      const startAt = new Date(document.getElementById("meetingDate").value); const roomName=document.getElementById("meetingRoom").value.trim().replace(/[^a-zA-Z0-9_-]/g,"-");
+      const startAt = new Date(document.getElementById("meetingDate").value); const roomName=document.getElementById("meetingRoom").value.trim().replace(/[^a-zA-Z0-9_-]/g,"-"); const editingMeetingId=document.getElementById("editingMeetingId").value;
+      if (Number.isNaN(startAt.getTime())) { message.textContent="يرجى اختيار موعد صحيح للاجتماع."; return; }
       if (!adminUser) { message.textContent="جارٍ فتح الصفحة، حاول مرة أخرى."; return; }
-      try { await addDoc(collection(db,"meetings"), { title:document.getElementById("meetingTitle").value.trim(), roomName, startAt, organizer:document.getElementById("meetingOrganizer").value.trim(), waitingRoom:document.getElementById("waitingRoom").checked, participantIds:selected, createdBy:adminUser.uid, createdAt:serverTimestamp(), isCancelled:false, isEnded:false }); event.target.reset(); document.getElementById("waitingRoom").checked=true; message.textContent="تم إنشاء الجلسة وإظهارها للمستخدمين المختارين."; } catch(error) { console.error(error); message.textContent="تعذر إنشاء الجلسة. تأكد من قواعد Firestore."; }
+      try {
+        const meetingData = { title:document.getElementById("meetingTitle").value.trim(), roomName, startAt, organizer:document.getElementById("meetingOrganizer").value.trim(), waitingRoom:document.getElementById("waitingRoom").checked, participantIds:selected };
+        if (editingMeetingId) {
+          await updateDoc(doc(db,"meetings",editingMeetingId), meetingData);
+          setMeetingFormMode();
+          message.textContent="تم حفظ تعديلات الجلسة بنجاح.";
+        } else {
+          await addDoc(collection(db,"meetings"), { ...meetingData, createdBy:adminUser.uid, createdAt:serverTimestamp(), isCancelled:false, isEnded:false });
+          setMeetingFormMode();
+          message.textContent="تم إنشاء الجلسة وإظهارها للمستخدمين المختارين.";
+        }
+      } catch(error) { console.error(error); message.textContent="تعذر حفظ الجلسة. تأكد من قواعد Firestore."; }
     });
+    document.getElementById("cancelMeetingEdit").onclick = () => { setMeetingFormMode(); document.getElementById("formMessage").textContent="تم إلغاء التعديل."; };
     document.getElementById("backButton").onclick=()=>location.replace("addash.html");
   </script>
 </body>
