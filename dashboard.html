@@ -2131,7 +2131,12 @@
 					.map((item) => ({ id: item.id, ...item.data() }))
 					.filter((test) => {
 						const assignedUserIds = Array.isArray(test.assignedUserIds) ? test.assignedUserIds.filter(Boolean) : [];
-						return assignedUserIds.length === 0 || assignedUserIds.includes(sessionUser.uid);
+						const now = Date.now();
+						const availableFrom = test.availableFrom ? new Date(test.availableFrom).getTime() : null;
+						const availableUntil = test.availableUntil ? new Date(test.availableUntil).getTime() : null;
+						const isWithinSchedule = (!availableFrom || Number.isNaN(availableFrom) || now >= availableFrom)
+							&& (!availableUntil || Number.isNaN(availableUntil) || now <= availableUntil);
+						return isWithinSchedule && (assignedUserIds.length === 0 || assignedUserIds.includes(sessionUser.uid));
 					});
 			} catch (error) {
 				console.warn("تعذر تحميل الاختبارات:", error);
