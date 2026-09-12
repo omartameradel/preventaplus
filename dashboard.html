@@ -32,7 +32,6 @@
 			color: var(--ink);
 			font-family: "Tajawal", "Trebuchet MS", Tahoma, Arial, sans-serif;
 		}
-		body.sidebar-open { overflow: hidden; }
 		body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .34; background-image: linear-gradient(rgba(16, 47, 89, .035) 1px, transparent 1px), linear-gradient(90deg, rgba(16, 47, 89, .035) 1px, transparent 1px); background-size: 32px 32px; }
 
 		body.is-loading #app { display: none; }
@@ -563,6 +562,12 @@
 		.meeting-room-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; color: #fff; }
 		.meeting-room-header h3 { margin: 0; font-size: 1rem; }
 		.meeting-room-header span { color: #b7d9e8; font-size: .72rem; }
+		.meeting-recording-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+		.meeting-recording-tools[hidden] { display: none; }
+		.meeting-recording-tools button, .meeting-recording-tools a { padding: 7px 10px; border: 1px solid rgba(255,255,255,.25); border-radius: 7px; background: rgba(255,255,255,.1); color: #fff; cursor: pointer; font: inherit; font-size: .72rem; text-decoration: none; }
+		.meeting-recording-tools button:hover, .meeting-recording-tools a:hover { background: rgba(230,169,58,.8); color: var(--navy); }
+		.meeting-recording-tools button:disabled { opacity: .55; cursor: wait; }
+		.meeting-recording-status { color: #b7d9e8; font-size: .7rem; }
 		.meet-container { width: 100%; height: min(620px, 70vh); min-height: 430px; }
 		.meeting-empty { padding: 45px 25px; color: #c7e5ed; text-align: center; }
 		.meeting-notice { margin-top: 13px; color: #b7d9e8; font-size: .72rem; line-height: 1.7; }
@@ -1329,7 +1334,7 @@
 	<script type="module">
 		import { db } from "./assets/firebase-config.js";
 		import { app } from "./assets/firebase-config.js";
-		import { addDoc, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+		import { addDoc, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 		import { getAuth, signInAnonymously, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 		import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
@@ -1466,6 +1471,8 @@
 		let supportSelectedTicket = null;
 		let supportTicketsListener = null;
 		let supportMessagesListener = null;
+		let testListTimerHandle = null;
+		const recordedMeetingAttendance = new Set();
 
 		function applyGeneralPagePermissions() {
 			const generalPageButtons = [...document.querySelectorAll(".side-nav .nav-button")].filter((button) => button.dataset.page && !button.dataset.page.startsWith("library:"));
@@ -1686,7 +1693,8 @@
 			const meetingDates = meetings.map((item) => ({ ...item, date: firestoreDate(item.startAt || item.date || item.startTime) }));
 			const availableTests = tests.filter((test) => {
 				const attempt = attempts.find((item) => item.testId === test.id);
-				return !attempt || attempt.isCompleted !== true;
+				const state = getTestScheduleState(test, attempt);
+				return state === "available" && (!attempt || attempt.isCompleted !== true);
 			});
 			const testAgenda = availableTests
 				.map((item) => ({ ...item, date: firestoreDate(item.availableFrom || item.createdAt) }))
@@ -2147,6 +2155,37 @@
 			await updateResults();
 		}
 
+		function getTestScheduleState(test, attempt) {
+			const startsAt = test.availableFrom ? new Date(test.availableFrom).getTime() : null;
+			const endsAt = test.availableUntil ? new Date(test.availableUntil).getTime() : null;
+			const now = Date.now();
+			if (attempt?.isCompleted) return "completed";
+			if (attempt?.status === "missed") return "missed";
+			if (startsAt && !Number.isNaN(startsAt) && now < startsAt) return "upcoming";
+			if (endsAt && !Number.isNaN(endsAt) && now > endsAt) return "expired";
+			return "available";
+		}
+
+		async function recordMissedTest(test, attempt = null) {
+			if (!test?.availableUntil || attempt) return attempt;
+			const endsAt = new Date(test.availableUntil).getTime();
+			if (Number.isNaN(endsAt) || Date.now() <= endsAt) return null;
+			const missedAttempt = {
+				testId: test.id,
+				userId: sessionUser.uid,
+				userName: activeUserData?.name || activeUserData?.email || "مستخدم",
+				status: "missed",
+				isCompleted: false,
+				missedAt: new Date(),
+				createdAt: new Date(),
+				correctCount: 0,
+				totalQuestions: Array.isArray(test.questions) ? test.questions.length : 0,
+				totalAnswered: 0
+			};
+			const docRef = await addDoc(collection(db, "testAttempts"), missedAttempt);
+			return { id: docRef.id, ...missedAttempt };
+		}
+
 		async function loadTestsList() {
 			try {
 				const snapshot = await getDocs(query(collection(db, "tests"), orderBy("createdAt", "desc")));
@@ -2154,12 +2193,7 @@
 					.map((item) => ({ id: item.id, ...item.data() }))
 					.filter((test) => {
 						const assignedUserIds = Array.isArray(test.assignedUserIds) ? test.assignedUserIds.filter(Boolean) : [];
-						const now = Date.now();
-						const availableFrom = test.availableFrom ? new Date(test.availableFrom).getTime() : null;
-						const availableUntil = test.availableUntil ? new Date(test.availableUntil).getTime() : null;
-						const isWithinSchedule = (!availableFrom || Number.isNaN(availableFrom) || now >= availableFrom)
-							&& (!availableUntil || Number.isNaN(availableUntil) || now <= availableUntil);
-						return isWithinSchedule && (assignedUserIds.length === 0 || assignedUserIds.includes(sessionUser.uid));
+						return assignedUserIds.length === 0 || assignedUserIds.includes(sessionUser.uid);
 					});
 			} catch (error) {
 				console.warn("تعذر تحميل الاختبارات:", error);
@@ -2169,10 +2203,8 @@
 
 		async function loadUserTestAttempts() {
 			try {
-				const snapshot = await getDocs(collection(db, "testAttempts"));
-				return snapshot.docs
-					.map((item) => ({ id: item.id, ...item.data() }))
-					.filter((item) => item.userId === sessionUser.uid);
+				const snapshot = await getDocs(query(collection(db, "testAttempts"), where("userId", "==", sessionUser.uid)));
+				return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
 			} catch (error) {
 				console.warn("تعذر تحميل محاولات الاختبارات:", error);
 				return [];
@@ -2195,32 +2227,45 @@
 			return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
 		}
 
+		function getSecondsUntil(value) {
+			const date = firestoreDate(value);
+			return date ? Math.max(0, Math.ceil((date.getTime() - Date.now()) / 1000)) : 0;
+		}
+
 		async function renderTests(panel) {
 			panel.innerHTML = `
 				<div class="panel-heading"><div class="panel-icon" aria-hidden="true">✓</div><div><span class="panel-tag">اختبر معرفتك</span><h2>الاختبارات</h2><p>اختر اختبارًا، وابدأه الآن أو استأنف محاولتك إذا كان الوقت متبقيًا.</p></div></div>
 				<div class="tests-grid" id="testsGrid">جاري تحميل الاختبارات...</div>`;
 			const tests = await loadTestsList();
 			const attempts = await loadUserTestAttempts();
+			for (const test of tests) {
+				const currentAttempt = attempts.find((item) => item.testId === test.id);
+				const missedAttempt = await recordMissedTest(test, currentAttempt);
+				if (missedAttempt) attempts.push(missedAttempt);
+			}
 			const testsGrid = document.getElementById("testsGrid");
 			if (!testsGrid || currentPage !== "tests") return;
 			if (!tests.length) {
 				testsGrid.innerHTML = `<div class="empty-state">لا توجد اختبارات متاحة حاليًا.</div>`;
 				return;
 			}
+			const getStatusText = (test, attempt) => {
+				const scheduleState = getTestScheduleState(test, attempt);
+				const remainingSeconds = getRemainingTestSeconds(test, attempt);
+				const canResume = !!attempt && !attempt.isCompleted && remainingSeconds > 0;
+				if (attempt?.isCompleted) return `تمت بنجاح - ${attempt.correctCount || 0}/${test.questions?.length || 0}`;
+				if (scheduleState === "missed" || scheduleState === "expired") return "لم يتم أداء الاختبار وانتهى موعده";
+				if (scheduleState === "upcoming") return `متبقي ${formatDuration(getSecondsUntil(test.availableFrom))} على بدء الاختبار`;
+				return canResume ? `متبقي ${formatDuration(remainingSeconds)}` : attempt ? "انتهت المحاولة" : "متاح الآن";
+			};
 			testsGrid.innerHTML = tests.map((test) => {
 				const attempt = attempts.find((item) => item.testId === test.id) || null;
+				const scheduleState = getTestScheduleState(test, attempt);
 				const remainingSeconds = getRemainingTestSeconds(test, attempt);
 				const canResume = !!attempt && !attempt.isCompleted && remainingSeconds > 0;
 				const isCompleted = !!attempt && attempt.isCompleted;
-				const statusText = isCompleted
-					? `تمت بنجاح - ${attempt.correctCount || 0}/${test.questions?.length || 0}`
-					: canResume
-						? `متبقي ${formatDuration(remainingSeconds)}`
-						: attempt
-							? `انتهت المحاولة`
-							: `متاح الآن`;
 				return `
-					<article class="test-card">
+					<article class="test-card" data-test-card="${escapeHtml(test.id)}">
 						${test.imageUrl ? `<img src="${escapeHtml(test.imageUrl)}" alt="${escapeHtml(test.title || "اختبار")}">` : `<div class="test-card-placeholder">اختبار</div>`}
 						<div class="test-card-body">
 							<h3>${escapeHtml(test.title || "اختبار")}</h3>
@@ -2229,11 +2274,28 @@
 								<span>المدة: ${Number(test.durationMinutes || 0)} دقيقة</span>
 								<span>الأسئلة: ${test.questions?.length || 0}</span>
 							</div>
-							<div class="test-status">${statusText}</div>
-							<button class="test-start-btn" type="button" data-test-id="${escapeHtml(test.id)}">${isCompleted ? "عرض النتيجة" : canResume ? "استئناف الاختبار" : "ابدأ الاختبار"}</button>
+							<div class="test-status" data-test-status="${escapeHtml(test.id)}">${getStatusText(test, attempt)}</div>
+							<button class="test-start-btn" type="button" data-test-id="${escapeHtml(test.id)}" ${scheduleState === "upcoming" || scheduleState === "missed" || scheduleState === "expired" ? "disabled" : ""}>${isCompleted ? "عرض النتيجة" : canResume ? "استئناف الاختبار" : "ابدأ الاختبار"}</button>
 						</div>
 					</article>`;
 			}).join("");
+			const initialStates = new Map(tests.map((test) => [test.id, getTestScheduleState(test, attempts.find((item) => item.testId === test.id) || null)]));
+			if (testListTimerHandle) clearInterval(testListTimerHandle);
+			testListTimerHandle = setInterval(() => {
+				if (currentPage !== "tests" || !document.getElementById("testsGrid")) {
+					clearInterval(testListTimerHandle);
+					return;
+				}
+				let scheduleChanged = false;
+				tests.forEach((test) => {
+					const attempt = attempts.find((item) => item.testId === test.id) || null;
+					const currentState = getTestScheduleState(test, attempt);
+					if (currentState !== initialStates.get(test.id)) scheduleChanged = true;
+					const statusNode = document.querySelector(`[data-test-status="${CSS.escape(test.id)}"]`);
+					if (statusNode) statusNode.textContent = getStatusText(test, attempt);
+				});
+				if (scheduleChanged) renderTests(document.getElementById("contentPanel"));
+			}, 1000);
 			testsGrid.querySelectorAll(".test-start-btn").forEach((button) => {
 				button.addEventListener("click", () => openTestModal(button.dataset.testId));
 			});
@@ -2244,6 +2306,15 @@
 			if (!test) return;
 			const attempts = await loadUserTestAttempts();
 			let attempt = attempts.find((item) => item.testId === testId) || null;
+			const scheduleState = getTestScheduleState(test, attempt);
+			if (scheduleState === "upcoming") {
+				alert(`الاختبار يبدأ في ${formatDate(test.availableFrom)}.`);
+				return;
+			}
+			if (scheduleState === "expired" || scheduleState === "missed") {
+				alert("انتهى موعد هذا الاختبار ولا يمكن فتحه الآن.");
+				return;
+			}
 			if (!attempt) {
 				const newAttempt = {
 					testId,
@@ -2375,7 +2446,7 @@
 			}, 0);
 			const wrongQuestions = questions
 				.filter((question, index) => Number(currentAnswers[index]) !== Number(question.correctIndex))
-				.map((question, index) => ({ index: questions.findIndex((item) => item === question), text: question.text }));
+				.map((question) => ({ index: questions.indexOf(question), text: question.text }));
 			const normalizedAnswers = Array.isArray(currentAnswers) ? currentAnswers : Array(questions.length).fill(null);
 			const attemptsDoc = doc(db, "testAttempts", attempt.id);
 			await updateDoc(attemptsDoc, {
@@ -2398,7 +2469,7 @@
 							<strong style="display:block; font-size:1.2rem; color:#0f766e;">${correctCount}/${questions.length}</strong>
 							<span style="color:#6d7d8c;">النتيجة النهائية</span>
 						</div>
-						${wrongQuestions.length ? `<div style="padding:18px; border:1px solid #dbe7ed; border-radius:12px; background:#fff; margin-bottom:16px;"><strong style="display:block; margin-bottom:10px; color:#102f59;">الأسئلة التي أخطأت فيها:</strong>${wrongQuestions.map((item) => `<div style="padding:8px 0; color:#6d7d8c;">• السؤال ${item.index + 1}: ${escapeHtml(item.text || "")}</div>`).join("")}</div>` : `<div style="padding:18px; border:1px solid #dbe7ed; border-radius:12px; background:#fff; color:#0f766e;">أحسنت! لم تخطئ في أي سؤال.</div>`}
+							${wrongQuestions.length ? `<div style="padding:18px; border:1px solid #dbe7ed; border-radius:12px; background:#fff; margin-bottom:16px;"><strong style="display:block; margin-bottom:10px; color:#102f59;">الأسئلة التي أخطأت فيها:</strong>${wrongQuestions.map((item) => `<div style="padding:8px 0; color:#6d7d8c;">• السؤال ${item.index + 1}: ${escapeHtml(item.text || "")}</div>`).join("")}</div>` : `<div style="padding:18px; border:1px solid #dbe7ed; border-radius:12px; background:#fff; color:#0f766e;">أحسنت! لم تخطئ في أي سؤال.</div>`}
 						<button type="button" id="closeTestResult" style="padding:10px 16px; border:0; border-radius:8px; background:#102f59; color:#fff; cursor:pointer;">إغلاق</button>
 					</div>`;
 				const closeButton = modal.querySelector(".news-modal-close");
@@ -2431,7 +2502,7 @@
 		async function renderMeetings(panel) {
 			panel.innerHTML = `
 				<div class="panel-heading"><div class="panel-icon" aria-hidden="true">◷</div><div><span class="panel-tag">اجتماعات آمنة</span><h2>الاجتماعات</h2><p>اختر اجتماعًا مصرحًا لك للدخول إلى غرفة بريفنتا مباشرة.</p></div></div>
-				<div class="meetings-layout"><div class="meeting-list" id="meetingList"><p class="empty-state">جاري تحميل الاجتماعات...</p></div><section class="meeting-room-panel"><div class="meeting-room-header"><div><h3 id="meetingRoomTitle">اختر اجتماعًا للبدء</h3><span id="meetingRoomStatus">الغرفة غير مفتوحة</span></div></div><div class="meet-container" id="meetContainer"><div class="meeting-empty">اختر اجتماعًا من القائمة لفتح الغرفة.</div></div></section></div>`;
+				<div class="meetings-layout"><div class="meeting-list" id="meetingList"><p class="empty-state">جاري تحميل الاجتماعات...</p></div><section class="meeting-room-panel"><div class="meeting-room-header"><div><h3 id="meetingRoomTitle">اختر اجتماعًا للبدء</h3><span id="meetingRoomStatus">الغرفة غير مفتوحة</span><div class="meeting-recording-tools" id="meetingRecordingTools" hidden><button type="button" id="startMeetingRecording">بدء تسجيل الاجتماع</button><button type="button" id="stopMeetingRecording" hidden>إيقاف التسجيل</button><a id="meetingRecordingDownload" hidden download target="_blank" rel="noopener">تحميل التسجيل</a><span class="meeting-recording-status" id="meetingRecordingStatus"></span></div></div></div><div class="meet-container" id="meetContainer"><div class="meeting-empty">اختر اجتماعًا من القائمة لفتح الغرفة.</div></div></section></div>`;
 			const meetings = await loadUserCollection("meetings");
 			const meetingList = document.getElementById("meetingList");
 			if (!meetingList || currentPage !== "meetings") return;
@@ -2460,6 +2531,12 @@
 			const container = document.getElementById("meetContainer");
 			const title = document.getElementById("meetingRoomTitle");
 			const status = document.getElementById("meetingRoomStatus");
+			const recordingTools = document.getElementById("meetingRecordingTools");
+			const startRecording = document.getElementById("startMeetingRecording");
+			const stopRecording = document.getElementById("stopMeetingRecording");
+			const recordingDownload = document.getElementById("meetingRecordingDownload");
+			const recordingStatus = document.getElementById("meetingRecordingStatus");
+			const isMeetingHost = meeting.hostUid === sessionUser.uid;
 			if (!container || !window.JitsiMeetExternalAPI) {
 				if (container) container.innerHTML = `<div class="meeting-empty">تعذر تحميل غرفة الاجتماع. تحقق من اتصال الإنترنت.</div>`;
 				return;
@@ -2473,6 +2550,9 @@
 				 return;
 			}
 			container.innerHTML = "";
+			if (recordingTools) recordingTools.hidden = !isMeetingHost;
+			if (recordingDownload) { recordingDownload.hidden = true; recordingDownload.removeAttribute("href"); }
+			if (recordingStatus) recordingStatus.textContent = isMeetingHost ? "التسجيل متاح للمنظم فقط" : "";
 			const rawRoom = meeting.roomName || meeting.room || meeting.id;
 			const roomName = `Preventa_${String(rawRoom).replace(/[^a-zA-Z0-9_-]/g, "_")}`;
 			title.textContent = meeting.title || meeting.name || "اجتماع بريفنتا";
@@ -2490,9 +2570,40 @@
 					lobby: { enabled: meeting.waitingRoom === true }
 				},
 				interfaceConfigOverwrite: {
-					TOOLBAR_BUTTONS: ["microphone", "camera", "desktop", "fullscreen", "hangup", "chat", "raisehand", "tileview"]
+					TOOLBAR_BUTTONS: ["microphone", "camera", "desktop", ...(isMeetingHost ? ["recording"] : []), "fullscreen", "hangup", "chat", "raisehand", "tileview"]
 				}
 			});
+			activeMeetingApi.addEventListener("videoConferenceJoined", async () => {
+				if (recordedMeetingAttendance.has(meeting.id)) return;
+				recordedMeetingAttendance.add(meeting.id);
+				try {
+					await addDoc(collection(db, "meetingAttendance"), {
+						meetingId: meeting.id,
+						userId: sessionUser.uid,
+						userName: activeUserData?.name || activeUserData?.email || "مستخدم",
+						joinedAt: new Date()
+					});
+				} catch (error) {
+					console.warn("تعذر تسجيل حضور الاجتماع:", error);
+				}
+			});
+			activeMeetingApi.addEventListener("recordingStatusChanged", (event) => {
+				if (!recordingStatus) return;
+				recordingStatus.textContent = event.on ? "جاري تسجيل الاجتماع" : "تم إيقاف التسجيل";
+				if (startRecording) startRecording.hidden = event.on;
+				if (stopRecording) stopRecording.hidden = !event.on;
+			});
+			activeMeetingApi.addEventListener("recordingLinkAvailable", (event) => {
+				if (!recordingDownload || !event?.link) return;
+				recordingDownload.href = event.link;
+				recordingDownload.hidden = false;
+				recordingDownload.textContent = "تحميل التسجيل";
+				if (recordingStatus) recordingStatus.textContent = "تم تجهيز التسجيل للتحميل";
+			});
+			if (isMeetingHost && startRecording && stopRecording) {
+				startRecording.onclick = () => { activeMeetingApi.executeCommand("startRecording", { mode: "file" }); };
+				stopRecording.onclick = () => { activeMeetingApi.executeCommand("stopRecording"); };
+			}
 			activeMeetingUnsubscribe = onSnapshot(doc(db, "meetings", meeting.id), (snapshot) => {
 				if (!snapshot.exists() || snapshot.data().isEnded === true || snapshot.data().isCancelled === true) {
 					if (activeMeetingApi) { activeMeetingApi.dispose(); activeMeetingApi = null; }
@@ -3000,6 +3111,11 @@
 						<ul class="agenda-list" id="profileDailyAgenda"><li><span>جاري تحميل مواعيدك...</span></li></ul>
 					</section>
 				</div>`;
+			const resultsSection = document.createElement("section");
+			resultsSection.className = "home-card";
+			resultsSection.style.marginTop = "18px";
+			resultsSection.innerHTML = `<h3 class="home-card-title">نتائج الاختبارات</h3><div id="profileTestResults" class="agenda-list"><li><span>جاري تحميل النتائج...</span></li></div>`;
+			panel.appendChild(resultsSection);
 			setupProfileEvents();
 			loadProfileActivity();
 			if (profilePasswordMessage && profilePasswordMessage.expiresAt > Date.now()) {
@@ -3010,7 +3126,12 @@
 		}
 
 		async function loadProfileActivity() {
-			const [activity, meeting] = await Promise.all([loadActivity(), loadNextMeeting()]);
+			const [activity, meeting, tests, attempts] = await Promise.all([loadActivity(), loadNextMeeting(), loadTestsList(), loadUserTestAttempts()]);
+			for (const test of tests) {
+				const attempt = attempts.find((item) => item.testId === test.id);
+				const missedAttempt = await recordMissedTest(test, attempt);
+				if (missedAttempt) attempts.push(missedAttempt);
+			}
 			const weeklyMeetings = document.getElementById("profileWeeklyMeetings");
 			const availableTests = document.getElementById("profileAvailableTests");
 			const unreadNotifications = document.getElementById("profileUnreadNotifications");
@@ -3022,6 +3143,15 @@
 			dailyAgenda.innerHTML = activity.agenda.length
 				? activity.agenda.map((item) => `<li><time>${escapeHtml(item.time)}</time><i></i><span>${escapeHtml(item.title)}</span></li>`).join("")
 				: "<li><span>لا توجد مواعيد أو مهام اليوم.</span></li>";
+			const results = document.getElementById("profileTestResults");
+			if (results) {
+				results.innerHTML = tests.map((test) => {
+					const attempt = attempts.find((item) => item.testId === test.id);
+					const state = getTestScheduleState(test, attempt);
+					const label = attempt?.isCompleted ? `النتيجة: ${attempt.correctCount || 0}/${attempt.totalQuestions || test.questions?.length || 0}` : state === "missed" || state === "expired" ? "لم يتم أداء الاختبار" : state === "upcoming" ? `يبدأ ${formatDate(test.availableFrom)}` : "لم يكتمل بعد";
+					return `<li><span><strong>${escapeHtml(test.title || "اختبار")}</strong><br><small>${escapeHtml(label)}</small></span></li>`;
+				}).join("") || "<li><span>لا توجد نتائج اختبارات حتى الآن.</span></li>";
+			}
 			setupMeetingCountdown(meeting, "profile");
 			applyLanguage();
 		}
@@ -3459,16 +3589,36 @@
 				const badgeMeetings = document.getElementById('badge-meetings');
 				if (badgeMeetings) badgeMeetings.style.display = nextMeeting ? 'block' : 'none';
 				if (nextMeeting) addNotification('meeting', 'اجتماع قادم', nextMeeting.title || nextMeeting.name || 'لديك اجتماع قادم', 'meetings', 'fa-calendar-days');
+				const userMeetings = await loadUserCollection("meetings");
+				const attendanceSnapshot = await getDocs(query(collection(db, "meetingAttendance"), where("userId", "==", sessionUser.uid)));
+				const attendance = attendanceSnapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+				const attendedMeetingIds = new Set(attendance.map(item => item.meetingId));
+				const missedMeetings = userMeetings.filter(meeting => {
+					const meetingDate = firestoreDate(meeting.endAt || meeting.endTime || meeting.startAt || meeting.date || meeting.startTime);
+					return meetingDate && meetingDate.getTime() < Date.now() && meeting.isCancelled !== true && meeting.isEnded !== false && !attendedMeetingIds.has(meeting.id);
+				});
+				if (missedMeetings.length) addNotification('meeting-missed', 'اجتماع لم تحضره', `لم تحضر اجتماع ${missedMeetings[0].title || missedMeetings[0].name || "المحدد"}`, 'meetings', 'fa-calendar-xmark');
 
 				const tests = await loadTestsList();
 				const attempts = await loadUserTestAttempts();
+				const missedTests = tests.filter(test => {
+					const attempt = attempts.find(a => a.testId === test.id);
+					return getTestScheduleState(test, attempt) === "missed" || getTestScheduleState(test, attempt) === "expired";
+				});
+				const completedResults = attempts.filter(attempt => attempt.isCompleted === true);
 				const hasUncompletedTests = tests.some(test => {
 					const attempt = attempts.find(a => a.testId === test.id);
-					return !attempt || !attempt.isCompleted;
+					return getTestScheduleState(test, attempt) === "available" && (!attempt || !attempt.isCompleted);
 				});
 				const badgeTests = document.getElementById('badge-tests');
 				if (badgeTests) badgeTests.style.display = hasUncompletedTests ? 'block' : 'none';
 				if (hasUncompletedTests) addNotification('test', 'اختبار متاح', 'لديك اختبار لم تكمله بعد', 'tests', 'fa-clipboard-check');
+				if (missedTests.length) addNotification('test-missed', 'اختبار لم يتم أداؤه', `انتهى موعد ${missedTests[0].title || "اختبار"} دون أداء`, 'profile', 'fa-clock');
+				if (completedResults.length) {
+					const latestResult = completedResults.sort((first, second) => (firestoreDate(second.completedAt)?.getTime() || 0) - (firestoreDate(first.completedAt)?.getTime() || 0))[0];
+					const resultTest = tests.find(test => test.id === latestResult.testId);
+					if (resultTest) addNotification('test-result', 'نتيجة اختبارك', `حصلت على ${latestResult.correctCount || 0}/${latestResult.totalQuestions || resultTest.questions?.length || 0} في ${resultTest.title || "الاختبار"}`, 'profile', 'fa-star');
+				}
 
 				const articlesObj = await loadArticles();
 				const threeDaysAgo = new Date();
