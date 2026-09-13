@@ -34,6 +34,7 @@
     .meeting-actions { display:flex; gap:8px; flex-wrap:wrap; }
     .danger, .end-meeting { margin-top:10px; padding:7px 10px; border:1px solid #efcaca; border-radius:7px; background:#fff5f5; color:#a52e2e; cursor:pointer; font:inherit; font-size:.75rem; }
     .end-meeting { border-color:#f0d49b; background:#fffaf0; color:#8a5d13; }
+    .edit-meeting { margin-top:10px; padding:7px 10px; border:1px solid var(--line); border-radius:7px; background:#edf6fb; color:var(--navy); cursor:pointer; font:inherit; font-size:.75rem; font-weight:bold; }
     .end-meeting:disabled { opacity:.65; cursor:not-allowed; }
     @media (max-width:800px) { body { padding:14px; } header { align-items:flex-start; flex-direction:column; } .layout { grid-template-columns:1fr; } }
   </style>
@@ -160,7 +161,7 @@
       }).join("") : "لا يوجد مستخدمون مفعلون.";
     }
     function listenMeetings() {
-      onSnapshot(query(collection(db,"meetings"), orderBy("createdAt","desc")), (snapshot) => { const box=document.getElementById("meetingsList"); box.innerHTML=snapshot.docs.length ? snapshot.docs.map((item) => { const m=item.data(); const ended=m.isEnded === true; return `<article class="meeting${ended ? " ended" : ""}"><div class="meeting-head"><strong>${escapeHtml(m.title || "اجتماع")}</strong><small>${ended ? "الجلسة منتهية" : (m.waitingRoom ? "غرفة انتظار مفعلة" : "دخول مباشر")}</small></div><div class="meeting-meta">المنظم: ${escapeHtml(m.organizer || "-")}<br>الموعد: ${formatDate(m.startAt)}<br>المصرح لهم: ${(m.participantIds || []).length} مستخدم</div><div class="meeting-actions">${ended ? "" : `<button class="end-meeting" data-end="${item.id}">إنهاء الجلسة</button>`}<button class="secondary" data-edit="${item.id}" style="font-size:.75rem;">تعديل</button><button class="danger" data-delete="${item.id}">حذف الجلسة</button></div></article>`; }).join("") : "لا توجد جلسات منشورة.";
+      onSnapshot(query(collection(db,"meetings"), orderBy("createdAt","desc")), (snapshot) => { const box=document.getElementById("meetingsList"); box.innerHTML=snapshot.docs.length ? snapshot.docs.map((item) => { const m=item.data(); const ended=m.isEnded === true; return `<article class="meeting${ended ? " ended" : ""}"><div class="meeting-head"><strong>${escapeHtml(m.title || "اجتماع")}</strong><small>${ended ? "الجلسة منتهية" : (m.waitingRoom ? "غرفة انتظار مفعلة" : "دخول مباشر")}</small></div><div class="meeting-meta">المنظم: ${escapeHtml(m.organizer || "-")}<br>الموعد: ${formatDate(m.startAt)}<br>المصرح لهم: ${(m.participantIds || []).length} مستخدم</div><div class="meeting-actions">${ended ? "" : `<button class="end-meeting" data-end="${item.id}">إنهاء الجلسة</button>`}<button class="edit-meeting" data-edit="${item.id}">تعديل</button><button class="danger" data-delete="${item.id}">حذف الجلسة</button></div></article>`; }).join("") : "لا توجد جلسات منشورة.";
 
       box.querySelectorAll("[data-edit]").forEach((button) => button.onclick = () => {
         const meetingDoc = snapshot.docs.find((item) => item.id === button.dataset.edit);
