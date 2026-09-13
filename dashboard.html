@@ -1619,6 +1619,13 @@ body {
 		}
 
 		async function loadMinisterialPages() {
+			const hasAllowedPagesSelection = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedPages");
+			const selectedPages = Array.isArray(activeUserData?.allowedPages) ? activeUserData.allowedPages.filter(Boolean) : [];
+			if (hasAllowedPagesSelection && !selectedPages.includes("ministerial")) {
+				ministerialPages = [];
+				renderMinisterialNavigation();
+				return;
+			}
 			try {
 				const snapshot = await getDocs(query(collection(db, "ministerialPublications"), orderBy("createdAt", "asc")));
 				const allowed = Array.isArray(activeUserData?.allowedMinisterialPages) ? activeUserData.allowedMinisterialPages.filter(Boolean) : [];
@@ -1647,6 +1654,13 @@ body {
 		}
 
 		async function loadFormsPages() {
+			const hasAllowedPagesSelection = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedPages");
+			const selectedPages = Array.isArray(activeUserData?.allowedPages) ? activeUserData.allowedPages.filter(Boolean) : [];
+			if (hasAllowedPagesSelection && !selectedPages.includes("forms")) {
+				formsPages = [];
+				renderFormsNavigation();
+				return;
+			}
 			try {
 				const snapshot = await getDocs(query(collection(db, "formsPages"), orderBy("createdAt", "asc")));
 				const allowed = Array.isArray(activeUserData?.allowedFormsPages) ? activeUserData.allowedFormsPages.filter(Boolean) : [];
@@ -1674,6 +1688,13 @@ body {
 		}
 
 		async function loadPreventionDesignsPages() {
+			const hasAllowedPagesSelection = Object.prototype.hasOwnProperty.call(activeUserData || {}, "allowedPages");
+			const selectedPages = Array.isArray(activeUserData?.allowedPages) ? activeUserData.allowedPages.filter(Boolean) : [];
+			if (hasAllowedPagesSelection && !selectedPages.includes("prevention-designs")) {
+				preventionDesignsPages = [];
+				renderPreventionDesignsNavigation();
+				return;
+			}
 			try {
 				const snapshot = await getDocs(query(collection(db, "preventionDesignsPages"), orderBy("createdAt", "asc")));
 				const allowed = Array.isArray(activeUserData?.allowedPreventionDesignsPages) ? activeUserData.allowedPreventionDesignsPages.filter(Boolean) : [];
@@ -2015,19 +2036,18 @@ body {
 			const normalizeAllowedUsers = (values) => Array.from(new Set((Array.isArray(values) ? values : [])
 				.map((value) => String(value || "").trim())
 				.filter((value) => value !== "")));
-			const fileAllowedUsers = normalizeAllowedUsers(file?.downloadAllowedUsers);
-			const pageAllowedUsers = normalizeAllowedUsers(page?.downloadAllowedUsers);
-			const hasExplicitFilePermissions = file && Object.prototype.hasOwnProperty.call(file, "downloadAllowedUsers");
-			const allowedUsers = hasExplicitFilePermissions ? fileAllowedUsers : pageAllowedUsers;
+			const fileBlockedUsers = normalizeAllowedUsers(file?.downloadBlockedUsers);
+			const pageBlockedUsers = normalizeAllowedUsers(page?.downloadBlockedUsers);
 			const currentUid = sessionUser?.uid;
+			const activeUserUid = activeUserData?.uid;
+			const activeEmail = activeUserData?.email;
+			const sessionEmail = sessionUser?.email;
+			const matchesUser = (value) => value === currentUid || value === activeUserUid || value === activeEmail || value === sessionEmail;
 
-			if (hasExplicitFilePermissions) {
-				if (!allowedUsers.length) return false;
-				return allowedUsers.some((value) => value === currentUid || value === activeUserData?.uid || value === activeUserData?.email || value === sessionUser?.email);
-			}
+			if (fileBlockedUsers.length && fileBlockedUsers.some(matchesUser)) return false;
+			if (pageBlockedUsers.length && pageBlockedUsers.some(matchesUser)) return false;
 
-			if (!allowedUsers.length) return true;
-			return allowedUsers.some((value) => value === currentUid || value === activeUserData?.uid || value === activeUserData?.email || value === sessionUser?.email);
+			return true;
 		}
 
 		function renderLibraryPage(panel, pageId, pages = libraryPages, sectionLabel = "المكتبة") {
