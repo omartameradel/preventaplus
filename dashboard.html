@@ -468,6 +468,10 @@ body {
 		.news-modal[hidden] { display: none; }
 		.news-modal-box { position: relative; width: min(760px, 100%); max-height: 90vh; overflow: auto; border: 1px solid rgba(255,255,255,.25); border-radius: 18px; background: #fff; box-shadow: 0 25px 80px rgba(0,0,0,.3); animation: modalReveal .25s ease both; }
 		.news-modal-box img { display: block; width: 100%; max-height: 390px; background: #081d36; object-fit: contain; }
+		#libraryModal .news-modal-box { width: min(960px, calc(100vw - 40px)); max-height: none; overflow: visible; }
+		#libraryModal .library-modal-content { max-height: min(760px, 78vh); overflow: auto; }
+		#libraryModal .library-modal-preview { display: block; min-height: 180px; max-height: none; overflow: visible; background: #eef6f8; }
+		#libraryModal .library-modal-preview img { display: block; width: 100%; max-width: 100%; height: auto; max-height: none; object-fit: contain; border-radius: 8px; }
 		.news-modal-copy { padding: 25px 30px 30px; }
 		.news-modal-copy h2 { margin: 0 0 12px; color: var(--navy); font-size: clamp(1.25rem, 3vw, 1.8rem); }
 		.news-modal-copy p { margin: 0; color: var(--muted); line-height: 2; white-space: pre-line; }
@@ -603,8 +607,9 @@ body {
 		.library-search-input { min-width: 230px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); font: inherit; }
 		.library-search-button { padding: 10px 15px; border: 0; border-radius: 10px; background: var(--navy); color: #fff; cursor: pointer; font: inherit; font-weight: bold; }
 		.library-modal-content { display: grid; gap: 14px; padding: 58px 24px 24px; }
-		.library-modal-preview { display: grid; place-items: center; min-height: 180px; max-height: 62vh; overflow: auto; border-radius: 12px; background: #eef6f8; }
-		.library-modal-preview img, .library-modal-preview video { max-width: 100%; max-height: 58vh; object-fit: contain; }
+		.library-modal-preview { display: grid; place-items: center; min-height: 180px; max-height: 76vh; overflow: visible; border-radius: 12px; background: #eef6f8; }
+		.library-modal-preview img { display:block; max-width: min(940px, 100%); max-height: 72vh; width: auto; height: auto; object-fit: contain; border-radius: 8px; }
+		.library-modal-preview video { max-width: 100%; max-height: 72vh; object-fit: contain; }
 		.library-modal-preview audio { width: min(560px, 100%); }
 		.library-modal-preview iframe { width: 100%; height: 58vh; min-height: 360px; border: 0; }
 		.library-modal-meta { color: var(--muted); font-size: .78rem; }
@@ -2146,23 +2151,11 @@ body {
     if (type.startsWith("video/")) return `<video controls src="${file.url}"></video>`;
     if (type.startsWith("audio/")) return `<audio controls src="${file.url}"></audio>`;
     
-    if (type === "application/pdf" || type.startsWith("text/") || type === "application/json" || type.includes("xml")) {
-        // اكتشاف إذا كان الجهاز موبايل
-        const isMobile = window.innerWidth <= 800 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        if (type === "application/pdf" && isMobile) {
-            // في الموبايل: عرض زر لفتح الـ PDF في البرنامج الأساسي للهاتف
-            return `
-                <div class="library-generic-preview" style="padding: 30px 15px;">
-                    <div class="library-file-icon" style="font-size: 3.5rem; margin-bottom: 10px;">📄</div>
-                    <div style="margin-bottom: 20px;">
-                        <strong style="display:block; color:var(--navy); font-size:1.15rem; margin-bottom:5px;">${escapeHtml(name)}</strong>
-                        <small style="color:var(--muted);">${escapeHtml(type)} · ${formatFileSize(file.size)}</small>
-                    </div>
-                    <a href="${file.url}" target="_blank" rel="noopener" style="display: inline-block; padding: 14px 28px; background: var(--blue); color: #fff; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 1rem; box-shadow: 0 8px 18px rgba(27,108,168,.25);">افتح ملف الـ PDF 📥</a>
-                </div>`;
-        }
+    if (type === "application/pdf") {
+        return `<iframe src="${file.url}" title="${escapeHtml(name)}"></iframe>`;
+    }
 
+    if (type.startsWith("text/") || type === "application/json" || type.includes("xml")) {
         try {
             if (activeLibraryBlobUrl) {
                 URL.revokeObjectURL(activeLibraryBlobUrl);
@@ -2196,9 +2189,10 @@ body {
 
 		async function openLibraryFile(file, page) {
 			if (!file?.url) return;
-			const name = file.name || "ملف المكتبة";
+			const title = file.title || file.name || "ملف المكتبة";
+			const name = title;
 			const normalizedUrl = file.url || "";
-			const normalizedName = name.toLowerCase();
+			const normalizedName = (file.name || title || "").toLowerCase();
 			const inferredType = file.type && file.type !== "application/octet-stream"
 				? file.type
 				: (normalizedName.endsWith(".pdf") ? "application/pdf"
