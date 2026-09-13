@@ -56,23 +56,31 @@
     .checkbox-list { 
       display: grid; 
       gap: 5px; 
-      max-height: 200px; 
+      max-height: 210px; 
       overflow-y: auto; 
       padding: 15px; 
-      border: 1px solid #e0e0e0; 
+      border: 1px solid #b7cbbd; 
       border-radius: 10px; 
       background: #fafafa; 
+      box-shadow: inset 0 0 0 1px rgba(26,77,46,0.04);
+      min-height: 120px;
     }
     .checkbox-list label { 
-      display: block; 
+      display: flex; 
+      align-items: center; 
+      justify-content: flex-end; 
+      flex-direction: row-reverse;
+      gap: 10px; 
       font-weight: 500; 
       padding: 8px 12px; 
       border-radius: 8px; 
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.2s;
+      min-height: 34px;
+      border: 1px solid transparent;
     }
-    .checkbox-list label:hover { background: #eef2f0; }
-    .checkbox-list input { margin-left: 10px; }
+    .checkbox-list label:hover { background: #eef2f0; border-color: #bdd0be; transform: translateY(-1px); }
+    .checkbox-list input { margin-left: 0; margin-right: 0; transform: scale(1.08); accent-color: #1a4d2e; }
 
     /* تصميم الجدول الجديد */
     .table-responsive {
@@ -299,6 +307,8 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const creatorApp = initializeApp(firebaseConfig, "user-creator");
+  const creatorAuth = getAuth(creatorApp);
   const db = getFirestore(app);
   const usersCollection = collection(db, "users");
   const generalPages = [
@@ -313,16 +323,18 @@
     { id: "profile", name: "الملف الشخصي" },
     { id: "library", name: "المكتبة" },
     { id: "ministerial", name: "منشورات وزارية" },
-    { id: "forms", name: "نماذج" }
+    { id: "forms", name: "نماذج" },
+    { id: "prevention-designs", name: "تصاميم وقائية" }
   ];
   const pageNameMap = Object.fromEntries(generalPages.map((page) => [page.id, page.name]));
 
   function populatePageChecklist(container, selectedIds = []) {
     if (!container) return;
+    const defaults = Array.isArray(selectedIds) && selectedIds.length ? selectedIds : generalPages.map((page) => page.id);
     container.innerHTML = generalPages.length
       ? generalPages.map((page) => `
           <label>
-            <input type="checkbox" value="${page.id}" ${selectedIds.includes(page.id) ? "checked" : ""}>
+            <input type="checkbox" value="${page.id}" ${defaults.includes(page.id) ? "checked" : ""}>
             ${page.name}
           </label>
         `).join("")
@@ -347,7 +359,7 @@
     const password = document.getElementById('new-password').value;
 
     try {
-      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const credential = await createUserWithEmailAndPassword(creatorAuth, email, password);
       const selectedGeneralPages = [...document.querySelectorAll('#new-user-page-list input:checked')].map((input) => input.value);
       const jobTitle = document.getElementById('new-job-title').value.trim();
       const workplace = document.getElementById('new-workplace').value.trim();
@@ -487,7 +499,7 @@
     }
   };
 
-  populatePageChecklist(document.getElementById('new-user-page-list'));
+  populatePageChecklist(document.getElementById('new-user-page-list'), generalPages.map((page) => page.id));
 </script>
 
 </body>
