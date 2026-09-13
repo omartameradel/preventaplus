@@ -1364,7 +1364,7 @@ body {
 	<script type="module">
 		import { db } from "./assets/firebase-config.js";
 		import { app } from "./assets/firebase-config.js";
-		import { addDoc, collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+		import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 		import { getAuth, signInAnonymously, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 		import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
@@ -1382,6 +1382,7 @@ body {
 		let preventionDesignsPagesListener = null;
 		let userDataListener = null;
 		let pageHistory = [];
+		let userTestAttemptsListener = null;
 
 		const translations = {
 			home: { ar: "الرئيسية", en: "Home" }, library: { ar: "المكتبة", en: "Library" }, meetings: { ar: "الاجتماعات", en: "Meetings" }, search: { ar: "البحث", en: "Search" }, tests: { ar: "الاختبارات", en: "Tests" }, community: { ar: "المجتمع", en: "Community" }, articles: { ar: "مقالات", en: "Articles" }, dashboard: { ar: "لوحة التحكم", en: "Dashboard" }, support: { ar: "الدعم الفني", en: "Support" }, profile: { ar: "الملف الشخصي", en: "Profile" }, logout: { ar: "تسجيل الخروج", en: "Logout" }, welcome: { ar: "أهلًا بك في Preventa Plus", en: "Welcome to Preventa Plus" },
@@ -1464,6 +1465,8 @@ body {
 				activeUserData = userData;
 				applyGeneralPagePermissions();
 				try { await ensureChatAuth(userData); } catch (authError) { console.error("تعذر تفعيل جلسة الدردشة:", authError); }
+				activeUserData = userData;
+				await trackDashboardPresence(userData);
 				document.getElementById("userEmail").textContent = userData.email || user.email || "حساب المستخدم";
 				document.getElementById("welcomeMessage").textContent = `أهلًا بك ${userData.name || "في منصتك الصحية"}`;
 				updateUserBadge(userData);
@@ -1482,6 +1485,41 @@ body {
 				sessionStorage.removeItem(sessionKey);
 				window.location.replace("index.html");
 			}
+		}
+
+		async function trackDashboardPresence(userData) {
+			if (!sessionUser?.uid) return;
+			const presenceRef = doc(db, "dashboardPresence", sessionUser.uid);
+			const payload = {
+				userId: sessionUser.uid,
+				email: userData?.email || sessionUser.email || "",
+				name: userData?.name || sessionUser.name || "مستخدم",
+				page: "dashboard",
+				online: true,
+				lastSeenAt: serverTimestamp(),
+				openedAt: serverTimestamp()
+			};
+			await setDoc(presenceRef, payload, { merge: true });
+			if (window.__dashboardPresenceHeartbeat) {
+				clearInterval(window.__dashboardPresenceHeartbeat);
+			}
+			window.__dashboardPresenceHeartbeat = setInterval(async () => {
+				try {
+					await updateDoc(presenceRef, { lastSeenAt: serverTimestamp(), online: true });
+				} catch (error) {
+					console.warn("تعذر تحديث حضور الداش بورد:", error);
+				}
+			}, 20000);
+			window.addEventListener("beforeunload", () => {
+				try {
+					deleteDoc(presenceRef).catch((error) => console.warn("تعذر حذف حضور الداش بورد:", error));
+					if (window.__dashboardPresenceHeartbeat) {
+						clearInterval(window.__dashboardPresenceHeartbeat);
+					}
+				} catch (error) {
+					console.warn("تعذر حذف حضور الداش بورد:", error);
+				}
+			});
 		}
 
 		const pageContent = {
@@ -1513,7 +1551,6 @@ body {
 		let supportSelectedTicket = null;
 		let supportTicketsListener = null;
 		let supportMessagesListener = null;
-		let testListTimerHandle = null;
 		const recordedMeetingAttendance = new Set();
 
 		function applyGeneralPagePermissions() {
@@ -2438,12 +2475,16 @@ body {
 		async function loadTestsList() {
 			try {
 				const snapshot = await getDocs(query(collection(db, "tests"), orderBy("createdAt", "desc")));
-				return snapshot.docs
-					.map((item) => ({ id: item.id, ...item.data() }))
-					.filter((test) => {
-						const assignedUserIds = Array.isArray(test.assignedUserIds) ? test.assignedUserIds.filter(Boolean) : [];
-						return assignedUserIds.length === 0 || assignedUserIds.includes(sessionUser.uid);
-					});
+				return snapshot.docs.map((item) => {
+					const test = { id: item.id, ...item.data() };
+					return {
+						...test,
+						title: test.title || "اختبار",
+						description: test.description || "لا يوجد وصف لهذا الاختبار.",
+						durationMinutes: Number(test.durationMinutes || 0),
+						questions: Array.isArray(test.questions) ? test.questions : []
+					};
+				});
 			} catch (error) {
 				console.warn("تعذر تحميل الاختبارات:", error);
 				return [];
@@ -2508,6 +2549,10 @@ body {
 				return canResume ? `متبقي ${formatDuration(remainingSeconds)}` : attempt ? "انتهت المحاولة" : "متاح الآن";
 			};
 			testsGrid.innerHTML = tests.map((test) => {
+				const testTitle = test.title || "اختبار";
+				const testDescription = test.description || "لا يوجد وصف لهذا الاختبار.";
+				const durationMinutes = Number(test.durationMinutes || 0);
+				const questionCount = Array.isArray(test.questions) ? test.questions.length : 0;
 				const attempt = attempts.find((item) => item.testId === test.id) || null;
 				const scheduleState = getTestScheduleState(test, attempt);
 				const remainingSeconds = getRemainingTestSeconds(test, attempt);
@@ -2515,44 +2560,32 @@ body {
 				const isCompleted = !!attempt && attempt.isCompleted;
 				return `
 					<article class="test-card" data-test-card="${escapeHtml(test.id)}">
-						${test.imageUrl ? `<img src="${escapeHtml(test.imageUrl)}" alt="${escapeHtml(test.title || "اختبار")}">` : `<div class="test-card-placeholder">اختبار</div>`}
+						${test.imageUrl ? `<img src="${escapeHtml(test.imageUrl)}" alt="${escapeHtml(testTitle)}">` : `<div class="test-card-placeholder">اختبار</div>`}
 						<div class="test-card-body">
-							<h3>${escapeHtml(test.title || "اختبار")}</h3>
-							<p>${escapeHtml(test.description || "لا يوجد وصف لهذا الاختبار.")}</p>
+							<h3>${escapeHtml(testTitle)}</h3>
+							<p>${escapeHtml(testDescription)}</p>
 							<div class="test-meta">
-								<span>المدة: ${Number(test.durationMinutes || 0)} دقيقة</span>
-								<span>الأسئلة: ${test.questions?.length || 0}</span>
+								<span>المدة: ${durationMinutes} دقيقة</span>
+								<span>الأسئلة: ${questionCount}</span>
 							</div>
 							<div class="test-status" data-test-status="${escapeHtml(test.id)}">${getStatusText(test, attempt)}</div>
 							<button class="test-start-btn" type="button" data-test-id="${escapeHtml(test.id)}" ${scheduleState === "upcoming" || scheduleState === "missed" || scheduleState === "expired" ? "disabled" : ""}>${isCompleted ? "عرض النتيجة" : canResume ? "استئناف الاختبار" : "ابدأ الاختبار"}</button>
 						</div>
 					</article>`;
 			}).join("");
-			const initialStates = new Map(tests.map((test) => [test.id, getTestScheduleState(test, attempts.find((item) => item.testId === test.id) || null)]));
-			if (testListTimerHandle) clearInterval(testListTimerHandle);
-			testListTimerHandle = setInterval(() => {
-				if (currentPage !== "tests" || !document.getElementById("testsGrid")) {
-					clearInterval(testListTimerHandle);
-					return;
-				}
-				let scheduleChanged = false;
-				tests.forEach((test) => {
-					const attempt = attempts.find((item) => item.testId === test.id) || null;
-					const currentState = getTestScheduleState(test, attempt);
-					if (currentState !== initialStates.get(test.id)) scheduleChanged = true;
-					const statusNode = document.querySelector(`[data-test-status="${CSS.escape(test.id)}"]`);
-					if (statusNode) statusNode.textContent = getStatusText(test, attempt);
-				});
-				if (scheduleChanged) renderTests(document.getElementById("contentPanel"));
-			}, 1000);
 			testsGrid.querySelectorAll(".test-start-btn").forEach((button) => {
 				button.addEventListener("click", () => openTestModal(button.dataset.testId));
 			});
 		}
 
 		async function openTestModal(testId) {
-			const test = (await loadTestsList()).find((item) => item.id === testId);
+			const tests = await loadTestsList();
+			const test = tests.find((item) => item.id === testId);
 			if (!test) return;
+			if (!Array.isArray(test.questions) || test.questions.length === 0) {
+				alert("هذا الاختبار لا يحتوي على أسئلة متاحة حاليًا.");
+				return;
+			}
 			const attempts = await loadUserTestAttempts();
 			let attempt = attempts.find((item) => item.testId === testId) || null;
 			const scheduleState = getTestScheduleState(test, attempt);
