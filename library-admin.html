@@ -97,7 +97,7 @@
               </select>
             </div>
             <div class="field">
-              <label>من يسمح له بمشاهدة ملفات هذه الصفحة؟</label>
+              <label>تحديد من لا يمكنه مشاهدة الملف</label>
               <input id="downloadUserSearch" type="search" placeholder="ابحث عن مستخدم...">
               <div id="downloadUsersList" class="user-select-box">اختر صفحة أولاً.</div>
               <p class="muted" style="margin:0;">اترك القائمة فارغة للسماح للجميع بمشاهدة الملفات.</p>
@@ -233,27 +233,6 @@
         if (filesCount > 0) {
           filesHtml = `<ul class="files-list">`;
           page.files.forEach((file, index) => {
-            const fileAllowedUsers = normalizeAllowedUsers(file.downloadAllowedUsers);
-            const uniqueUsers = [];
-            fileAllowedUsers.forEach((userValue) => {
-              const match = allUsers.find((user) => user.id === userValue || user.email === userValue);
-              if (!match) {
-                if (!uniqueUsers.includes(userValue)) uniqueUsers.push(userValue);
-                return;
-              }
-              const uniqueKey = match.id || match.email || userValue;
-              if (!uniqueUsers.some((entry) => entry === uniqueKey || entry === match.email || entry === match.id)) {
-                uniqueUsers.push(uniqueKey);
-              }
-            });
-            const fileAllowedNames = uniqueUsers
-              .map((userValue) => {
-                const match = allUsers.find((user) => user.id === userValue || user.email === userValue);
-                return match ? (match.name || match.email || userValue) : userValue;
-              })
-              .slice(0, 3);
-            const summary = uniqueUsers.length ? fileAllowedNames.join("، ") : "الجميع";
-
             filesHtml += `
               <li>
                 <div style="display:flex; flex-direction:column; gap:6px; flex:1; min-width:0;">
@@ -261,9 +240,8 @@
                     <a href="${file.url}" target="_blank" title="اضغط لتحميل أو فتح الملف">📄 ${escapeHtml(file.name)}</a>
                     <span class="muted">${formatSize(file.size)}</span>
                   </div>
-                  <small class="muted">من يمكنه مشاهدة الملف: ${escapeHtml(summary)}</small>
                   <div class="file-actions">
-                    <button class="file-permissions-toggle" type="button" data-page-id="${pageId}" data-file-index="${index}">تحديد من يمكنه مشاهدة الملف</button>
+                    <button class="file-permissions-toggle" type="button" data-page-id="${pageId}" data-file-index="${index}">تحديد من لا يمكنه مشاهدة الملف</button>
                     <button class="edit-file" type="button" data-page-id="${pageId}" data-file-index="${index}" data-file-title="${escapeHtml(file.title || file.name || "")}" data-file-description="${escapeHtml(file.description || "")}">تعديل العنوان والوصف</button>
                     <button class="delete-file" type="button" data-page-id="${pageId}" data-file-index="${index}">حذف الملف</button>
                   </div>
@@ -387,7 +365,7 @@
       }
 
       const page = libraryPagesCache.find((item) => item.id === pageId);
-      const allowedUsers = normalizeAllowedUsers(page?.downloadAllowedUsers);
+      const blockedUsers = normalizeAllowedUsers(page?.downloadBlockedUsers);
       const filteredUsers = allUsers.filter((user) => {
         const text = `${user.name || ""} ${user.email || ""}`.toLowerCase();
         return text.includes(searchTerm);
@@ -399,7 +377,7 @@
       }
 
       list.innerHTML = filteredUsers.map((user) => {
-        const checked = allowedUsers.includes(user.id) || allowedUsers.includes(user.email);
+        const checked = blockedUsers.includes(user.id) || blockedUsers.includes(user.email);
         return `
           <label class="user-row">
             <input type="checkbox" data-user-id="${user.id}" ${checked ? "checked" : ""}>
@@ -415,11 +393,11 @@
         input.addEventListener("change", async () => {
           const selectedUsers = [...list.querySelectorAll("input:checked")].map((item) => item.dataset.userId);
           try {
-            await updateDoc(doc(db, contentCollection, pageId), { downloadAllowedUsers: selectedUsers });
+            await updateDoc(doc(db, contentCollection, pageId), { downloadBlockedUsers: selectedUsers });
             await loadPages();
             renderDownloadUsersList(pageId);
           } catch (error) {
-            console.error("تعذر تحديث صلاحيات التحميل:", error);
+            console.error("تعذر تحديث صلاحيات الحظر:", error);
           }
         });
       });
@@ -431,13 +409,13 @@
 
       const page = libraryPagesCache.find((item) => item.id === pageId);
       const file = Array.isArray(page?.files) ? page.files[fileIndex] : null;
-      const allowedUsers = normalizeAllowedUsers(file?.downloadAllowedUsers);
-      const selectedUsers = allUsers.filter((user) => allowedUsers.includes(user.id) || allowedUsers.includes(user.email));
+      const blockedUsers = normalizeAllowedUsers(file?.downloadBlockedUsers);
+      const selectedUsers = allUsers.filter((user) => blockedUsers.includes(user.id) || blockedUsers.includes(user.email));
 
       panel.innerHTML = `
         <div class="permission-summary">
-          <span>المحددون:</span>
-          ${selectedUsers.length ? selectedUsers.map((user) => `<span class="permission-chip">${escapeHtml(user.name || user.email || "مستخدم")}</span>`).join("") : '<span class="muted">لا يوجد مستخدمون محددون — الجميع يمكنهم مشاهدة الملف</span>'}
+          <span>الممنوعون:</span>
+          ${selectedUsers.length ? selectedUsers.map((user) => `<span class="permission-chip">${escapeHtml(user.name || user.email || "مستخدم")}</span>`).join("") : '<span class="muted">لا يوجد مستخدمون محظورون — الجميع يمكنهم مشاهدة الملف</span>'}
         </div>
         <div class="permission-input-row">
           <input type="text" class="file-permission-email" data-page-id="${pageId}" data-file-index="${fileIndex}" placeholder="أضف بريد مستخدم يدويًا">
@@ -449,7 +427,7 @@
         </div>
         <div class="user-select-box file-user-box">
           ${allUsers.map((user) => {
-            const checked = allowedUsers.includes(user.id) || allowedUsers.includes(user.email);
+            const checked = blockedUsers.includes(user.id) || blockedUsers.includes(user.email);
             return `
               <label class="user-row">
                 <input type="checkbox" data-user-id="${user.id}" data-page-id="${pageId}" data-file-index="${fileIndex}" ${checked ? "checked" : ""}>
@@ -470,8 +448,8 @@
       panel.querySelector(".permission-save")?.addEventListener("click", async (event) => {
         const page = libraryPagesCache.find((item) => item.id === pageId);
         const currentFiles = Array.isArray(page?.files) ? [...page.files] : [];
-        const existingAllowedUsers = normalizeAllowedUsers(currentFiles[fileIndex]?.downloadAllowedUsers);
-        const manualEmails = existingAllowedUsers.filter((value) => !allUsers.some((user) => user.id === value || user.email === value));
+        const existingBlockedUsers = normalizeAllowedUsers(currentFiles[fileIndex]?.downloadBlockedUsers);
+        const manualEmails = existingBlockedUsers.filter((value) => !allUsers.some((user) => user.id === value || user.email === value));
         const checkedUsers = allUsers.filter((user) => panel.querySelector(`input[data-user-id="${user.id}"]:checked`));
         const selectedUserIds = checkedUsers.map((user) => user.id);
         const saveButton = event.currentTarget;
@@ -479,10 +457,12 @@
         saveButton.disabled = true;
         saveButton.textContent = "جاري الحفظ...";
         try {
-          currentFiles[fileIndex] = {
+          const nextFile = {
             ...currentFiles[fileIndex],
-            downloadAllowedUsers: Array.from(new Set([...selectedUserIds, ...manualEmails]))
+            downloadBlockedUsers: Array.from(new Set([...selectedUserIds, ...manualEmails]))
           };
+          delete nextFile.downloadAllowedUsers;
+          currentFiles[fileIndex] = nextFile;
           await updateDoc(doc(db, contentCollection, pageId), { files: currentFiles });
           await loadPages();
           renderFilePermissionsPanel(pageId, fileIndex);
@@ -499,13 +479,15 @@
       panel.querySelector(".permission-add-button")?.addEventListener("click", async () => {
         const page = libraryPagesCache.find((item) => item.id === pageId);
         const currentFiles = Array.isArray(page?.files) ? [...page.files] : [];
-        const currentAllowedUsers = normalizeAllowedUsers(currentFiles[fileIndex]?.downloadAllowedUsers);
+        const currentBlockedUsers = normalizeAllowedUsers(currentFiles[fileIndex]?.downloadBlockedUsers);
         const emailInput = panel.querySelector(".file-permission-email");
         const email = emailInput?.value.trim();
         if (!email) return;
-        if (!currentAllowedUsers.includes(email)) {
-          currentAllowedUsers.push(email);
-          currentFiles[fileIndex] = { ...currentFiles[fileIndex], downloadAllowedUsers: currentAllowedUsers };
+        if (!currentBlockedUsers.includes(email)) {
+          currentBlockedUsers.push(email);
+          const nextFile = { ...currentFiles[fileIndex], downloadBlockedUsers: currentBlockedUsers };
+          delete nextFile.downloadAllowedUsers;
+          currentFiles[fileIndex] = nextFile;
           await updateDoc(doc(db, contentCollection, pageId), { files: currentFiles });
           await loadPages();
         }
