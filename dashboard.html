@@ -230,9 +230,9 @@ body {
 		.status { padding: 9px 14px; border: 1px solid rgba(93, 201, 189, .35); border-radius: 20px; background: rgba(239, 250, 248, .82); color: #217568; font-size: .82rem; font-weight: bold; white-space: nowrap; box-shadow: 0 8px 18px rgba(33, 117, 104, .08); }
 
 		.content-panel { position: relative; min-height: 430px; overflow: hidden; padding: clamp(22px, 4vw, 46px); border: 1px solid rgba(219, 231, 237, .88); border-radius: 22px; background: rgba(255, 255, 255, .86); box-shadow: var(--shadow-soft); backdrop-filter: blur(12px); }
-		.content-panel::after { content: ""; position: absolute; left: -65px; bottom: -75px; width: 220px; height: 220px; border: 25px solid rgba(65, 177, 205, .08); border-radius: 50%; }
+		.content-panel::after { content: ""; position: absolute; left: -65px; bottom: -75px; width: 220px; height: 220px; border: 25px solid rgba(248, 250, 250, 0.08); border-radius: 50%; }
 		.content-panel h2 { margin: 0 0 10px; color: var(--navy); font-size: clamp(1.5rem, 3vw, 2.15rem); }
-		.content-panel p { max-width: 680px; margin: 0; color: var(--muted); line-height: 1.9; }
+		.content-panel p { max-width: 680px; margin: 0; color: #fff; line-height: 1.9; }
 		.panel-heading { position: relative; z-index: 1; display: flex; align-items: flex-start; gap: 17px; }
 		.panel-icon { display: grid; flex: 0 0 62px; place-items: center; width: 62px; height: 62px; border: 1px solid rgba(93, 201, 189, .3); border-radius: 18px; background: linear-gradient(145deg, var(--navy), #1d7392); color: #fff; font-size: 1.7rem; box-shadow: 7px 7px 0 rgba(230, 169, 58, .75); }
 		.panel-tag { display: inline-block; margin-bottom: 11px; padding: 5px 10px; border-radius: 5px; background: var(--cyan); color: var(--blue); font-size: .75rem; font-weight: bold; }
@@ -415,14 +415,14 @@ body {
 		.meeting-card { position: relative; min-height: 260px; padding: 25px; overflow: hidden; background: linear-gradient(135deg, #102f59, #1c6d91); color: #fff; }
 		.meeting-card::after { content: "◷"; position: absolute; left: 24px; bottom: -18px; color: rgba(255,255,255,.12); font-size: 9rem; }
 		.card-kicker { color: var(--mint); font-size: .75rem; font-weight: bold; }
-		.meeting-card h3 { margin: 10px 0 6px; font-size: 1.3rem; }
-		.meeting-organizer { margin: 0; color: #c7e5ed; font-size: .83rem; }
+		.meeting-card h3 { margin: 10px 0 6px; font-size: 1.3rem; color: #fff; }
+		.meeting-organizer { margin: 0; color: #f6a8cb; font-size: .83rem; }
 		.countdown { display: flex; gap: 8px; margin: 24px 0 20px; direction: ltr; }
 		.time-unit { min-width: 61px; padding: 8px 6px; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: rgba(255,255,255,.1); text-align: center; }
-		.time-unit strong { display: block; font-size: 1.35rem; }
-		.time-unit span { color: #b7d9e8; font-size: .65rem; }
-		.join-meeting { position: relative; z-index: 1; display: inline-block; padding: 10px 18px; border-radius: 8px; background: rgba(255,255,255,.16); color: #a8bbc7; pointer-events: none; font-size: .82rem; font-weight: bold; text-decoration: none; }
-		.join-meeting.ready { background: var(--gold); color: var(--navy); pointer-events: auto; box-shadow: 0 8px 18px rgba(230,169,58,.25); }
+		.time-unit strong { display: block; font-size: 1.35rem; color: #fff; }
+		.time-unit span { color: #fff; font-size: .65rem; }
+		.join-meeting { position: relative; z-index: 1; display: inline-block; padding: 10px 18px; border-radius: 8px; background: rgba(255,255,255,.16); color: #fff; pointer-events: none; font-size: .82rem; font-weight: bold; text-decoration: none; }
+		.join-meeting.ready { background: var(--gold); color: #fff; pointer-events: auto; box-shadow: 0 8px 18px rgba(230,169,58,.25); }
 		.home-side { display: grid; gap: 18px; }
 		.stats-card, .agenda-card { padding: 20px; }
 		.profile-activity { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 22px; }
@@ -887,7 +887,7 @@ body {
 	flex: 0 0 34px;
 	border-radius: 10px;
 	background: rgba(93,201,189,.13);
-	color: #8ee0d4;
+	color: #fff;
 	font-size: 1rem;
 }
 .nav-button:hover, .library-toggle:hover {
@@ -1239,7 +1239,7 @@ body {
 		<aside class="sidebar" id="sidebar" aria-label="القائمة الرئيسية">
 		<div class="brand">
             <div class="brand-content">
-                <img src="Gemini_Generated_Image_sqbqqysqbqqysqbq.png" alt="Preventa Plus">
+                <img src="logo.png" alt="Preventa Plus">
 				<div class="brand-copy">
 					<strong>Preventa Plus</strong>
 					<span>منصتك الصحية</span>
