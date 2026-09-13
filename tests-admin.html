@@ -631,10 +631,35 @@
             const attempt = attempts.find((item) => item.id === button.dataset.retakeTest);
             if (!attempt) return;
             const userName = attempt.userName || attempt.userEmail || "هذا المستخدم";
-            if (!confirm(`هل تريد السماح بإعادة الاختبار للمستخدم ${userName}؟ سيتم حذف نتيجته الحالية.`)) return;
+            if (!confirm(`هل تريد السماح بإعادة الاختبار للمستخدم ${userName}؟ سيتم حذف نتيجته الحالية وإنشاء محاولة جديدة من البداية.`)) return;
             button.disabled = true;
             try {
+              const testDoc = await getDoc(doc(db, "tests", attempt.testId));
+              const testData = testDoc.exists() ? testDoc.data() : null;
+
               await deleteDoc(doc(db, "testAttempts", attempt.id));
+
+              if (testData) {
+                const questionCount = Array.isArray(testData.questions) ? testData.questions.length : 0;
+                await addDoc(collection(db, "testAttempts"), {
+                  testId: attempt.testId,
+                  userId: attempt.userId,
+                  userName: attempt.userName || attempt.userEmail || userName,
+                  userEmail: attempt.userEmail || "",
+                  startedAt: new Date(),
+                  durationSeconds: Number(testData.durationMinutes || 0) * 60,
+                  currentAnswers: Array(questionCount).fill(null),
+                  currentQuestionIndex: 0,
+                  isCompleted: false,
+                  createdAt: new Date(),
+                  totalQuestions: questionCount,
+                  totalAnswered: 0,
+                  correctCount: 0,
+                  score: 0,
+                  wrongQuestions: []
+                });
+              }
+
               await loadTests();
             } catch (error) {
               console.error("تعذر إعادة الاختبار:", error);
