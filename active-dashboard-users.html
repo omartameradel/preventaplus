@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>المستخدمون النشطون الآن</title>
+  <style>
+    * { box-sizing: border-box; font-family: Tahoma, Arial, sans-serif; }
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #eef8f7, #f8f5ec);
+      color: #183047;
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+    main {
+      max-width: 960px;
+      margin: auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(16,47,89,.12);
+      padding: 24px;
+    }
+    h1 { margin: 0 0 16px; color: #102f59; }
+    .summary { color: #607a8b; margin-bottom: 16px; }
+    .users-list { display: grid; gap: 12px; }
+    .user-row {
+      border: 1px solid #dbe7ed;
+      background: #f8fbfb;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .user-row strong { display: block; color: #102f59; }
+    .user-row small { color: #607a8b; }
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #16a34a;
+      box-shadow: 0 0 0 3px rgba(22,163,74,.14);
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+    .empty { color: #607a8b; padding: 12px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>المستخدمون النشطون الآن داخل الداش بورد</h1>
+    <div class="summary">قائمة الحضور الحالي في Dashboard</div>
+    <div class="users-list" id="usersList">
+      <div class="empty">جارٍ تحميل الحضور...</div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, where, getDocs, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo",
+      authDomain: "wallet-tamer-adel.firebaseapp.com",
+      projectId: "wallet-tamer-adel",
+      storageBucket: "wallet-tamer-adel.firebasestorage.app",
+      messagingSenderId: "51007948250",
+      appId: "1:51007948250:web:e1f6eaaebb4202b8aface3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const usersList = document.getElementById("usersList");
+
+    function timeAgo(value) {
+      try {
+        const date = value?.toDate ? value.toDate() : new Date(value);
+        if (!date || Number.isNaN(date.getTime())) return "غير معروف";
+        const diff = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+        if (diff < 60) return `${diff} ثواني`;
+        const mins = Math.floor(diff / 60);
+        if (mins < 60) return `${mins} دقيقة`;
+        const hours = Math.floor(mins / 60);
+        return `${hours} ساعة`;
+      } catch (error) {
+        return "غير معروف";
+      }
+    }
+
+    onSnapshot(collection(db, "dashboardPresence"), (snapshot) => {
+      const rows = snapshot.docs
+        .map((item) => ({ id: item.id, ...item.data() }))
+        .filter((item) => item.online !== false)
+        .sort((a, b) => (b.lastSeenAt?.seconds || 0) - (a.lastSeenAt?.seconds || 0));
+
+      if (!rows.length) {
+        usersList.innerHTML = `<div class="empty">لا يوجد مستخدمون نشطون الآن داخل الداش بورد.</div>`;
+        return;
+      }
+
+      usersList.innerHTML = rows.map((user) => `
+        <div class="user-row">
+          <div>
+            <span class="status-dot" title="نشط"></span>
+            <strong>${user.name || "مستخدم"}</strong>
+            <small>${user.email || "-"}</small>
+          </div>
+          <div>
+            <small>آخر نشاط: ${timeAgo(user.lastSeenAt)}</small>
+          </div>
+        </div>
+      `).join("");
+    }, (error) => {
+      console.error("تعذر تحميل الحضور:", error);
+      usersList.innerHTML = `<div class="empty">تعذر تحميل الحضور الآن.</div>`;
+    });
+  </script>
+</body>
+</html>
