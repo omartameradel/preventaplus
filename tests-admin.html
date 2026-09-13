@@ -273,6 +273,10 @@
 
           <div class="field">
             <label>المستخدمون الذين سيظهر لهم الاختبار</label>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+              <button class="secondary" type="button" id="selectAllUsersBtn" style="padding:8px 12px; font-size:.78rem;">تحديد الكل</button>
+              <button class="secondary" type="button" id="clearUsersBtn" style="padding:8px 12px; font-size:.78rem;">إلغاء التحديد</button>
+            </div>
             <div id="testUsersList" class="user-selection-list"></div>
             <small class="muted">اترك القائمة فارغة إذا كنت تريد إظهار الاختبار لكافة المستخدمين.</small>
           </div>
@@ -461,6 +465,18 @@
       const selected = new Set(Array.isArray(userIds) ? userIds : []);
       document.querySelectorAll("#testUsersList input[type=checkbox]").forEach((input) => {
         input.checked = selected.has(input.value);
+      });
+    }
+
+    function selectAllUsers() {
+      document.querySelectorAll("#testUsersList input[type=checkbox]").forEach((input) => {
+        input.checked = true;
+      });
+    }
+
+    function clearSelectedUsers() {
+      document.querySelectorAll("#testUsersList input[type=checkbox]").forEach((input) => {
+        input.checked = false;
       });
     }
 
@@ -697,6 +713,14 @@
         console.error("خطأ في التحقق من صلاحيات الأدمن:", error);
         document.getElementById("adminStatus").textContent = "تعذر التحقق من صلاحيات الأدمن";
       }
+    });
+
+    document.getElementById("selectAllUsersBtn").addEventListener("click", () => {
+      selectAllUsers();
+    });
+
+    document.getElementById("clearUsersBtn").addEventListener("click", () => {
+      clearSelectedUsers();
     });
 
     document.getElementById("addQuestionBtn").addEventListener("click", () => {
