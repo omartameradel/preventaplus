@@ -3823,6 +3823,32 @@ body {
 					activeLibraryBlobUrl = null;
 				}
 			};
+
+			const blockCaptureKeys = (event) => {
+				const key = event.key || "";
+				const keyLower = key.toLowerCase();
+				const isWindowsSnip = event.shiftKey && event.key === "S" && event.keyCode === 83 && event.ctrlKey === false && event.altKey === false;
+				const isWindowsShiftS = event.shiftKey && event.key === "S" && event.keyCode === 83;
+				const isScreenShotShortcut = event.key === "PrintScreen" || event.key === "Snapshot" || event.key === "SysRq" || event.key === "F13";
+				const isMacScreenshot = event.metaKey && event.shiftKey && ["3", "4", "5"].includes(keyLower);
+				const isSaveCombo = (event.ctrlKey || event.metaKey) && (keyLower === "s" || keyLower === "p");
+				const isCopyCombo = (event.ctrlKey || event.metaKey) && keyLower === "c";
+				const isPasteCombo = (event.ctrlKey || event.metaKey) && keyLower === "v";
+				const isCutCombo = (event.ctrlKey || event.metaKey) && keyLower === "x";
+				const isDevCombo = event.ctrlKey && event.shiftKey && ["i", "j", "u", "c", "m"].includes(keyLower);
+				const isCaptureKeys = isWindowsShiftS || isWindowsSnip || isScreenShotShortcut || isMacScreenshot;
+				if (isCaptureKeys || isSaveCombo || isCopyCombo || isPasteCombo || isCutCombo || isDevCombo) {
+					event.preventDefault();
+					return false;
+				}
+			};
+			document.addEventListener("contextmenu", (event) => event.preventDefault());
+			document.addEventListener("copy", (event) => event.preventDefault());
+			document.addEventListener("cut", (event) => event.preventDefault());
+			document.addEventListener("paste", (event) => event.preventDefault());
+			document.addEventListener("dragstart", (event) => event.preventDefault());
+			document.addEventListener("keydown", blockCaptureKeys);
+			window.addEventListener("keydown", blockCaptureKeys);
 			
 			document.getElementById("newsModalClose").addEventListener("click", closeNewsModal);
 			document.getElementById("libraryModalClose").addEventListener("click", closeLibraryModal);
@@ -3873,9 +3899,11 @@ body {
 			}, { passive: true });
 
 			window.addEventListener("popstate", (event) => {
-				if (!event.state?.fromDashboard) return;
-				const previousPage = pageHistory.length ? pageHistory.pop() : "home";
-				renderPage(previousPage, true);
+				if (!event.state || event.state.fromDashboard !== true) return;
+				if (currentPage !== "home") {
+					renderPage("home", true);
+				}
+				window.history.replaceState({ fromDashboard: true, dashboardPage: "home" }, "", `${location.pathname}${location.search || ""}#home`);
 			});
 
 			const goBackInDashboard = () => {
