@@ -4,10 +4,8 @@
   <meta charset="utf-8">
   <title>لوحة تحكم الأدمن | إدارة الحسابات</title>
   
-  <!-- تضمين خط تجوال من جوجل -->
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
   
-  <!-- تضمين Bootstrap 3 للواجهة -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   
   <style>
@@ -86,31 +84,53 @@
     .table-responsive {
       border-radius: 15px;
       overflow-x: auto;
+      overflow-y: hidden;
+      max-height: none;
       box-shadow: 0 0 15px rgba(0,0,0,0.02);
     }
-    .table { margin-bottom: 0; background: #fff; }
+    .table { margin-bottom: 0; background: #fff; width: 100%; table-layout: auto;}
+    
     .table thead th {
       background-color: #1a4d2e;
       color: #ffffff;
       font-weight: 500;
-      padding: 15px;
+      padding: 10px;
       border-bottom: none;
-      white-space: nowrap;
+      text-align: center;
     }
+    
     .table > tbody > tr > td { 
       vertical-align: middle; 
-      padding: 15px;
+      padding: 8px;
       border-top: 1px solid #f0f0f0;
-      font-size: 14px;
+      font-size: 13px;
+      text-align: center;
+      word-wrap: break-word; 
+      white-space: normal; 
     }
+    
     .table-striped > tbody > tr:nth-of-type(odd) { background-color: #fcfcfc; }
     .table-hover > tbody > tr:hover { background-color: #f1f5f3; }
 
-    /* التحكم في عرض الأعمدة لمنع تكسر النص */
-    .table td { min-width: 120px; }
-    .table td:nth-child(2) { min-width: 200px; /* البريد الإلكتروني */ }
-    .table td:nth-child(7) { min-width: 220px; /* الصفحات العامة */ }
-    .actions-cell { min-width: 260px; white-space: nowrap; }
+    /* إلغاء العروض الثابتة لمنع السكرول الأفقي */
+    .table td { min-width: auto; }
+    
+    /* تنسيق خلية الإجراءات (الزراير) */
+    .actions-cell { 
+      white-space: normal; 
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+      min-width: 160px;
+    }
+    
+    .actions-cell .btn {
+      flex: 1 1 45%; 
+      margin: 0; 
+      font-size: 12px;
+      padding: 5px;
+    }
 
     /* الشارات (Badges) */
     .badge { padding: 6px 12px; border-radius: 20px; font-weight: 500; font-family: 'Tajawal', sans-serif;}
@@ -127,7 +147,62 @@
     .btn-block { padding: 12px; font-size: 16px; }
     .btn-primary { background-color: #1a4d2e; border-color: #1a4d2e; }
     .btn-primary:hover { background-color: #133a22; border-color: #133a22; }
-    .btn-xs { padding: 6px 10px; margin: 2px; font-size: 13px; font-weight: 500; border-radius: 6px;}
+    .btn-xs { border-radius: 6px;}
+
+    /* إحصاءات الحسابات */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(135px, 1fr));
+      gap: 12px;
+      margin: 15px 0 18px;
+      direction: rtl;
+    }
+    .stat-card {
+      background: #eef5ef;
+      border: 1px solid #c8d9cc;
+      border-radius: 12px;
+      padding: 12px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+    .stat-label {
+      font-size: 13px;
+      color: #526457;
+      font-weight: 700;
+    }
+    .stat-number {
+      font-size: 26px;
+      color: #1a4d2e;
+      font-weight: 800;
+      min-width: 42px;
+      text-align: center;
+    }
+
+    /* شريط بحث مستخدم */
+    .user-search-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      margin: 14px 0 10px;
+      flex-wrap: wrap;
+    }
+    .user-search-bar input {
+      min-width: min(280px, 100%);
+      border-radius: 10px;
+      padding: 10px 14px;
+      border: 1px solid #ccd8d2;
+      font-family: 'Tajawal', sans-serif;
+      direction: rtl;
+    }
+    .user-search-bar .btn {
+      padding: 9px 16px;
+      font-size: 14px;
+      font-weight: 700;
+    }
 
     /* تصميم شريط التمرير (Scrollbar) */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -144,13 +219,8 @@
   </style>
 </head>
 <body>
-
-<!-- تم التغيير من container إلى container-fluid لاستغلال مساحة الشاشة -->
-<div class="container-fluid" style="margin-top: 40px; padding: 0 30px;">
-  <div class="row">
-    
-    <!-- قسم إنشاء حساب جديد (مساحة أقل بقليل) -->
-    <div class="col-lg-3 col-md-4">
+ <div class="row" style="margin-top: 20px;">
+    <div class="col-lg-12">
       <div class="admin-wrapper">
         <h3>إنشاء حساب جديد</h3>
         <form id="admin-create-user-form">
@@ -186,11 +256,35 @@
         </form>
       </div>
     </div>
-
-    <!-- قسم عرض الحسابات (مساحة أكبر لراحة الجدول) -->
-    <div class="col-lg-9 col-md-8">
+  </div>
+</div>
+<div class="container-fluid" style="margin-top: 40px; padding: 0 30px;">
+  <div class="row">
+    <div class="col-lg-12">
       <div class="admin-wrapper">
         <h3>الحسابات المسجلة</h3>
+
+        <div class="stats-strip">
+          <div class="stat-card">
+            <span class="stat-label">عدد المستخدمين الكل</span>
+            <span class="stat-number" id="totalUsersCount">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">المستخدمين المفعلين</span>
+            <span class="stat-number" id="activeUsersCount">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">المستخدمين المعطلين</span>
+            <span class="stat-number" id="inactiveUsersCount">0</span>
+          </div>
+        </div>
+
+        <div class="user-search-bar">
+          <input type="search" id="userSearchInput" placeholder="ابحث عن مستخدم بالاسم أو البريد أو الهاتف">
+          <button type="button" class="btn btn-primary" id="searchUserBtn">بحث عن مستخدم</button>
+          <button type="button" class="btn btn-default" id="clearSearchBtn">مسح</button>
+        </div>
+
         <div class="table-responsive">
           <table class="table table-striped table-hover">
             <thead>
@@ -200,24 +294,22 @@
                 <th>رقم الهاتف</th>
                 <th>الوظيفة</th>
                 <th>مكان العمل</th>
-                <th>كلمة المرور</th>
+                <th> pass</th>
                 <th>الصفحات العامة</th>
                 <th>الحالة</th>
                 <th>الإجراءات</th>
               </tr>
             </thead>
             <tbody id="users-table-body">
-              <!-- سيتم جلب الحسابات هنا -->
-            </tbody>
+              </tbody>
           </table>
         </div>
       </div>
     </div>
-
   </div>
-</div>
 
-<!-- Modal لتعديل بيانات المستخدم -->
+ 
+
 <div class="modal fade" id="editUserModal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -262,7 +354,6 @@
   </div>
 </div>
 
-<!-- Modal لتحديد الصفحات العامة للمستخدم -->
 <div class="modal fade" id="pageAccessModal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -285,11 +376,9 @@
   </div>
 </div>
 
-<!-- تضمين مكتبات البوتستراب للـ Modal -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-<!-- كود Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -390,31 +479,59 @@
   });
 
   const usersTableBody = document.getElementById('users-table-body');
-  
-  onSnapshot(usersCollection, (snapshot) => {
-    usersTableBody.innerHTML = ""; 
-    
-    snapshot.forEach((docSnap) => {
-      const user = docSnap.data();
-      const docId = docSnap.id; 
-      
-      const statusBadge = user.isActive 
-        ? `<span class="badge badge-active">مفعل</span>` 
+  const totalUsersCount = document.getElementById('totalUsersCount');
+  const activeUsersCount = document.getElementById('activeUsersCount');
+  const inactiveUsersCount = document.getElementById('inactiveUsersCount');
+  const userSearchInput = document.getElementById('userSearchInput');
+  const searchUserBtn = document.getElementById('searchUserBtn');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
+  let snapshotUsers = [];
+
+  function renderUsers(users) {
+    const searchTerm = (userSearchInput.value || '').trim().toLowerCase();
+    usersTableBody.innerHTML = "";
+
+    const rows = users.filter((item) => {
+      const userData = item.data;
+      if (!searchTerm) return true;
+      const fields = [
+        userData.name,
+        userData.email,
+        userData.phone,
+        userData.jobTitle || userData.job,
+        userData.workplace,
+        getAllowedPagesSummary(userData.allowedPages || userData.allowedLibraryPages, userData)
+      ];
+      return fields.some((value) => String(value || '').toLowerCase().includes(searchTerm));
+    });
+
+    if (!rows.length) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="9" class="text-center">لا توجد نتائج مطابقة للبحث</td>`;
+      usersTableBody.appendChild(tr);
+      return;
+    }
+
+    rows.forEach((item) => {
+      const docId = item.id;
+      const userData = item.data;
+      const statusBadge = userData.isActive
+        ? `<span class="badge badge-active">مفعل</span>`
         : `<span class="badge badge-inactive">معطل</span>`;
-        
-      const statusBtnText = user.isActive ? "تعطيل" : "تفعيل";
-      const statusBtnClass = user.isActive ? "btn-warning" : "btn-success";
-      const allowedPagesSummary = getAllowedPagesSummary(user.allowedPages || user.allowedLibraryPages, user);
-      const selectedPageIds = Array.isArray(user.allowedPages || user.allowedLibraryPages) ? (user.allowedPages || user.allowedLibraryPages) : [];
+
+      const statusBtnText = userData.isActive ? "تعطيل" : "تفعيل";
+      const statusBtnClass = userData.isActive ? "btn-warning" : "btn-success";
+      const allowedPagesSummary = getAllowedPagesSummary(userData.allowedPages || userData.allowedLibraryPages, userData);
+      const selectedPageIds = Array.isArray(userData.allowedPages || userData.allowedLibraryPages) ? (userData.allowedPages || userData.allowedLibraryPages) : [];
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><strong>${user.name || ''}</strong></td>
-        <td>${user.email || ''}</td>
-        <td dir="ltr">${user.phone || ''}</td>
-        <td>${user.jobTitle || user.job || ''}</td>
-        <td>${user.workplace || ''}</td>
-        <td>${user.password || 'غير متوفرة'}</td>
+        <td><strong>${userData.name || ''}</strong></td>
+        <td>${userData.email || ''}</td>
+        <td dir="ltr">${userData.phone || ''}</td>
+        <td>${userData.jobTitle || userData.job || ''}</td>
+        <td>${userData.workplace || ''}</td>
+        <td>${userData.password || 'غير متوفرة'}</td>
         <td style="color: #666; font-size: 13px; line-height:1.6;">${allowedPagesSummary}</td>
         <td>${statusBadge}</td>
         <td class="actions-cell">
@@ -425,13 +542,39 @@
         </td>
       `;
 
-      tr.querySelector('.toggle-status-btn').addEventListener('click', () => toggleStatus(docId, !!user.isActive));
-      tr.querySelector('.edit-user-btn').addEventListener('click', () => openEditModal(docId, user.name || '', user.email || '', user.phone || '', user.password || '', user.jobTitle || user.job || '', user.workplace || ''));
-      tr.querySelector('.page-access-btn').addEventListener('click', () => openPageAccessModal(docId, user.name || '', selectedPageIds));
+      tr.querySelector('.toggle-status-btn').addEventListener('click', () => toggleStatus(docId, !!userData.isActive));
+      tr.querySelector('.edit-user-btn').addEventListener('click', () => openEditModal(docId, userData.name || '', userData.email || '', userData.phone || '', userData.password || '', userData.jobTitle || userData.job || '', userData.workplace || ''));
+      tr.querySelector('.page-access-btn').addEventListener('click', () => openPageAccessModal(docId, userData.name || '', selectedPageIds));
       tr.querySelector('.delete-user-btn').addEventListener('click', () => deleteUser(docId));
 
       usersTableBody.appendChild(tr);
     });
+  }
+
+  function updateStats(users) {
+    const total = users.length;
+    const active = users.filter((item) => item.data && item.data.isActive === true).length;
+    const inactive = total - active;
+
+    totalUsersCount.textContent = total;
+    activeUsersCount.textContent = active;
+    inactiveUsersCount.textContent = inactive;
+  }
+
+  onSnapshot(usersCollection, (snapshot) => {
+    snapshotUsers = snapshot.docs.map((docSnap) => ({ id: docSnap.id, data: docSnap.data() }));
+    updateStats(snapshotUsers);
+    renderUsers(snapshotUsers);
+  });
+
+  searchUserBtn.addEventListener('click', () => renderUsers(snapshotUsers));
+  clearSearchBtn.addEventListener('click', () => {
+    userSearchInput.value = '';
+    renderUsers(snapshotUsers);
+  });
+
+  userSearchInput.addEventListener('input', () => {
+    renderUsers(snapshotUsers);
   });
 
   window.openPageAccessModal = (docId, name, allowedPages) => {
