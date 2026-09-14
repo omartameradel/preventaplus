@@ -5,62 +5,163 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>المستخدمون النشطون الآن</title>
   <style>
-    * { box-sizing: border-box; font-family: Tahoma, Arial, sans-serif; }
+    :root {
+      --bg-color: #f4f7f6;
+      --card-bg: #ffffff;
+      --text-main: #102f59;
+      --text-sub: #607a8b;
+      --border-color: #dbe7ed;
+      --hover-bg: #f8fbfb;
+      --primary: #183047;
+    }
+    
+    body.dark-mode {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-main: #e0e0e0;
+      --text-sub: #a0a0a0;
+      --border-color: #333333;
+      --hover-bg: #2a2a2a;
+      --primary: #4fc3f7;
+    }
+
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; transition: background 0.3s, color 0.3s; }
+    
     body {
       margin: 0;
-      background: linear-gradient(135deg, #eef8f7, #f8f5ec);
-      color: #183047;
+      background: var(--bg-color);
+      color: var(--text-main);
       min-height: 100vh;
       padding: 32px 16px;
     }
+
     main {
       max-width: 960px;
       margin: auto;
-      background: #fff;
+      background: var(--card-bg);
       border-radius: 16px;
-      box-shadow: 0 12px 30px rgba(16,47,89,.12);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
       padding: 24px;
     }
-    h1 { margin: 0 0 16px; color: #102f59; }
-    .summary { color: #607a8b; margin-bottom: 16px; }
-    .users-list { display: grid; gap: 12px; }
-    .user-row {
-      border: 1px solid #dbe7ed;
-      background: #f8fbfb;
+
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
+    
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      width: 100%;
+      background: var(--hover-bg);
+      padding: 12px;
       border-radius: 12px;
-      padding: 14px 16px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+
+    .search-bar {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--card-bg);
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      background: #102f59;
+      color: #fff;
+    }
+    
+    body.dark-mode .btn { background: #4fc3f7; color: #121212; }
+
+    .users-list { display: grid; gap: 12px; }
+    
+    .user-row {
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 16px;
+      animation: fadeIn 0.4s ease-in-out;
     }
-    .user-row strong { display: block; color: #102f59; }
-    .user-row small { color: #607a8b; }
-    .status-dot {
-      width: 12px;
-      height: 12px;
+    
+    .user-row:hover { background: var(--hover-bg); transform: translateY(-2px); transition: 0.2s; }
+
+    .user-info { display: flex; align-items: center; gap: 12px; }
+    
+    .avatar {
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      background: #16a34a;
-      box-shadow: 0 0 0 3px rgba(22,163,74,.14);
-      display: inline-block;
-      vertical-align: middle;
-      margin-left: 8px;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2rem;
     }
-    .empty { color: #607a8b; padding: 12px; }
+
+    .user-details strong { display: block; color: var(--text-main); }
+    .user-details small { color: var(--text-sub); }
+
+    .status-dot {
+      width: 12px; height: 12px; border-radius: 50%; display: inline-block;
+    }
+    .status-active { background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.14); }
+    .status-idle { background: #facc15; box-shadow: 0 0 0 3px rgba(250,204,21,.14); }
+    .status-offline { background: #9ca3af; box-shadow: 0 0 0 3px rgba(156,163,175,.14); }
+
+    .time-badge {
+      background: var(--hover-bg);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      border: 1px solid var(--border-color);
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 600px) { .user-row { flex-direction: column; align-items: flex-start; } }
   </style>
 </head>
 <body>
   <main>
-    <h1>المستخدمون النشطون الآن داخل الداش بورد</h1>
-    <div class="summary">قائمة الحضور الحالي في Dashboard</div>
+    <div class="header-section">
+      <h1>المستخدمون النشطون <span id="userCount">(0)</span></h1>
+      <button class="btn" id="darkModeToggle">الوضع الليلي 🌙</button>
+    </div>
+    
+    <div class="toolbar">
+      <input type="text" id="searchInput" class="search-bar" placeholder="ابحث بالاسم أو الإيميل..." />
+    </div>
+
     <div class="users-list" id="usersList">
-      <div class="empty">جارٍ تحميل الحضور...</div>
+      <div style="padding: 20px; text-align: center; color: var(--text-sub);">جارٍ تحميل الحضور...</div>
     </div>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, where, getDocs, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo",
@@ -73,49 +174,117 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    
+    let globalUsers = []; 
     const usersList = document.getElementById("usersList");
+    const searchInput = document.getElementById("searchInput");
+    const countBadge = document.getElementById("userCount");
 
-    function timeAgo(value) {
+    // ميزة الوضع الليلي
+    document.getElementById("darkModeToggle").addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+    });
+
+    // دالة لحساب الوقت وتحديد حالة الاتصال (نشط/خامل)
+    function analyzeTime(value) {
       try {
         const date = value?.toDate ? value.toDate() : new Date(value);
-        if (!date || Number.isNaN(date.getTime())) return "غير معروف";
-        const diff = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
-        if (diff < 60) return `${diff} ثواني`;
-        const mins = Math.floor(diff / 60);
-        if (mins < 60) return `${mins} دقيقة`;
+        if (!date || Number.isNaN(date.getTime())) return { text: "غير معروف", statusClass: "status-offline" };
+        
+        const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+        let statusClass = "status-active"; // أخضر
+        
+        if (diffSeconds > 300) statusClass = "status-idle"; // أصفر إذا مر أكثر من 5 دقائق
+        if (diffSeconds > 3600) statusClass = "status-offline"; // رمادي إذا مر أكثر من ساعة
+
+        if (diffSeconds < 60) return { text: `منذ ${diffSeconds} ثواني`, statusClass };
+        const mins = Math.floor(diffSeconds / 60);
+        if (mins < 60) return { text: `منذ ${mins} دقيقة`, statusClass };
         const hours = Math.floor(mins / 60);
-        return `${hours} ساعة`;
-      } catch (error) {
-        return "غير معروف";
+        return { text: `منذ ${hours} ساعة`, statusClass };
+      } catch {
+        return { text: "غير معروف", statusClass: "status-offline" };
       }
     }
 
-    onSnapshot(collection(db, "dashboardPresence"), (snapshot) => {
-      const rows = snapshot.docs
-        .map((item) => ({ id: item.id, ...item.data() }))
-        .filter((item) => item.online !== false)
-        .sort((a, b) => (b.lastSeenAt?.seconds || 0) - (a.lastSeenAt?.seconds || 0));
-
-      if (!rows.length) {
-        usersList.innerHTML = `<div class="empty">لا يوجد مستخدمون نشطون الآن داخل الداش بورد.</div>`;
+    // دالة الرسم (Render)
+    function renderUsers(users) {
+      countBadge.innerText = `(${users.length})`;
+      if (!users.length) {
+        usersList.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-sub);">لا توجد نتائج مطابقة.</div>`;
         return;
       }
 
-      usersList.innerHTML = rows.map((user) => `
-        <div class="user-row">
-          <div>
-            <span class="status-dot" title="نشط"></span>
-            <strong>${user.name || "مستخدم"}</strong>
-            <small>${user.email || "-"}</small>
+      usersList.innerHTML = users.map((user) => {
+        const timeData = analyzeTime(user.lastSeenAt);
+        const firstLetter = (user.name || "م").charAt(0).toUpperCase();
+        
+        return `
+          <div class="user-row">
+            <div class="user-info">
+              <div class="avatar">${firstLetter}</div>
+              <div class="user-details">
+                <strong>
+                  <span class="status-dot ${timeData.statusClass}"></span>
+                  ${user.name || "مستخدم غير معروف"}
+                </strong>
+                <small>${user.email || "لا يوجد إيميل"}</small>
+              </div>
+            </div>
+            <div class="time-badge">
+              آخر نشاط: ${timeData.text}
+            </div>
           </div>
-          <div>
-            <small>آخر نشاط: ${timeAgo(user.lastSeenAt)}</small>
-          </div>
-        </div>
-      `).join("");
+        `;
+      }).join("");
+    }
+
+    // ميزة البحث السريع
+    searchInput.addEventListener("input", (e) => {
+      const term = e.target.value.toLowerCase();
+      const filtered = globalUsers.filter(u => 
+        (u.name && u.name.toLowerCase().includes(term)) || 
+        (u.email && u.email.toLowerCase().includes(term))
+      );
+      renderUsers(filtered);
+    });
+
+    onSnapshot(collection(db, "dashboardPresence"), (snapshot) => {
+      const rawUsers = snapshot.docs
+        .map((item) => ({ id: item.id, ...item.data() }))
+        .filter((item) => item.online !== false);
+
+      // ميزة: منع التكرار (Deduplication) بناءً على الإيميل
+      const uniqueUsersMap = {};
+      rawUsers.forEach(user => {
+        const key = user.email || user.id; // نستخدم الإيميل كمفتاح لضمان عدم تكراره
+        const currentUserTime = user.lastSeenAt?.seconds || 0;
+        const storedUserTime = uniqueUsersMap[key]?.lastSeenAt?.seconds || 0;
+        
+        // إذا كان المستخدم غير موجود في القائمة، أو هذا السجل أحدث من السجل المحفوظ
+        if (!uniqueUsersMap[key] || currentUserTime > storedUserTime) {
+          uniqueUsersMap[key] = user;
+        }
+      });
+
+      // تحويل الكائن إلى مصفوفة وترتيبها من الأحدث للأقدم
+      globalUsers = Object.values(uniqueUsersMap)
+        .sort((a, b) => (b.lastSeenAt?.seconds || 0) - (a.lastSeenAt?.seconds || 0));
+
+      // إعادة تفعيل فلتر البحث الحالي إن وجد
+      const term = searchInput.value.toLowerCase();
+      if (term) {
+        const filtered = globalUsers.filter(u => 
+          (u.name && u.name.toLowerCase().includes(term)) || 
+          (u.email && u.email.toLowerCase().includes(term))
+        );
+        renderUsers(filtered);
+      } else {
+        renderUsers(globalUsers);
+      }
     }, (error) => {
       console.error("تعذر تحميل الحضور:", error);
-      usersList.innerHTML = `<div class="empty">تعذر تحميل الحضور الآن.</div>`;
+      usersList.innerHTML = `<div style="padding: 20px; text-align: center; color: red;">تعذر تحميل البيانات، تأكد من الاتصال.</div>`;
     });
   </script>
 </body>
