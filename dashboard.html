@@ -622,6 +622,10 @@ body {
 		.nav-icon { position: relative; }
 		.nav-badge { position: absolute; top: -3px; right: -3px; width: 11px; height: 11px; background-color: var(--danger); border: 2px solid var(--navy); border-radius: 50%; display: none; z-index: 10; box-shadow: 0 0 6px rgba(184, 50, 50, 0.6); }
 
+		.mobile-dashboard-bottom-bar {
+			display: none;
+		}
+
 		@keyframes pageEnter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 		@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
@@ -1346,7 +1350,7 @@ body {
 			<section class="content-panel" id="contentPanel"></section>
 		</main>
 	</div>
-	
+
 	<div class="news-modal" id="newsModal" hidden role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
 		<div class="news-modal-box">
 			<button class="news-modal-close" id="newsModalClose" type="button" aria-label="إغلاق">×</button>
@@ -3636,7 +3640,10 @@ body {
 		}
 
 		function renderPage(page, isBack = false) {
-			if (!isBack && currentPage !== page) pageHistory.push(currentPage);
+			if (!isBack && currentPage !== page) {
+				pageHistory.push(currentPage);
+				history.pushState({ dashboardPage: page, fromDashboard: true }, "", `${location.pathname}#${encodeURIComponent(page)}`);
+			}
 			currentPage = page;
 			document.querySelectorAll("[data-page]").forEach((button) => button.classList.toggle("active", button.dataset.page === page));
 			updateBackButton();
@@ -3864,6 +3871,18 @@ body {
 				if (searchPanel.classList.contains("open")) positionDropdown(searchPanel, searchToggle);
 				if (notificationsPanel?.classList.contains("open")) positionDropdown(notificationsPanel, notificationToggle);
 			}, { passive: true });
+
+			window.addEventListener("popstate", (event) => {
+				if (!event.state?.fromDashboard) return;
+				const previousPage = pageHistory.length ? pageHistory.pop() : "home";
+				renderPage(previousPage, true);
+			});
+
+			const goBackInDashboard = () => {
+				if (pageHistory.length === 0) return;
+				const previousPage = pageHistory.pop();
+				renderPage(previousPage, true);
+			};
 			
 			languageButton?.addEventListener("click", () => {
 				currentLanguage = currentLanguage === "ar" ? "en" : "ar";
@@ -3931,11 +3950,7 @@ body {
 				sessionStorage.removeItem(sessionKey);
 				window.location.replace("index.html");
 			});
-			document.getElementById("backBtn")?.addEventListener("click", () => {
-				if (pageHistory.length === 0) return;
-				const previousPage = pageHistory.pop();
-				renderPage(previousPage, true);
-			});
+			document.getElementById("backBtn")?.addEventListener("click", goBackInDashboard);
 		}
 
 		async function updateNotificationBadges() {
