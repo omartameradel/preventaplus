@@ -358,9 +358,8 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo",
@@ -372,7 +371,6 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getFirestore(app);
 
     let globalUsers = []; 
@@ -793,8 +791,6 @@
 
     async function startListening() {
       try {
-        await signInAnonymously(auth);
-        
         onSnapshot(collection(db, "dashboardPresence"), (snapshot) => {
           const rawUsers = snapshot.docs
             .map((item) => {
@@ -844,8 +840,8 @@
           usersList.innerHTML = `<div style="grid-column: 1/-1; padding: 20px; text-align: center; color: var(--danger); background: var(--card-bg); border-radius: 12px; border: 1px solid var(--danger);">تعذر تحميل البيانات، تأكد من الصلاحيات أو الاتصال بالإنترنت. <br> <small>${error.message}</small></div>`;
         });
       } catch (error) {
-        console.error("Auth error:", error);
-        usersList.innerHTML = `<div style="grid-column: 1/-1; padding: 20px; text-align: center; color: var(--danger);">خطأ في المصادقة: ${error.message}</div>`;
+        console.error("Error connecting to database:", error);
+        usersList.innerHTML = `<div style="grid-column: 1/-1; padding: 20px; text-align: center; color: var(--danger);">خطأ في الاتصال بقاعدة البيانات: ${error.message}</div>`;
       }
     }
 
@@ -856,6 +852,5 @@
     });
 
   </script>
-  <script type="module" src="main.js"></script>
 </body>
 </html>
