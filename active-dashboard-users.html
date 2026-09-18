@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>المستخدمون النشطون الآن</title>
+  <title>لوحة تحكم المستخدمين النشطين المتقدمة</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <style>
     :root {
       --bg-color: #f4f7f6;
@@ -13,6 +16,10 @@
       --border-color: #dbe7ed;
       --hover-bg: #f8fbfb;
       --primary: #183047;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --info: #3b82f6;
     }
     
     body.dark-mode {
@@ -25,23 +32,29 @@
       --primary: #4fc3f7;
     }
 
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; transition: background 0.3s, color 0.3s; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; transition: background 0.3s, color 0.3s, border-color 0.3s; }
     
     body {
       margin: 0;
       background: var(--bg-color);
       color: var(--text-main);
       min-height: 100vh;
-      padding: 32px 16px;
+      padding: 20px;
     }
 
-    main {
-      max-width: 960px;
+    .dashboard-container {
+      max-width: 1400px;
       margin: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card {
       background: var(--card-bg);
       border-radius: 16px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      padding: 20px;
     }
 
     .header-section {
@@ -50,66 +63,109 @@
       align-items: center;
       flex-wrap: wrap;
       gap: 16px;
-      margin-bottom: 20px;
     }
 
-    h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
+    h1, h2, h3 { margin: 0; color: var(--primary); }
+    h1 { font-size: 1.8rem; }
     
-    .toolbar {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      width: 100%;
-      background: var(--hover-bg);
-      padding: 12px;
-      border-radius: 12px;
-      border: 1px solid var(--border-color);
-      margin-bottom: 20px;
-    }
-
-    .search-bar {
-      flex: 1;
-      padding: 10px 16px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      background: var(--card-bg);
-      color: var(--text-main);
-      outline: none;
-    }
-
     .btn {
       padding: 10px 16px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      background: #102f59;
+      background: var(--primary);
       color: #fff;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+    body.dark-mode .btn:not(.btn-danger) { background: var(--primary); color: #121212; }
+    
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+    body.dark-mode .btn-outline { color: var(--primary); border-color: var(--primary); }
+    
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .input-control {
+      padding: 10px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-color);
+      color: var(--text-main);
+      outline: none;
+      font-size: 0.9rem;
+      flex: 1 1 140px;
+      min-width: 140px;
     }
     
-    body.dark-mode .btn { background: #4fc3f7; color: #121212; }
-
-    .users-list { display: grid; gap: 12px; }
+    .input-control:focus { border-color: var(--primary); }
     
-    .user-row {
+    .date-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex: 2 1 300px;
+      min-width: 250px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .stat-box {
+      background: var(--hover-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    
+    .stat-box h3 { font-size: 2rem; margin: 10px 0; color: var(--text-main); }
+    .stat-box p { margin: 0; color: var(--text-sub); font-size: 0.9rem; }
+
+    .chart-container {
+      height: 250px;
+      width: 100%;
+      margin-top: 16px;
+    }
+
+    .users-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 16px; }
+    
+    .user-card {
       border: 1px solid var(--border-color);
       background: var(--card-bg);
       border-radius: 12px;
-      padding: 12px 16px;
+      padding: 16px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
+      flex-direction: column;
+      gap: 12px;
       animation: fadeIn 0.4s ease-in-out;
+      position: relative;
     }
-    
-    .user-row:hover { background: var(--hover-bg); transform: translateY(-2px); transition: 0.2s; }
+    .user-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
+    .user-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .user-info { display: flex; align-items: center; gap: 12px; }
     
     .avatar {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: var(--primary);
       color: #fff;
@@ -117,51 +173,194 @@
       align-items: center;
       justify-content: center;
       font-weight: bold;
-      font-size: 1.2rem;
+      font-size: 1.4rem;
     }
+    body.dark-mode .avatar { color: #121212; }
 
-    .user-details strong { display: block; color: var(--text-main); }
-    .user-details small { color: var(--text-sub); }
+    .user-details strong { display: flex; align-items: center; gap: 8px; color: var(--text-main); font-size: 1.1rem; }
+    .user-details small { color: var(--text-sub); display: block; margin-top: 4px; }
 
-    .status-dot {
-      width: 12px; height: 12px; border-radius: 50%; display: inline-block;
-    }
-    .status-active { background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.14); }
-    .status-idle { background: #facc15; box-shadow: 0 0 0 3px rgba(250,204,21,.14); }
-    .status-offline { background: #9ca3af; box-shadow: 0 0 0 3px rgba(156,163,175,.14); }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .status-active { background: var(--success); box-shadow: 0 0 0 3px rgba(16,185,129,.2); }
+    .status-idle { background: var(--warning); box-shadow: 0 0 0 3px rgba(245,158,11,.2); }
+    .status-offline { background: var(--text-sub); box-shadow: 0 0 0 3px rgba(156,163,175,.2); }
 
-    .time-badge {
-      background: var(--hover-bg);
-      padding: 6px 12px;
-      border-radius: 8px;
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
       font-size: 0.85rem;
-      color: var(--text-sub);
+      background: var(--hover-bg);
+      padding: 12px;
+      border-radius: 8px;
       border: 1px solid var(--border-color);
     }
+    .meta-item { display: flex; flex-direction: column; }
+    .meta-label { color: var(--text-sub); font-size: 0.75rem; }
+    .meta-value { color: var(--text-main); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .tag {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      background: var(--border-color);
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px dashed var(--border-color); }
+    .card-actions .btn { flex: 1; justify-content: center; padding: 8px; font-size: 0.8rem; }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      opacity: 0; pointer-events: none; transition: 0.3s;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: all; }
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 16px;
+      width: 90%; max-width: 600px;
+      max-height: 80vh; overflow-y: auto;
+      padding: 24px;
+      transform: translateY(20px); transition: 0.3s;
+    }
+    .modal-overlay.active .modal-content { transform: translateY(0); }
+    
+    .log-entry { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+    .log-entry:last-child { border-bottom: none; }
+    .log-time { color: var(--text-sub); font-size: 0.8rem; display: block; }
+
+    .toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
+    .toast {
+      background: var(--card-bg); color: var(--text-main);
+      padding: 12px 20px; border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border-right: 4px solid var(--primary);
+      animation: slideIn 0.3s ease-out forwards;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .toast.toast-warning { border-right-color: var(--warning); }
+    
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    @media (max-width: 600px) { .user-row { flex-direction: column; align-items: flex-start; } }
+    
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
   </style>
 </head>
 <body>
-  <main>
-    <div class="header-section">
-      <h1>المستخدمون النشطون <span id="userCount">(0)</span></h1>
-      <button class="btn" id="darkModeToggle">الوضع الليلي 🌙</button>
-    </div>
+  <div class="dashboard-container">
     
-    <div class="toolbar">
-      <input type="text" id="searchInput" class="search-bar" placeholder="ابحث بالاسم أو الإيميل..." />
+    <!-- Header -->
+    <div class="card header-section">
+      <div>
+        <h1>لوحة التحكم المتقدمة <span id="userCount" style="color: var(--text-sub); font-size: 1.2rem;">(0)</span></h1>
+        <p style="color: var(--text-sub); margin: 5px 0 0 0; font-size: 0.9rem;">مراقبة وإدارة المستخدمين النشطين في الوقت الفعلي</p>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-outline" id="exportBtn">📥 تصدير CSV</button>
+        <button class="btn btn-danger" id="endAllBtn">⚠️ إنهاء جميع الجلسات</button>
+        <button class="btn" id="darkModeToggle">🌙 الوضع الليلي</button>
+      </div>
     </div>
 
-    <div class="users-list" id="usersList">
-      <div style="padding: 20px; text-align: center; color: var(--text-sub);">جارٍ تحميل الحضور...</div>
+    <!-- Stats & Chart -->
+    <div class="card">
+      <h2 style="margin-bottom: 16px;">إحصائيات النشاط</h2>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <h3 id="statTotal">0</h3>
+          <p>إجمالي المتصلين الآن</p>
+        </div>
+        <div class="stat-box">
+          <h3 id="statMobile">0</h3>
+          <p>أجهزة الهاتف/التابلت</p>
+        </div>
+        <div class="stat-box">
+          <h3 id="statDesktop">0</h3>
+          <p>أجهزة الكمبيوتر</p>
+        </div>
+        <div class="stat-box">
+          <h3 id="statTopPage" style="font-size: 1.2rem; margin: 18px 0; word-break: break-all;">-</h3>
+          <p>الصفحة الأكثر نشاطاً</p>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="activityChart"></canvas>
+      </div>
     </div>
-  </main>
+
+    <!-- Toolbar Filters -->
+    <div class="toolbar">
+      <input type="text" id="searchInput" class="input-control" style="flex: 2 1 250px;" placeholder="ابحث بالاسم، الإيميل، أو الـ IP..." />
+      
+      <select id="filterStatus" class="input-control">
+        <option value="all">كل الحالات</option>
+        <option value="active">نشط الآن</option>
+        <option value="idle">خامل (أكثر من 5د)</option>
+        <option value="offline">غير متصل</option>
+      </select>
+
+      <select id="filterRole" class="input-control">
+        <option value="all">كل الصلاحيات</option>
+        <option value="admin">مدير (Admin)</option>
+        <option value="user">مستخدم (User)</option>
+      </select>
+
+      <select id="filterDevice" class="input-control">
+        <option value="all">كل الأجهزة</option>
+        <option value="desktop">كمبيوتر</option>
+        <option value="mobile">هاتف/تابلت</option>
+      </select>
+
+      <select id="sortSelect" class="input-control">
+        <option value="lastActivity">ترتيب: الأحدث نشاطاً</option>
+        <option value="sessionDuration">ترتيب: أطول مدة جلسة</option>
+      </select>
+      
+      <div class="date-group">
+        <span style="font-size: 0.8rem; color: var(--text-sub);">من:</span>
+        <input type="date" id="dateStart" class="input-control" />
+        <span style="font-size: 0.8rem; color: var(--text-sub);">إلى:</span>
+        <input type="date" id="dateEnd" class="input-control" />
+      </div>
+    </div>
+
+    <!-- Users List -->
+    <div class="users-list" id="usersList">
+      <div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-sub); background: var(--card-bg); border-radius: 12px;">
+        <span style="font-size: 2rem; display: block; margin-bottom: 10px;">⏳</span>
+        جارٍ الاتصال بقاعدة البيانات وتحميل الحضور...
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Activity Log Modal -->
+  <div class="modal-overlay" id="logModal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 16px;">
+        <h2 id="modalUserName">سجل نشاط المستخدم</h2>
+        <button class="btn btn-outline" style="padding: 4px 10px;" onclick="closeModal()">✖ إغلاق</button>
+      </div>
+      <div id="modalLogContent">
+        <!-- Logs will be populated here -->
+      </div>
+    </div>
+  </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAA-iRIXpM_xkN3btGyr7elW8mwiuDbTLo",
@@ -173,119 +372,490 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
-    
-    let globalUsers = []; 
-    const usersList = document.getElementById("usersList");
-    const searchInput = document.getElementById("searchInput");
-    const countBadge = document.getElementById("userCount");
 
-    // ميزة الوضع الليلي
+    let globalUsers = []; 
+    let previousUserKeys = new Set();
+    let chartInstance = null;
+    let historyData = { labels: [], activeCounts: [] };
+
+    // DOM Elements
+    const usersList = document.getElementById("usersList");
+    const countBadge = document.getElementById("userCount");
+    const searchInput = document.getElementById("searchInput");
+    const filterStatus = document.getElementById("filterStatus");
+    const filterRole = document.getElementById("filterRole");
+    const filterDevice = document.getElementById("filterDevice");
+    const sortSelect = document.getElementById("sortSelect");
+    const dateStart = document.getElementById("dateStart");
+    const dateEnd = document.getElementById("dateEnd");
+    
+    // Stats Elements
+    const statTotal = document.getElementById("statTotal");
+    const statMobile = document.getElementById("statMobile");
+    const statDesktop = document.getElementById("statDesktop");
+    const statTopPage = document.getElementById("statTopPage");
+
+    // ==========================================
+    // حل مشكلة الصفحات الحقيقية (قاموس الترجمة)
+    // ==========================================
+    function getCorrectPageName(pageVal) {
+      if (!pageVal) return "الرئيسية";
+      let p = String(pageVal).trim();
+      
+      // إزالة الامتدادات إذا تم تمريرها بالخطأ
+      if (p.includes(".html")) p = p.replace(".html", "");
+      
+      const dictionary = {
+        "home": "الرئيسية",
+        "dashboard": "الرئيسية",
+        "meetings": "الاجتماعات",
+        "support": "الدعم الفني",
+        "profile": "الملف الشخصي",
+        "articles": "المقالات",
+        "tests": "الاختبارات",
+        "community": "المجتمع",
+        "search": "البحث",
+        "library": "المكتبة",
+        "ministerial": "القرارات الوزارية",
+        "forms": "النماذج ",
+        "prevention-designs": "التصميمات الوقائية"
+      };
+      
+      let lowerP = p.toLowerCase();
+      // بحث مطابق تماماً
+      if (dictionary[lowerP]) return dictionary[lowerP];
+      
+      // بحث جزئي
+      for (const [en, ar] of Object.entries(dictionary)) {
+        if (lowerP.includes(en)) return ar;
+      }
+      
+      // الحالات الخاصة
+      if (lowerP === 'لوحة التحكم') return 'الرئيسية';
+      
+      return p; // إرجاع الاسم كما هو في حال كان بالعربية بالفعل
+    }
+
     document.getElementById("darkModeToggle").addEventListener("click", () => {
       document.body.classList.toggle("dark-mode");
+      if(chartInstance) updateChartColors();
     });
 
-    // دالة لحساب الوقت وتحديد حالة الاتصال (نشط/خامل)
+    window.showToast = function(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type === 'warning' ? 'toast-warning' : ''}`;
+      toast.innerHTML = `<span>${type === 'warning' ? '⚠️' : '🔔'}</span> <div>${message}</div>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    };
+
+    window.closeModal = function() {
+      document.getElementById('logModal').classList.remove('active');
+    };
+
+    window.openLogModal = function(userId) {
+      const user = globalUsers.find(u => u.id === userId);
+      if(!user) return;
+      document.getElementById('modalUserName').innerText = `سجل نشاط: ${user.name || 'مجهول'}`;
+      
+      const timeData = analyzeTime(user.lastSeenAt);
+      let logsHTML = `
+        <div class="log-entry">
+          <strong>تسجيل الدخول / آخر ظهور</strong>
+          <span class="log-time">${new Date(user.lastSeenAt?.seconds * 1000 || Date.now()).toLocaleString('ar-EG')}</span>
+        </div>
+        <div class="log-entry">
+          <strong>الوصول إلى صفحة:</strong> ${user.currentPage}
+          <span class="log-time">${timeData.text}</span>
+        </div>
+        <div class="log-entry">
+          <strong>آخر إجراء:</strong> ${user.lastAction}
+        </div>
+      `;
+      document.getElementById('modalLogContent').innerHTML = logsHTML;
+      document.getElementById('logModal').classList.add('active');
+    };
+
     function analyzeTime(value) {
       try {
-        const date = value?.toDate ? value.toDate() : new Date(value);
-        if (!date || Number.isNaN(date.getTime())) return { text: "غير معروف", statusClass: "status-offline" };
+        const date = value?.toDate ? value.toDate() : (value?.seconds ? new Date(value.seconds * 1000) : new Date(value));
+        if (!date || Number.isNaN(date.getTime())) return { text: "غير معروف", status: "offline", statusClass: "status-offline", diffSeconds: 99999 };
         
         const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
-        let statusClass = "status-active"; // أخضر
+        let status = "active";
+        let statusClass = "status-active"; 
         
-        if (diffSeconds > 300) statusClass = "status-idle"; // أصفر إذا مر أكثر من 5 دقائق
-        if (diffSeconds > 3600) statusClass = "status-offline"; // رمادي إذا مر أكثر من ساعة
+        if (diffSeconds > 300) { status = "idle"; statusClass = "status-idle"; } 
+        if (diffSeconds > 3600) { status = "offline"; statusClass = "status-offline"; } 
 
-        if (diffSeconds < 60) return { text: `منذ ${diffSeconds} ثواني`, statusClass };
-        const mins = Math.floor(diffSeconds / 60);
-        if (mins < 60) return { text: `منذ ${mins} دقيقة`, statusClass };
-        const hours = Math.floor(mins / 60);
-        return { text: `منذ ${hours} ساعة`, statusClass };
+        let text = "";
+        if (diffSeconds < 60) text = `منذ ${diffSeconds} ثواني`;
+        else if (diffSeconds < 3600) text = `منذ ${Math.floor(diffSeconds / 60)} دقيقة`;
+        else text = `منذ ${Math.floor(diffSeconds / 3600)} ساعة`;
+
+        return { text, status, statusClass, dateObj: date, diffSeconds };
       } catch {
-        return { text: "غير معروف", statusClass: "status-offline" };
+        return { text: "غير معروف", status: "offline", statusClass: "status-offline", diffSeconds: 99999 };
       }
     }
 
-    // دالة الرسم (Render)
-    function renderUsers(users) {
-      countBadge.innerText = `(${users.length})`;
-      if (!users.length) {
-        usersList.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-sub);">لا توجد نتائج مطابقة.</div>`;
+    function calculateSessionDuration(user, timeData) {
+      const start = user.sessionStartAt?.seconds ? new Date(user.sessionStartAt.seconds * 1000) : null;
+      if (!start) return timeData.diffSeconds < 3600 ? `${Math.floor(timeData.diffSeconds/60)} دقيقة` : "غير محدد";
+      
+      const diffMins = Math.max(0, Math.floor((Date.now() - start.getTime()) / 60000));
+      if(diffMins < 60) return `${diffMins} دقيقة`;
+      return `${Math.floor(diffMins/60)} ساعة و ${diffMins%60} دقيقة`;
+    }
+
+    window.endSession = async function(userId) {
+      if(!confirm("هل أنت متأكد من إنهاء جلسة هذا المستخدم وحذفه من القائمة؟")) return;
+      try {
+        await deleteDoc(doc(db, "dashboardPresence", userId));
+        showToast("تم إنهاء جلسة المستخدم بنجاح.", "success");
+      } catch (e) {
+        showToast("حدث خطأ أثناء إنهاء الجلسة.", "warning");
+        console.error(e);
+      }
+    };
+
+    document.getElementById("endAllBtn").addEventListener("click", async () => {
+      if(!confirm("تحذير: سيتم إنهاء وحذف جميع الجلسات النشطة! هل أنت متأكد؟")) return;
+      try {
+        const activeUsers = globalUsers.filter(u => analyzeTime(u.lastSeenAt).status !== 'offline');
+        for (const user of activeUsers) {
+          await deleteDoc(doc(db, "dashboardPresence", user.id));
+        }
+        showToast(`تم إنهاء وحذف ${activeUsers.length} جلسة.`, "success");
+      } catch (e) {
+        showToast("حدث خطأ أثناء التنفيذ.", "warning");
+      }
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+      csvContent += "الاسم,البريد,الحالة,آخر نشاط,المدة,الصلاحية,الجهاز,نظام التشغيل,المتصفح,الدولة/المدينة,IP,الصفحة الحالية\n";
+      
+      getFilteredUsers().forEach(user => {
+        const t = analyzeTime(user.lastSeenAt);
+        const duration = calculateSessionDuration(user, t);
+        const row = [
+          `"${user.name || 'مجهول'}"`,
+          `"${user.email || ''}"`,
+          `"${t.status}"`,
+          `"${t.text}"`,
+          `"${duration}"`,
+          `"${user.role || 'user'}"`,
+          `"${user.deviceType || 'desktop'}"`,
+          `"${user.os || 'غير محدد'}"`,
+          `"${user.browser || 'غير محدد'}"`,
+          `"${user.location || 'غير محدد'}"`,
+          `"${user.ip || 'مخفي'}"`,
+          `"${user.currentPage || 'الرئيسية'}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `active_users_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    });
+
+    function getFilteredUsers() {
+      let filtered = [...globalUsers];
+      
+      const term = searchInput.value.toLowerCase();
+      if(term) {
+        filtered = filtered.filter(u => 
+          (u.name && u.name.toLowerCase().includes(term)) || 
+          (u.email && u.email.toLowerCase().includes(term)) ||
+          (u.ip && u.ip.includes(term))
+        );
+      }
+
+      const statusVal = filterStatus.value;
+      if(statusVal !== 'all') {
+        filtered = filtered.filter(u => analyzeTime(u.lastSeenAt).status === statusVal);
+      }
+
+      const roleVal = filterRole.value;
+      if(roleVal !== 'all') {
+        filtered = filtered.filter(u => (u.role || 'user').toLowerCase() === roleVal);
+      }
+
+      const devVal = filterDevice.value;
+      if(devVal !== 'all') {
+        filtered = filtered.filter(u => {
+          const type = (u.deviceType || 'desktop').toLowerCase();
+          if(devVal === 'mobile') return type.includes('mobile') || type.includes('tablet');
+          return type.includes('desktop') || type.includes('pc') || type.includes('mac');
+        });
+      }
+
+      const startD = dateStart.value ? new Date(dateStart.value).getTime() : 0;
+      const endD = dateEnd.value ? new Date(dateEnd.value).getTime() + 86399000 : Infinity; 
+      if(startD > 0 || endD < Infinity) {
+        filtered = filtered.filter(u => {
+          const t = analyzeTime(u.lastSeenAt).dateObj?.getTime() || 0;
+          return t >= startD && t <= endD;
+        });
+      }
+
+      const sortVal = sortSelect.value;
+      if(sortVal === 'lastActivity') {
+        filtered.sort((a, b) => (b.lastSeenAt?.seconds || 0) - (a.lastSeenAt?.seconds || 0));
+      } else if (sortVal === 'sessionDuration') {
+        filtered.sort((a, b) => {
+          const startA = a.sessionStartAt?.seconds || a.lastSeenAt?.seconds || 0;
+          const startB = b.sessionStartAt?.seconds || b.lastSeenAt?.seconds || 0;
+          return startA - startB; 
+        });
+      }
+
+      return filtered;
+    }
+
+    function renderDashboard() {
+      const usersToRender = getFilteredUsers();
+      
+      const activeOnly = usersToRender.filter(u => analyzeTime(u.lastSeenAt).status === 'active');
+      statTotal.innerText = activeOnly.length;
+      countBadge.innerText = `(${usersToRender.length})`;
+      
+      let mobiles = 0, desktops = 0;
+      const pageCounts = {};
+      
+      usersToRender.forEach(u => {
+        const d = (u.deviceType || 'desktop').toLowerCase();
+        if(d.includes('mobile') || d.includes('tablet')) mobiles++; else desktops++;
+        
+        const p = u.currentPage; // تم تصحيحها في الدالة العلوية
+        pageCounts[p] = (pageCounts[p] || 0) + 1;
+      });
+
+      statMobile.innerText = mobiles;
+      statDesktop.innerText = desktops;
+      
+      let topP = "-", max = 0;
+      for(const [p, c] of Object.entries(pageCounts)) {
+        if(c > max) { max = c; topP = p; }
+      }
+      statTopPage.innerText = topP;
+
+      if(historyData.labels.length === 0 || Date.now() - historyData.lastUpdate > 60000) {
+         historyData.labels.push(new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}));
+         historyData.activeCounts.push(activeOnly.length);
+         if(historyData.labels.length > 15) { 
+           historyData.labels.shift();
+           historyData.activeCounts.shift();
+         }
+         historyData.lastUpdate = Date.now();
+         updateChart();
+      }
+
+      if (!usersToRender.length) {
+        usersList.innerHTML = `<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-sub); background: var(--card-bg); border-radius: 12px;">لا توجد نتائج مطابقة لمعايير البحث.</div>`;
         return;
       }
 
-      usersList.innerHTML = users.map((user) => {
+      usersList.innerHTML = usersToRender.map((user) => {
         const timeData = analyzeTime(user.lastSeenAt);
+        const duration = calculateSessionDuration(user, timeData);
         const firstLetter = (user.name || "م").charAt(0).toUpperCase();
         
+        const os = user.os || "غير محدد";
+        const browser = user.browser || "غير معروف";
+        const location = user.location || "غير متاح";
+        const ip = user.ip || "مخفي";
+        const role = user.role === 'admin' ? 'مدير' : 'مستخدم';
+        
         return `
-          <div class="user-row">
-            <div class="user-info">
-              <div class="avatar">${firstLetter}</div>
-              <div class="user-details">
-                <strong>
-                  <span class="status-dot ${timeData.statusClass}"></span>
-                  ${user.name || "مستخدم غير معروف"}
-                </strong>
-                <small>${user.email || "لا يوجد إيميل"}</small>
+          <div class="user-card">
+            <div class="user-header">
+              <div class="user-info">
+                <div class="avatar">${firstLetter}</div>
+                <div class="user-details">
+                  <strong>
+                    <span class="status-dot ${timeData.statusClass}"></span>
+                    ${user.name || "مستخدم غير معروف"}
+                  </strong>
+                  <small>${user.email || "بدون بريد إلكتروني"}</small>
+                </div>
               </div>
             </div>
-            <div class="time-badge">
-              آخر نشاط: ${timeData.text}
+            
+            <div class="tags">
+              <span class="tag">👑 ${role}</span>
+              <span class="tag">💻 ${user.deviceType || 'Desktop'}</span>
+              <span class="tag">🌐 ${browser}</span>
+              <span class="tag">⚙️ ${os}</span>
+            </div>
+
+            <div class="meta-grid">
+              <div class="meta-item">
+                <span class="meta-label">الموقع و IP</span>
+                <span class="meta-value" title="${location} - ${ip}">${location} / ${ip}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">الصفحة الحالية</span>
+                <span class="meta-value" title="${user.currentPage}">${user.currentPage}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">آخر نشاط</span>
+                <span class="meta-value">${timeData.text}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">مدة الجلسة</span>
+                <span class="meta-value">${duration}</span>
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button class="btn btn-outline" onclick="openLogModal('${user.id}')">📜 السجل</button>
+              <button class="btn btn-danger" onclick="endSession('${user.id}')">🛑 إنهاء الجلسة</button>
             </div>
           </div>
         `;
       }).join("");
     }
 
-    // ميزة البحث السريع
-    searchInput.addEventListener("input", (e) => {
-      const term = e.target.value.toLowerCase();
-      const filtered = globalUsers.filter(u => 
-        (u.name && u.name.toLowerCase().includes(term)) || 
-        (u.email && u.email.toLowerCase().includes(term))
-      );
-      renderUsers(filtered);
-    });
+    function initChart() {
+      const ctx = document.getElementById('activityChart').getContext('2d');
+      const isDark = document.body.classList.contains('dark-mode');
+      const textColor = isDark ? '#a0a0a0' : '#607a8b';
+      const gridColor = isDark ? '#333' : '#dbe7ed';
 
-    onSnapshot(collection(db, "dashboardPresence"), (snapshot) => {
-      const rawUsers = snapshot.docs
-        .map((item) => ({ id: item.id, ...item.data() }))
-        .filter((item) => item.online !== false);
-
-      // ميزة: منع التكرار (Deduplication) بناءً على الإيميل
-      const uniqueUsersMap = {};
-      rawUsers.forEach(user => {
-        const key = user.email || user.id; // نستخدم الإيميل كمفتاح لضمان عدم تكراره
-        const currentUserTime = user.lastSeenAt?.seconds || 0;
-        const storedUserTime = uniqueUsersMap[key]?.lastSeenAt?.seconds || 0;
-        
-        // إذا كان المستخدم غير موجود في القائمة، أو هذا السجل أحدث من السجل المحفوظ
-        if (!uniqueUsersMap[key] || currentUserTime > storedUserTime) {
-          uniqueUsersMap[key] = user;
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: historyData.labels,
+          datasets: [{
+            label: 'المستخدمون النشطون',
+            data: historyData.activeCounts,
+            borderColor: '#183047',
+            backgroundColor: 'rgba(24, 48, 71, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor }, grid: { color: gridColor } },
+            x: { ticks: { color: textColor }, grid: { color: gridColor } }
+          }
         }
       });
+    }
 
-      // تحويل الكائن إلى مصفوفة وترتيبها من الأحدث للأقدم
-      globalUsers = Object.values(uniqueUsersMap)
-        .sort((a, b) => (b.lastSeenAt?.seconds || 0) - (a.lastSeenAt?.seconds || 0));
+    function updateChartColors() {
+      if(!chartInstance) return;
+      const isDark = document.body.classList.contains('dark-mode');
+      const textColor = isDark ? '#a0a0a0' : '#607a8b';
+      const gridColor = isDark ? '#333' : '#dbe7ed';
+      const primary = isDark ? '#4fc3f7' : '#183047';
+      
+      chartInstance.data.datasets[0].borderColor = primary;
+      chartInstance.data.datasets[0].backgroundColor = isDark ? 'rgba(79, 195, 247, 0.1)' : 'rgba(24, 48, 71, 0.1)';
+      chartInstance.options.scales.y.ticks.color = textColor;
+      chartInstance.options.scales.x.ticks.color = textColor;
+      chartInstance.options.scales.y.grid.color = gridColor;
+      chartInstance.options.scales.x.grid.color = gridColor;
+      chartInstance.update();
+    }
 
-      // إعادة تفعيل فلتر البحث الحالي إن وجد
-      const term = searchInput.value.toLowerCase();
-      if (term) {
-        const filtered = globalUsers.filter(u => 
-          (u.name && u.name.toLowerCase().includes(term)) || 
-          (u.email && u.email.toLowerCase().includes(term))
-        );
-        renderUsers(filtered);
-      } else {
-        renderUsers(globalUsers);
-      }
-    }, (error) => {
-      console.error("تعذر تحميل الحضور:", error);
-      usersList.innerHTML = `<div style="padding: 20px; text-align: center; color: red;">تعذر تحميل البيانات، تأكد من الاتصال.</div>`;
+    function updateChart() {
+      if(!chartInstance) { initChart(); return; }
+      chartInstance.data.labels = historyData.labels;
+      chartInstance.data.datasets[0].data = historyData.activeCounts;
+      chartInstance.update();
+    }
+
+    [searchInput, filterStatus, filterRole, filterDevice, sortSelect, dateStart, dateEnd].forEach(el => {
+      el.addEventListener('input', renderDashboard);
+      el.addEventListener('change', renderDashboard);
     });
+
+    async function startListening() {
+      try {
+        await signInAnonymously(auth);
+        
+        onSnapshot(collection(db, "dashboardPresence"), (snapshot) => {
+          const rawUsers = snapshot.docs
+            .map((item) => {
+              const data = item.data();
+              // تطبيق المترجم لاستخراج اسم الصفحة الحقيقي
+              const realPage = data.page || data.currentPage || 'home';
+              const translatedPage = getCorrectPageName(realPage);
+              
+              return {
+                id: item.id,
+                ...data,
+                currentPage: translatedPage,
+                sessionStartAt: data.sessionStartAt || data.openedAt || null,
+                lastAction: data.lastAction || `تصفح ${translatedPage}`
+              };
+            })
+            .filter((item) => item.online !== false && !item.isDeleted);
+
+          const uniqueUsersMap = {};
+          rawUsers.forEach(user => {
+            const key = user.email || user.id;
+            const currentUserTime = user.lastSeenAt?.seconds || 0;
+            const storedUserTime = uniqueUsersMap[key]?.lastSeenAt?.seconds || 0;
+            
+            if (!uniqueUsersMap[key] || currentUserTime > storedUserTime) {
+              uniqueUsersMap[key] = user;
+            }
+          });
+
+          globalUsers = Object.values(uniqueUsersMap);
+
+          const currentKeys = new Set(globalUsers.map(u => u.id));
+          if(previousUserKeys.size > 0) {
+            currentKeys.forEach(id => {
+              if(!previousUserKeys.has(id)) {
+                const newUser = globalUsers.find(u => u.id === id);
+                showToast(`تسجيل دخول جديد: ${newUser.name || 'مستخدم جديد'}`, 'info');
+              }
+            });
+          }
+          previousUserKeys = currentKeys;
+
+          renderDashboard();
+          
+        }, (error) => {
+          console.error("تعذر تحميل الحضور:", error);
+          usersList.innerHTML = `<div style="grid-column: 1/-1; padding: 20px; text-align: center; color: var(--danger); background: var(--card-bg); border-radius: 12px; border: 1px solid var(--danger);">تعذر تحميل البيانات، تأكد من الصلاحيات أو الاتصال بالإنترنت. <br> <small>${error.message}</small></div>`;
+        });
+      } catch (error) {
+        console.error("Auth error:", error);
+        usersList.innerHTML = `<div style="grid-column: 1/-1; padding: 20px; text-align: center; color: var(--danger);">خطأ في المصادقة: ${error.message}</div>`;
+      }
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      startListening();
+    });
+
   </script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
