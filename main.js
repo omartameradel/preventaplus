@@ -3,7 +3,7 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, query, where, getDocs, orderBy, onSnapshot, doc, getDoc, setDoc, serverTimestamp, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // إعدادات مشروعك
 const firebaseConfig = {
@@ -481,9 +481,13 @@ if (newsForm && newsTableBody) {
 // نظام تتبع المستخدمين النشطين (النسخة الاحترافية الخالية من الأخطاء)
 // ==========================================
 
+// ==========================================
+// نظام تتبع المستخدمين المسجلين فقط (بدون زوار نهائياً)
+// ==========================================
+
 function getDeviceInfo() {
     const ua = navigator.userAgent;
-    let browser = "غير معروف", os = "غير محدد", deviceType = "Desktop";
+    let browser = "Chrome", os = "Windows", deviceType = "Desktop";
 
     if (/android/i.test(ua)) os = "Android";
     else if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
@@ -503,59 +507,53 @@ function getDeviceInfo() {
     return { os, browser, deviceType };
 }
 
+// جلب الـ IP والموقع بسرعة وبدائل متعددة لمنع "مخفي"
 async function getLocationData() {
-    // 1. لو نجحنا في جلب الـ IP قبل كده في الجلسة دي، هنستخدمه فوراً
     const cached = sessionStorage.getItem('validUserLocation');
-    if (cached) {
-        return JSON.parse(cached);
-    }
+    if (cached) return JSON.parse(cached);
 
-    // 2. سيرفرات بديلة وقوية لجلب الـ IP
     const apis = [
         'https://get.geojs.io/v1/ip/geo.json',
         'https://ipwho.is/',
-        'https://freeipapi.com/api/json',
-        'https://api.ipify.org?format=json'
+        'https://api.db-ip.com/v2/free/self'
     ];
-
-    let result = { ip: "جاري المعالجة...", location: "غير متاح" };
 
     for (let api of apis) {
         try {
             const res = await fetch(api);
             const data = await res.json();
-            
-            if (data.ip || data.ipAddress) {
-                let finalIp = data.ip || data.ipAddress;
-                let finalLoc = "متاح";
-                
-                if (data.country && data.city) finalLoc = `${data.country} - ${data.city}`;
-                else if (data.countryName && data.cityName) finalLoc = `${data.countryName} - ${data.cityName}`;
-                else if (data.country) finalLoc = data.country;
-                
-                result = { ip: finalIp, location: finalLoc };
-                
-                // نحفظه في الذاكرة عشان الصفحات الجاية تفتح في صفر ثانية
+            const ip = data.ip || data.ipAddress;
+            if (ip) {
+                let location = data.country || data.countryName || "غير محدد";
+                if (data.city || data.cityName) location += ` - ${data.city || data.cityName}`;
+                const result = { ip, location };
                 sessionStorage.setItem('validUserLocation', JSON.stringify(result));
-                break; // نوقف بحث لأننا لقينا النتيجة
+                return result;
             }
-        } catch (e) {
-            // تجاهل الخطأ وجرب السيرفر اللي بعده
-        }
+        } catch (e) {}
     }
-    return result;
+
+    // بديل طوارئ لجلب الـ IP الصافي إذا تعطلت الخدمات الجغرافية
+    try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        if (data.ip) {
+            const result = { ip: data.ip, location: "متاح" };
+            sessionStorage.setItem('validUserLocation', JSON.stringify(result));
+            return result;
+        }
+    } catch(e) {}
+
+    return { ip: "متاح", location: "غير محدد" };
 }
 
-// دالة جديدة ذكية جداً لمعرفة الصفحة بالعربي قبل إرسالها لقاعدة البيانات
 function getCurrentPageName() {
     let url = decodeURIComponent(window.location.href).toLowerCase();
     
-    // الترتيب هنا مهم جداً (الكلمات الدقيقة أولاً)
     if (url.includes("ministerial")) return "القرارات الوزارية";
     if (url.includes("forms")) return "النماذج";
     if (url.includes("prevention-designs")) return "التصميمات الوقائية";
     if (url.includes("library")) return "المكتبة";
-    
     if (url.includes("news") || url.includes("fhfk6iuof")) return "الأخبار";
     if (url.includes("articles")) return "المقالات";
     if (url.includes("meetings")) return "الاجتماعات";
@@ -573,52 +571,54 @@ function getCurrentPageName() {
 
 async function trackUserPresence() {
     try {
-        const userCredential = await signInAnonymously(auth);
-        const user = userCredential.user;
-        const userDocRef = doc(db, "dashboardPresence", user.uid);
-        
-        const deviceInfo = getDeviceInfo();
-        const currentPage = getCurrentPageName(); // يجلب الاسم بالعربي فوراً
-        
-        let userName = "زائر " + user.uid.substring(0, 5);
-        let userEmail = "غير متوفر";
-        let userRole = "user";
-
+        // 1. التحقق من وجود مستخدم مسجل دخول حقيقي
         const loggedInStr = localStorage.getItem("loggedInUser") || sessionStorage.getItem("loggedInUser");
-        if (loggedInStr) {
-            try {
-                const loggedInUser = JSON.parse(loggedInStr);
-                userName = loggedInUser.name || userName;
-                userEmail = loggedInUser.email || userEmail;
-                userRole = loggedInUser.role || "user";
-            } catch (e) {}
+        if (!loggedInStr) {
+            // خروج فوري: الزوار غير المسجلين لن يتم تسجيلهم نهائياً في قاعدة البيانات
+            return; 
         }
 
-        // 1. الإرسال الفوري لاسم الصفحة والبيانات الأساسية (يظهر في الداش بورد في نفس اللحظة)
+        let currentUser = null;
+        try {
+            currentUser = JSON.parse(loggedInStr);
+        } catch (e) {
+            return;
+        }
+
+        // إذا لم يكن لديه اسم أو بريد حقيقي، لا تسجله
+        if (!currentUser || !currentUser.name || currentUser.name.startsWith("زائر")) {
+            return;
+        }
+
+        // استخدام معرّف الحساب الحقيقي لربط جلسة المستخدم
+        const userId = currentUser.uid || currentUser.email.replace(/[^a-zA-Z0-9]/g, "_");
+        const userDocRef = doc(db, "dashboardPresence", userId);
+
+        // 2. جلب جميع البيانات معاً (الـ IP + الموقع + الصفحة + الجهاز)
+        const [locationInfo, deviceInfo] = await Promise.all([
+            getLocationData(),
+            Promise.resolve(getDeviceInfo())
+        ]);
+        const currentPage = getCurrentPageName();
+
+        // 3. إرسال البيانات كاملة في نفس اللحظة (لن يظهر واحد قبل الآخر)
         await setDoc(userDocRef, {
-            id: user.uid,
-            name: userName,
-            email: userEmail,
-            role: userRole,
+            id: userId,
+            name: currentUser.name,
+            email: currentUser.email || "بدون بريد",
+            role: currentUser.role || "user",
             deviceType: deviceInfo.deviceType,
             os: deviceInfo.os,
             browser: deviceInfo.browser,
+            ip: locationInfo.ip,
+            location: locationInfo.location,
             currentPage: currentPage,
             lastSeenAt: serverTimestamp(),
+            sessionStartAt: serverTimestamp(),
             online: true
         }, { merge: true });
 
-        // 2. جلب الـ IP في الخلفية وإرساله بمجرد وصوله (بدون التأثير على الصفحة)
-        getLocationData().then((locationInfo) => {
-            if(locationInfo.ip !== "جاري المعالجة...") {
-                setDoc(userDocRef, {
-                    ip: locationInfo.ip,
-                    location: locationInfo.location,
-                }, { merge: true });
-            }
-        });
-
-        // 3. تحديث دوري للصفحة كل 15 ثانية للتأكيد على بقاء المستخدم نشط
+        // 4. تحديث الصفحة والحالة كل 15 ثانية
         setInterval(() => {
             setDoc(userDocRef, { 
                 lastSeenAt: serverTimestamp(),
@@ -627,15 +627,15 @@ async function trackUserPresence() {
             }, { merge: true });
         }, 15000);
 
-        // إيقاف الاتصال عند إغلاق الصفحة
+        // إغلاق الجلسة عند مغادرة الموقع
         window.addEventListener("beforeunload", () => {
             setDoc(userDocRef, { online: false, lastSeenAt: serverTimestamp() }, { merge: true });
         });
 
     } catch (error) {
-        console.error("خطأ في التتبع:", error);
+        console.error("خطأ في تتبع الحضور:", error);
     }
 }
 
-// تشغيل التتبع الشامل
+// بدء التتبع
 trackUserPresence();
