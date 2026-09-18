@@ -477,6 +477,10 @@ if (newsForm && newsTableBody) {
 // ==========================================
 // نظام تتبع المستخدمين النشطين (Live Tracking)
 // ==========================================
+// ==========================================
+// نظام تتبع المستخدمين النشطين (النسخة الاحترافية الخالية من الأخطاء)
+// ==========================================
+
 function getDeviceInfo() {
     const ua = navigator.userAgent;
     let browser = "غير معروف", os = "غير محدد", deviceType = "Desktop";
@@ -500,58 +504,82 @@ function getDeviceInfo() {
 }
 
 async function getLocationData() {
-  try {
-    // 1. الخادم الأول (نسبة نجاحه عالية جداً ولا يواجه مشاكل CORS)
-    const res1 = await fetch('https://ipwho.is/');
-    const data1 = await res1.json();
-    if (data1.success) {
-      console.log("تم جلب IP من الخادم 1:", data1.ip);
-      return { ip: data1.ip, location: `${data1.country} - ${data1.city}` };
+    // 1. لو نجحنا في جلب الـ IP قبل كده في الجلسة دي، هنستخدمه فوراً
+    const cached = sessionStorage.getItem('validUserLocation');
+    if (cached) {
+        return JSON.parse(cached);
     }
-  } catch (e) {}
 
-  try {
-    // 2. الخادم الثاني (بديل في حال تعطل الأول)
-    const res2 = await fetch('https://freeipapi.com/api/json');
-    const data2 = await res2.json();
-    if (data2.ipAddress) {
-      console.log("تم جلب IP من الخادم 2:", data2.ipAddress);
-      return { ip: data2.ipAddress, location: `${data2.countryName} - ${data2.cityName}` };
+    // 2. سيرفرات بديلة وقوية لجلب الـ IP
+    const apis = [
+        'https://get.geojs.io/v1/ip/geo.json',
+        'https://ipwho.is/',
+        'https://freeipapi.com/api/json',
+        'https://api.ipify.org?format=json'
+    ];
+
+    let result = { ip: "جاري المعالجة...", location: "غير متاح" };
+
+    for (let api of apis) {
+        try {
+            const res = await fetch(api);
+            const data = await res.json();
+            
+            if (data.ip || data.ipAddress) {
+                let finalIp = data.ip || data.ipAddress;
+                let finalLoc = "متاح";
+                
+                if (data.country && data.city) finalLoc = `${data.country} - ${data.city}`;
+                else if (data.countryName && data.cityName) finalLoc = `${data.countryName} - ${data.cityName}`;
+                else if (data.country) finalLoc = data.country;
+                
+                result = { ip: finalIp, location: finalLoc };
+                
+                // نحفظه في الذاكرة عشان الصفحات الجاية تفتح في صفر ثانية
+                sessionStorage.setItem('validUserLocation', JSON.stringify(result));
+                break; // نوقف بحث لأننا لقينا النتيجة
+            }
+        } catch (e) {
+            // تجاهل الخطأ وجرب السيرفر اللي بعده
+        }
     }
-  } catch (e) {}
-
-  try {
-    // 3. الخادم الثالث (يجلب الـ IP فقط كطوارئ قصوى)
-    const res3 = await fetch('https://api.ipify.org?format=json');
-    const data3 = await res3.json();
-    if (data3.ip) {
-      console.log("تم جلب IP من الخادم 3:", data3.ip);
-      return { ip: data3.ip, location: "غير محدد" };
-    }
-  } catch (e) {
-    console.error("تم حظر جميع الخوادم بواسطة متصفحك أو مانع الإعلانات.");
-  }
-
-  return { ip: "مخفي", location: "غير متاح" };
+    return result;
 }
 
+// دالة جديدة ذكية جداً لمعرفة الصفحة بالعربي قبل إرسالها لقاعدة البيانات
 function getCurrentPageName() {
-    let path = window.location.pathname;
-    let page = path.split("/").pop(); 
-    if (!page || page === "") page = "home"; 
-    return page.replace(".html", ""); 
+    let url = decodeURIComponent(window.location.href).toLowerCase();
+    
+    // الترتيب هنا مهم جداً (الكلمات الدقيقة أولاً)
+    if (url.includes("ministerial")) return "القرارات الوزارية";
+    if (url.includes("forms")) return "النماذج";
+    if (url.includes("prevention-designs")) return "التصميمات الوقائية";
+    if (url.includes("library")) return "المكتبة";
+    
+    if (url.includes("news") || url.includes("fhfk6iuof")) return "الأخبار";
+    if (url.includes("articles")) return "المقالات";
+    if (url.includes("meetings")) return "الاجتماعات";
+    if (url.includes("support")) return "الدعم الفني";
+    if (url.includes("community")) return "المجتمع";
+    if (url.includes("tests")) return "الاختبارات";
+    if (url.includes("profile")) return "الملف الشخصي";
+    if (url.includes("mm6ops")) return "إدارة المستخدمين";
+    if (url.includes("dashboard") || url.includes("addash")) return "لوحة التحكم";
+    if (url.includes("index") || url.endsWith("/")) return "الرئيسية";
+    
+    let path = window.location.pathname.split("/").pop().replace(".html", "");
+    return path || "الرئيسية";
 }
 
 async function trackUserPresence() {
     try {
         const userCredential = await signInAnonymously(auth);
         const user = userCredential.user;
+        const userDocRef = doc(db, "dashboardPresence", user.uid);
         
         const deviceInfo = getDeviceInfo();
-        const locationInfo = await getLocationData();
-        const currentPage = getCurrentPageName();
-
-        // سحب اسم المستخدم من Local Storage إذا كان مسجل دخول فعلاً
+        const currentPage = getCurrentPageName(); // يجلب الاسم بالعربي فوراً
+        
         let userName = "زائر " + user.uid.substring(0, 5);
         let userEmail = "غير متوفر";
         let userRole = "user";
@@ -566,9 +594,8 @@ async function trackUserPresence() {
             } catch (e) {}
         }
 
-        const userDocRef = doc(db, "dashboardPresence", user.uid);
-
-        const presenceData = {
+        // 1. الإرسال الفوري لاسم الصفحة والبيانات الأساسية (يظهر في الداش بورد في نفس اللحظة)
+        await setDoc(userDocRef, {
             id: user.uid,
             name: userName,
             email: userEmail,
@@ -576,30 +603,39 @@ async function trackUserPresence() {
             deviceType: deviceInfo.deviceType,
             os: deviceInfo.os,
             browser: deviceInfo.browser,
-            ip: locationInfo.ip,
-            location: locationInfo.location,
             currentPage: currentPage,
             lastSeenAt: serverTimestamp(),
             online: true
-        };
+        }, { merge: true });
 
-        await setDoc(userDocRef, presenceData, { merge: true });
+        // 2. جلب الـ IP في الخلفية وإرساله بمجرد وصوله (بدون التأثير على الصفحة)
+        getLocationData().then((locationInfo) => {
+            if(locationInfo.ip !== "جاري المعالجة...") {
+                setDoc(userDocRef, {
+                    ip: locationInfo.ip,
+                    location: locationInfo.location,
+                }, { merge: true });
+            }
+        });
 
+        // 3. تحديث دوري للصفحة كل 15 ثانية للتأكيد على بقاء المستخدم نشط
         setInterval(() => {
             setDoc(userDocRef, { 
                 lastSeenAt: serverTimestamp(),
-                currentPage: getCurrentPageName()
+                currentPage: getCurrentPageName(),
+                online: true
             }, { merge: true });
-        }, 60000);
+        }, 15000);
 
+        // إيقاف الاتصال عند إغلاق الصفحة
         window.addEventListener("beforeunload", () => {
             setDoc(userDocRef, { online: false, lastSeenAt: serverTimestamp() }, { merge: true });
         });
 
     } catch (error) {
-        console.error("خطأ في تتبع المستخدم:", error);
+        console.error("خطأ في التتبع:", error);
     }
 }
 
-// تشغيل التتبع
+// تشغيل التتبع الشامل
 trackUserPresence();
