@@ -1,8 +1,9 @@
 // ==========================================
-// استدعاء مكتبات Firebase (الإصدار الحديث v10)
+// استدعاء مكتبات Firebase
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs, orderBy, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, query, where, getDocs, orderBy, onSnapshot, doc, getDoc, setDoc, serverTimestamp, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // إعدادات مشروعك
 const firebaseConfig = {
@@ -17,6 +18,8 @@ const firebaseConfig = {
 // تهيئة Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app); // تمت إضافة المصادقة للتتبع
+
 // ==========================================
 // 1. إعدادات الوضع الليلي / النهاري
 // ==========================================
@@ -128,110 +131,95 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- تسجيل الدخول ---
-    // --- تسجيل الدخول (بدون Firebase Authentication - محاكاة وهمية) ---
-   // --- تسجيل الدخول (بدون Firebase Auth) ---
     // ==========================================
     // --- نظام تسجيل الدخول (محاكاة Firebase عبر Local Storage) ---
     // ==========================================
-   // ==========================================
-const loginForm = document.getElementById('firebase-login-form');
-if (loginForm) {
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const rememberCheckbox = document.getElementById('remember');
-    const submitBtn = document.getElementById('loginBtn');
-    const togglePassword = document.getElementById('togglePassword');
+    const loginForm = document.getElementById('firebase-login-form');
+    if (loginForm) {
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const rememberCheckbox = document.getElementById('remember');
+        const submitBtn = document.getElementById('loginBtn');
+        const togglePassword = document.getElementById('togglePassword');
 
-    // استرجاع البريد إذا كان محفوظاً عبر ميزة "تذكرني"
-    const savedEmail = localStorage.getItem("rememberedEmail");
-    if (savedEmail) {
-        emailInput.value = savedEmail;
-        rememberCheckbox.checked = true;
-    }
+        const savedEmail = localStorage.getItem("rememberedEmail");
+        if (savedEmail) {
+            emailInput.value = savedEmail;
+            rememberCheckbox.checked = true;
+        }
 
-    // إظهار/إخفاء كلمة المرور
-    togglePassword?.addEventListener('click', () => {
-        const isPassword = passwordInput.type === 'password';
-        passwordInput.type = isPassword ? 'text' : 'password';
-        togglePassword.setAttribute('aria-label', isPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور');
-        togglePassword.setAttribute('aria-pressed', String(isPassword));
-        togglePassword.querySelector('svg')?.classList.toggle('is-visible', isPassword);
-    });
+        togglePassword?.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            togglePassword.setAttribute('aria-label', isPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور');
+            togglePassword.setAttribute('aria-pressed', String(isPassword));
+            togglePassword.querySelector('svg')?.classList.toggle('is-visible', isPassword);
+        });
 
-    // تنفيذ تسجيل الدخول والبحث في قاعدة البيانات
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const originalBtnText = submitBtn.innerHTML;
-        submitBtn.innerHTML = "<span>جاري التحقق من البيانات... <i class='fa-solid fa-spinner fa-spin'></i></span>";
-        submitBtn.disabled = true;
-
-        const enteredEmail = emailInput.value.trim();
-        const enteredPassword = passwordInput.value;
-        const rememberMe = rememberCheckbox.checked;
-
-        try {
-            // 1. البحث في مجموعة "users" عن حساب يطابق الإيميل والباسورد
-            const usersRef = collection(db, "users");
-            const q = query(
-                usersRef, 
-                where("email", "==", enteredEmail), 
-                where("password", "==", enteredPassword)
-            );
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            const querySnapshot = await getDocs(q);
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = "<span>جاري التحقق من البيانات... <i class='fa-solid fa-spinner fa-spin'></i></span>";
+            submitBtn.disabled = true;
 
-            // 2. التحقق مما إذا تم العثور على الحساب
-            if (!querySnapshot.empty) {
-                // الحساب موجود
-                const userDoc = querySnapshot.docs[0];
-                const userData = userDoc.data();
+            const enteredEmail = emailInput.value.trim();
+            const enteredPassword = passwordInput.value;
+            const rememberMe = rememberCheckbox.checked;
 
-                // 3. التأكد من أن الحساب "مفعل" (isActive: true)
-                if (userData.isActive === true) {
-                    
-                    // حفظ خيار "تذكرني"
-                    if (rememberMe) {
-                        localStorage.setItem("rememberedEmail", enteredEmail);
+            try {
+                const usersRef = collection(db, "users");
+                const q = query(
+                    usersRef, 
+                    where("email", "==", enteredEmail), 
+                    where("password", "==", enteredPassword)
+                );
+                
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    const userDoc = querySnapshot.docs[0];
+                    const userData = userDoc.data();
+
+                    if (userData.isActive === true) {
+                        if (rememberMe) {
+                            localStorage.setItem("rememberedEmail", enteredEmail);
+                        } else {
+                            localStorage.removeItem("rememberedEmail");
+                        }
+
+                        const userSession = {
+                            uid: userDoc.id,
+                            email: userData.email,
+                            name: userData.name
+                        };
+                        sessionStorage.setItem("loggedInUser", JSON.stringify(userSession));
+                        localStorage.setItem("loggedInUser", JSON.stringify(userSession));
+
+                        submitBtn.innerHTML = "<span>تم تسجيل الدخول بنجاح <i class='fa-solid fa-check'></i></span>";
+                        window.location.href = "dashboard.html"; 
+
                     } else {
-                        localStorage.removeItem("rememberedEmail");
+                        alert("عذراً، هذا الحساب معطل حالياً. يرجى التواصل مع الإدارة.");
+                        submitBtn.innerHTML = originalBtnText;
+                        submitBtn.disabled = false;
                     }
 
-                    // حفظ الجلسة (بيانات المستخدم واسمه)
-                    sessionStorage.setItem("loggedInUser", JSON.stringify({ 
-                        uid: userDoc.id, 
-                        email: userData.email,
-                        name: userData.name 
-                    }));
-                    
-                    submitBtn.innerHTML = "<span>تم تسجيل الدخول بنجاح <i class='fa-solid fa-check'></i></span>";
-                    
-                    // التوجيه فوراً إلى صفحة الداش بورد
-                    window.location.href = "dashboard.html"; 
-
                 } else {
-                    // إذا كان الحساب معطل من قبل الأدمن
-                    alert("عذراً، هذا الحساب معطل حالياً. يرجى التواصل مع الإدارة.");
+                    alert("خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة.");
                     submitBtn.innerHTML = originalBtnText;
                     submitBtn.disabled = false;
                 }
 
-            } else {
-                // إذا لم يتم العثور على الإيميل أو الباسورد كان خاطئاً
-                alert("خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة.");
+            } catch (error) {
+                console.error("خطأ في الاتصال بقاعدة البيانات: ", error);
+                alert("حدث خطأ أثناء التحقق من البيانات. تأكد من اتصالك بالإنترنت.");
                 submitBtn.innerHTML = originalBtnText;
                 submitBtn.disabled = false;
             }
+        });
+    }
 
-        } catch (error) {
-            console.error("خطأ في الاتصال بقاعدة البيانات: ", error);
-            alert("حدث خطأ أثناء التحقق من البيانات. تأكد من اتصالك بالإنترنت.");
-            submitBtn.innerHTML = originalBtnText;
-            submitBtn.disabled = false;
-        }
-    });
-}
     // --- تشغيل سلايدر الخدمات ---
     if (document.querySelector('.services-slider')) {
         new Swiper('.services-slider', {
@@ -351,6 +339,10 @@ if (renderFrame) {
         }
     });
 }
+
+// ==========================================
+// إدارة الأخبار (إضافة، تعديل، حذف)
+// ==========================================
 const newsForm = document.getElementById('news-form');
 const newsIdInput = document.getElementById('newsId');
 const titleInput = document.getElementById('newsTitle');
@@ -361,147 +353,253 @@ const cancelEditBtn = document.getElementById('cancelEditBtn');
 const newsTableBody = document.getElementById('newsTableBody');
 const formTitle = document.getElementById('formTitle');
 
-let newsArray = []; // مصفوفة لحفظ البيانات محلياً لتسهيل التعديل
+let newsArray = [];
 
-// ==========================================
-// 1. جلب الأخبار وعرضها في الجدول (لحظياً)
-// ==========================================
 if (newsForm && newsTableBody) {
-const newsRef = collection(db, "news");
-const q = query(newsRef, orderBy("createdAt", "desc"));
+    const newsRef = collection(db, "news");
+    const q = query(newsRef, orderBy("createdAt", "desc"));
 
-onSnapshot(q, (snapshot) => {
-    newsTableBody.innerHTML = ""; // تفريغ الجدول
-    newsArray = []; // تفريغ المصفوفة
+    onSnapshot(q, (snapshot) => {
+        newsTableBody.innerHTML = ""; 
+        newsArray = []; 
 
-    if (snapshot.empty) {
-        newsTableBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>لا توجد أخبار مضافة حالياً.</td></tr>";
-        return;
-    }
-
-    snapshot.forEach((documentSnapshot) => {
-        const data = documentSnapshot.data();
-        const id = documentSnapshot.id;
-        
-        // حفظ البيانات في المصفوفة
-        newsArray.push({ id, ...data });
-
-        // تحويل التاريخ ليكون مقروءاً
-        const date = data.createdAt ? data.createdAt.toDate().toLocaleDateString('ar-EG') : 'الآن';
-
-        // إنشاء صف الجدول
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><img src="${data.imageUrl}" alt="صورة الخبر"></td>
-            <td>${data.title}</td>
-            <td>${date}</td>
-            <td>
-                <button class="action-btn btn-edit" data-id="${id}"><i class="fa-solid fa-pen"></i> تعديل</button>
-                <button class="action-btn btn-delete" data-id="${id}"><i class="fa-solid fa-trash"></i> حذف</button>
-            </td>
-        `;
-        newsTableBody.appendChild(tr);
-    });
-});
-
-// ==========================================
-// 2. إضافة أو تعديل خبر (عند الضغط على نشر)
-// ==========================================
-newsForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    submitBtn.innerHTML = "جاري الحفظ... <i class='fa-solid fa-spinner fa-spin'></i>";
-    submitBtn.disabled = true;
-
-    const id = newsIdInput.value;
-    const title = titleInput.value;
-    const imageUrl = imageInput.value;
-    const description = descInput.value;
-
-    try {
-        if (id) {
-            // حالة التعديل: تحديث الخبر الموجود
-            const docRef = doc(db, "news", id);
-            await updateDoc(docRef, {
-                title: title,
-                imageUrl: imageUrl,
-                description: description
-                // لا نقوم بتحديث createdAt للحفاظ على تاريخ النشر الأصلي
-            });
-            alert("تم تعديل الخبر بنجاح!");
-            resetForm();
-        } else {
-            // حالة الإضافة: إضافة خبر جديد
-            await addDoc(collection(db, "news"), {
-                title: title,
-                imageUrl: imageUrl,
-                description: description,
-                createdAt: serverTimestamp() // يضيف تاريخ السيرفر تلقائياً
-            });
-            alert("تمت إضافة الخبر بنجاح!");
-            newsForm.reset();
+        if (snapshot.empty) {
+            newsTableBody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>لا توجد أخبار مضافة حالياً.</td></tr>";
+            return;
         }
-    } catch (error) {
-        console.error("خطأ:", error);
-        alert("حدث خطأ أثناء حفظ الخبر.");
-    } finally {
-        submitBtn.innerHTML = "نشر الخبر <i class='fa-solid fa-paper-plane'></i>";
-        submitBtn.disabled = false;
-    }
-});
 
-// ==========================================
-// 3. الاستماع لأزرار الحذف والتعديل داخل الجدول
-// ==========================================
-newsTableBody.addEventListener('click', async (e) => {
-    // حالة زر الحذف
-    if (e.target.closest('.btn-delete')) {
-        const id = e.target.closest('.btn-delete').dataset.id;
-        const confirmDelete = confirm("هل أنت متأكد من حذف هذا الخبر نهائياً؟");
-        if (confirmDelete) {
-            try {
-                await deleteDoc(doc(db, "news", id));
-                alert("تم حذف الخبر بنجاح.");
-            } catch (error) {
-                console.error("خطأ في الحذف:", error);
-                alert("حدث خطأ أثناء الحذف.");
+        snapshot.forEach((documentSnapshot) => {
+            const data = documentSnapshot.data();
+            const id = documentSnapshot.id;
+            
+            newsArray.push({ id, ...data });
+
+            const date = data.createdAt ? data.createdAt.toDate().toLocaleDateString('ar-EG') : 'الآن';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><img src="${data.imageUrl}" alt="صورة الخبر"></td>
+                <td>${data.title}</td>
+                <td>${date}</td>
+                <td>
+                    <button class="action-btn btn-edit" data-id="${id}"><i class="fa-solid fa-pen"></i> تعديل</button>
+                    <button class="action-btn btn-delete" data-id="${id}"><i class="fa-solid fa-trash"></i> حذف</button>
+                </td>
+            `;
+            newsTableBody.appendChild(tr);
+        });
+    });
+
+    newsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        submitBtn.innerHTML = "جاري الحفظ... <i class='fa-solid fa-spinner fa-spin'></i>";
+        submitBtn.disabled = true;
+
+        const id = newsIdInput.value;
+        const title = titleInput.value;
+        const imageUrl = imageInput.value;
+        const description = descInput.value;
+
+        try {
+            if (id) {
+                const docRef = doc(db, "news", id);
+                await updateDoc(docRef, {
+                    title: title,
+                    imageUrl: imageUrl,
+                    description: description
+                });
+                alert("تم تعديل الخبر بنجاح!");
+                resetForm();
+            } else {
+                await addDoc(collection(db, "news"), {
+                    title: title,
+                    imageUrl: imageUrl,
+                    description: description,
+                    createdAt: serverTimestamp()
+                });
+                alert("تمت إضافة الخبر بنجاح!");
+                newsForm.reset();
+            }
+        } catch (error) {
+            console.error("خطأ:", error);
+            alert("حدث خطأ أثناء حفظ الخبر.");
+        } finally {
+            submitBtn.innerHTML = "نشر الخبر <i class='fa-solid fa-paper-plane'></i>";
+            submitBtn.disabled = false;
+        }
+    });
+
+    newsTableBody.addEventListener('click', async (e) => {
+        if (e.target.closest('.btn-delete')) {
+            const id = e.target.closest('.btn-delete').dataset.id;
+            const confirmDelete = confirm("هل أنت متأكد من حذف هذا الخبر نهائياً؟");
+            if (confirmDelete) {
+                try {
+                    await deleteDoc(doc(db, "news", id));
+                    alert("تم حذف الخبر بنجاح.");
+                } catch (error) {
+                    console.error("خطأ في الحذف:", error);
+                    alert("حدث خطأ أثناء الحذف.");
+                }
             }
         }
-    }
 
-    // حالة زر التعديل
-    if (e.target.closest('.btn-edit')) {
-        const id = e.target.closest('.btn-edit').dataset.id;
-        
-        // البحث عن الخبر في المصفوفة
-        const newsItem = newsArray.find(item => item.id === id);
-        if (newsItem) {
-            // تعبئة الفورم بالبيانات
-            newsIdInput.value = newsItem.id;
-            titleInput.value = newsItem.title;
-            imageInput.value = newsItem.imageUrl;
-            descInput.value = newsItem.description;
-
-            // تغيير شكل الفورم
-            formTitle.innerText = "تعديل الخبر الحالي";
-            submitBtn.innerHTML = "حفظ التعديلات <i class='fa-solid fa-check'></i>";
-            cancelEditBtn.style.display = "block"; // إظهار زر الإلغاء
+        if (e.target.closest('.btn-edit')) {
+            const id = e.target.closest('.btn-edit').dataset.id;
+            const newsItem = newsArray.find(item => item.id === id);
             
-            // عمل Scroll ناعم للفورم لأعلى
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (newsItem) {
+                newsIdInput.value = newsItem.id;
+                titleInput.value = newsItem.title;
+                imageInput.value = newsItem.imageUrl;
+                descInput.value = newsItem.description;
+
+                formTitle.innerText = "تعديل الخبر الحالي";
+                submitBtn.innerHTML = "حفظ التعديلات <i class='fa-solid fa-check'></i>";
+                cancelEditBtn.style.display = "block"; 
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
+    });
+
+    cancelEditBtn.addEventListener('click', resetForm);
+
+    function resetForm() {
+        newsForm.reset();
+        newsIdInput.value = "";
+        formTitle.innerText = "إضافة خبر جديد";
+        submitBtn.innerHTML = "نشر الخبر <i class='fa-solid fa-paper-plane'></i>";
+        cancelEditBtn.style.display = "none";
     }
-});
+}
 
 // ==========================================
-// 4. زر إلغاء التعديل
+// نظام تتبع المستخدمين النشطين (Live Tracking)
 // ==========================================
-cancelEditBtn.addEventListener('click', resetForm);
+function getDeviceInfo() {
+    const ua = navigator.userAgent;
+    let browser = "غير معروف", os = "غير محدد", deviceType = "Desktop";
 
-function resetForm() {
-    newsForm.reset();
-    newsIdInput.value = "";
-    formTitle.innerText = "إضافة خبر جديد";
-    submitBtn.innerHTML = "نشر الخبر <i class='fa-solid fa-paper-plane'></i>";
-    cancelEditBtn.style.display = "none";
+    if (/android/i.test(ua)) os = "Android";
+    else if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
+    else if (/windows/i.test(ua)) os = "Windows";
+    else if (/mac/i.test(ua)) os = "MacOS";
+    else if (/linux/i.test(ua)) os = "Linux";
+
+    if (/mobile/i.test(ua)) deviceType = "Mobile";
+    else if (/tablet/i.test(ua)) deviceType = "Tablet";
+
+    if (/chrome|crios/i.test(ua) && !/edge|opr\//i.test(ua)) browser = "Chrome";
+    else if (/safari/i.test(ua) && !/chrome|crios/i.test(ua)) browser = "Safari";
+    else if (/firefox|fxios/i.test(ua)) browser = "Firefox";
+    else if (/edg/i.test(ua)) browser = "Edge";
+    else if (/opr\//i.test(ua)) browser = "Opera";
+
+    return { os, browser, deviceType };
 }
+
+async function getLocationData() {
+  try {
+    // 1. الخادم الأول (نسبة نجاحه عالية جداً ولا يواجه مشاكل CORS)
+    const res1 = await fetch('https://ipwho.is/');
+    const data1 = await res1.json();
+    if (data1.success) {
+      console.log("تم جلب IP من الخادم 1:", data1.ip);
+      return { ip: data1.ip, location: `${data1.country} - ${data1.city}` };
+    }
+  } catch (e) {}
+
+  try {
+    // 2. الخادم الثاني (بديل في حال تعطل الأول)
+    const res2 = await fetch('https://freeipapi.com/api/json');
+    const data2 = await res2.json();
+    if (data2.ipAddress) {
+      console.log("تم جلب IP من الخادم 2:", data2.ipAddress);
+      return { ip: data2.ipAddress, location: `${data2.countryName} - ${data2.cityName}` };
+    }
+  } catch (e) {}
+
+  try {
+    // 3. الخادم الثالث (يجلب الـ IP فقط كطوارئ قصوى)
+    const res3 = await fetch('https://api.ipify.org?format=json');
+    const data3 = await res3.json();
+    if (data3.ip) {
+      console.log("تم جلب IP من الخادم 3:", data3.ip);
+      return { ip: data3.ip, location: "غير محدد" };
+    }
+  } catch (e) {
+    console.error("تم حظر جميع الخوادم بواسطة متصفحك أو مانع الإعلانات.");
+  }
+
+  return { ip: "مخفي", location: "غير متاح" };
 }
+
+function getCurrentPageName() {
+    let path = window.location.pathname;
+    let page = path.split("/").pop(); 
+    if (!page || page === "") page = "home"; 
+    return page.replace(".html", ""); 
+}
+
+async function trackUserPresence() {
+    try {
+        const userCredential = await signInAnonymously(auth);
+        const user = userCredential.user;
+        
+        const deviceInfo = getDeviceInfo();
+        const locationInfo = await getLocationData();
+        const currentPage = getCurrentPageName();
+
+        // سحب اسم المستخدم من Local Storage إذا كان مسجل دخول فعلاً
+        let userName = "زائر " + user.uid.substring(0, 5);
+        let userEmail = "غير متوفر";
+        let userRole = "user";
+
+        const loggedInStr = localStorage.getItem("loggedInUser") || sessionStorage.getItem("loggedInUser");
+        if (loggedInStr) {
+            try {
+                const loggedInUser = JSON.parse(loggedInStr);
+                userName = loggedInUser.name || userName;
+                userEmail = loggedInUser.email || userEmail;
+                userRole = loggedInUser.role || "user";
+            } catch (e) {}
+        }
+
+        const userDocRef = doc(db, "dashboardPresence", user.uid);
+
+        const presenceData = {
+            id: user.uid,
+            name: userName,
+            email: userEmail,
+            role: userRole,
+            deviceType: deviceInfo.deviceType,
+            os: deviceInfo.os,
+            browser: deviceInfo.browser,
+            ip: locationInfo.ip,
+            location: locationInfo.location,
+            currentPage: currentPage,
+            lastSeenAt: serverTimestamp(),
+            online: true
+        };
+
+        await setDoc(userDocRef, presenceData, { merge: true });
+
+        setInterval(() => {
+            setDoc(userDocRef, { 
+                lastSeenAt: serverTimestamp(),
+                currentPage: getCurrentPageName()
+            }, { merge: true });
+        }, 60000);
+
+        window.addEventListener("beforeunload", () => {
+            setDoc(userDocRef, { online: false, lastSeenAt: serverTimestamp() }, { merge: true });
+        });
+
+    } catch (error) {
+        console.error("خطأ في تتبع المستخدم:", error);
+    }
+}
+
+// تشغيل التتبع
+trackUserPresence();
