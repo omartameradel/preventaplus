@@ -569,6 +569,30 @@
       link.remove();
     });
 
+    function isGuestUserRecord(data = {}) {
+      const name = String(data.name || "").trim();
+      const email = String(data.email || "").trim();
+      const role = String(data.role || "").trim();
+
+      const guestName = /^زائر|^guest|^visitor|^anonymous|\bزائر\b|\bguest\b|\bvisitor\b|\banonymous\b/i.test(name);
+      const guestEmail = /(?:^|@)(guest|visitor|anonymous)/i.test(email) || email.toLowerCase().includes("anonymous");
+      const guestRole = /^(guest|visitor|anonymous)$/i.test(role);
+
+      return guestName || guestEmail || guestRole;
+    }
+
+    function isValidRegisteredUserRecord(data = {}) {
+      const name = String(data.name || "").trim();
+      const email = String(data.email || "").trim();
+      const userId = String(data.userId || data.uid || data.id || "").trim();
+
+      if (!name || !email || !userId) return false;
+      if (isGuestUserRecord(data)) return false;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
+
+      return true;
+    }
+
     function getFilteredUsers() {
       let filtered = [...globalUsers];
       
@@ -669,7 +693,9 @@
       usersList.innerHTML = usersToRender.map((user) => {
         const timeData = analyzeTime(user.lastSeenAt);
         const duration = calculateSessionDuration(user, timeData);
-        const firstLetter = (user.name || "م").charAt(0).toUpperCase();
+        const displayName = String(user.name || "").trim() || "حساب غير مصرح";
+        const displayEmail = String(user.email || "").trim() || "لا يوجد بريد إلكتروني";
+        const firstLetter = displayName.charAt(0).toUpperCase();
         
         const os = user.os || "غير محدد";
         const browser = user.browser || "غير معروف";
@@ -685,9 +711,9 @@
                 <div class="user-details">
                   <strong>
                     <span class="status-dot ${timeData.statusClass}"></span>
-                    ${user.name || "مستخدم غير معروف"}
+                    ${displayName}
                   </strong>
-                  <small>${user.email || "بدون بريد إلكتروني"}</small>
+                  <small>${displayEmail}</small>
                 </div>
               </div>
             </div>
@@ -795,6 +821,12 @@
           const rawUsers = snapshot.docs
             .map((item) => {
               const data = item.data();
+
+              if (!isValidRegisteredUserRecord(data)) {
+                deleteDoc(doc(db, "dashboardPresence", item.id)).catch(() => {});
+                return null;
+              }
+
               // تطبيق المترجم لاستخراج اسم الصفحة الحقيقي
               const realPage = data.page || data.currentPage || 'home';
               const translatedPage = getCorrectPageName(realPage);
@@ -807,6 +839,7 @@
                 lastAction: data.lastAction || `تصفح ${translatedPage}`
               };
             })
+            .filter(Boolean)
             .filter((item) => item.online !== false && !item.isDeleted);
 
           const uniqueUsersMap = {};
