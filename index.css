@@ -40,6 +40,7 @@ body {
     min-height: 100vh;
 }
 
+
 /* =========================================
    3. تصميم الهيدر (Header)
 ========================================= */
@@ -370,10 +371,45 @@ body {
 }
 
 .card-desc {
+    margin: 0 0 12px;
     font-size: 1.1rem;
     line-height: 1.8;
     color: var(--text-color);
     opacity: 0.9;
+}
+
+.card-desc.is-collapsed {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+}
+
+.card-desc.is-expanded {
+    display: block;
+}
+
+.news-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--primary-color);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.news-toggle:hover,
+.news-toggle:focus-visible {
+    background: rgba(37, 99, 235, 0.14);
+    transform: translateY(-1px);
+    outline: none;
 }
 
 /* ألوان نقاط التبديل (Pagination) */
@@ -3221,8 +3257,34 @@ body {
 .news-page-image-wrap > span i { margin-left: 4px; color: var(--news-yellow); }
 .news-page-card-body { display: flex; flex: 1; flex-direction: column; padding: 22px; }
 .news-page-card-body h3 { margin: 0 0 12px; color: var(--news-ink); font-size: 1.35rem; line-height: 1.5; }
-.news-page-card-body p { display: -webkit-box; overflow: hidden; margin: 0; color: #697287; line-height: 1.85; -webkit-box-orient: vertical; -webkit-line-clamp: 5; line-clamp: 5; }
+.news-page-card-body p { margin: 0; color: #697287; line-height: 1.85; }
+.news-page-card-body p.is-collapsed {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+}
+.news-page-card-body p.is-expanded {
+    display: block;
+}
 .news-page-card-body p a { color: var(--news-coral); font-weight: 700; overflow-wrap: anywhere; }
+.news-page-card-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    border: 0;
+    background: rgba(239, 35, 60, 0.08);
+    color: var(--news-coral);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: .82rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+.news-page-card-toggle:hover,
+.news-page-card-toggle:focus-visible { background: rgba(239, 35, 60, 0.12); outline: none; }
 .news-page-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 22px; color: var(--news-coral); font-size: .82rem; font-weight: 800; }
 .news-page-card-footer span { color: #8991a1; }
 .news-page-card-footer span i { color: #18a879; }
