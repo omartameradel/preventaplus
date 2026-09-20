@@ -13,7 +13,7 @@
 <link rel="canonical" href="https://preventaplus.online/">
 <link rel="icon" type="image/png" href="6384.png">
 <link rel="apple-touch-icon" href="Gemini_Generated_Image_sqbqqysqbqqysqbq.png">
-
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 <meta property="og:locale" content="ar_AR">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://preventaplus.online/">
@@ -22,34 +22,106 @@
 <meta property="og:description" content="معرفة صحية موثوقة بلغة بسيطة تساعدك على الوقاية واتخاذ قرارات أذكى لصحتك.">
 <meta property="og:image" content="https://preventaplus.online/Gemini_Generated_Image_sqbqqysqbqqysqbq.png">
 <meta property="og:image:alt" content="شعار Preventa Plus">
-
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Preventa Plus | مدونة الطب الوقائي">
 <meta name="twitter:description" content="معرفة صحية موثوقة بلغة بسيطة تساعدك على الوقاية واتخاذ قرارات أذكى لصحتك.">
 <meta name="twitter:image" content="https://preventaplus.online/Gemini_Generated_Image_sqbqqysqbqqysqbq.png">
 <meta name="twitter:image:alt" content="شعار Preventa Plus">
 
-<style>
-html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#fff}
-#loading{display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column}
-#loading h2{color:#2563eb;font-family:sans-serif}
-#contentIframe{width:100%;height:100%;border:0;display:block}
-.spinner{width:60px;height:60px;border:6px solid #f3f3f3;border-top:6px solid #3498db;border-radius:50%;animation:spin 1s linear infinite}
-@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-</style>
+    <style>
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff;
+            font-family: 'Tajawal', sans-serif;
+        }
 
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"MedicalWebPage","name":"Preventa Plus | مدونة الطب الوقائي","description":"منصة عربية للتوعية الصحية والطب الوقائي، تقدم معرفة موثوقة تساعدك أنت وعائلتك على اتخاذ قرارات أذكى لصحة أفضل.","url":"https://preventaplus.online/","inLanguage":"ar","publisher":{"@type":"Organization","name":"Preventa Plus","logo":{"@type":"ImageObject","url":"https://preventaplus.online/6384.png"}}}
-</script>
-</head>
+        #loading {
+            display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;
+        }
+        .spinner {
+            width: 60px; height: 60px; border: 6px solid #f3f3f3; border-top: 6px solid #1d4ed8; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }
 
+        #contentIframe {
+            width: 100%; height: 100%; border: 0; display: none; 
+        }
+
+
+        #maintenance-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #0b1f3a 50%, #1d4ed8 100%);
+            display: none; 
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 99999; color: white; text-align: center;
+        }
+        
+        .maintenance-box {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 50px 60px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255,255,255,0.05);
+            animation: float 4s ease-in-out infinite;
+            max-width: 90%;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .icon-container {
+            position: relative; height: 100px; margin-bottom: 20px;
+        }
+        
+        .gear {
+            position: absolute; font-size: 55px; line-height: 1; filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5));
+        }
+        .gear1 {
+            left: calc(50% - 30px); top: 0; color: #38bdf8;
+            animation: spinGear 4s linear infinite;
+        }
+        .gear2 {
+            left: calc(50% + 15px); top: 35px; font-size: 40px; color: #93c5fd;
+            animation: spinGearReverse 4s linear infinite;
+        }
+
+        @keyframes spinGear { 100% { transform: rotate(360deg); } }
+        @keyframes spinGearReverse { 100% { transform: rotate(-360deg); } }
+
+        #maintenance-text {
+            font-size: clamp(1.5rem, 4vw, 2.8rem);
+            margin: 0; font-weight: 900;
+            background: linear-gradient(to left, #38bdf8, #818cf8, #e0e7ff);
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .maintenance-desc {
+            color: #94a3b8; font-size: 1.2rem; margin-top: 15px; font-weight: 400;
+        }
+
+        .progress-bar {
+            width: 100%; height: 8px; background: rgba(255,255,255,0.1);
+            border-radius: 20px; margin-top: 40px; overflow: hidden; position: relative;
+        }
+        
+        .progress-indicator {
+            width: 50%; height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #38bdf8, #818cf8);
+            border-radius: 20px;
+            animation: loadingProgress 2s infinite ease-in-out alternate;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+        }
+
+        @keyframes loadingProgress {
+            0% { width: 10%; transform: translateX(-100%); }
+            100% { width: 60%; transform: translateX(200%); }
+        }
+    </style>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"MedicalWebPage","name":"Preventa Plus | مدونة الطب الوقائي","description":"منصة عربية للتوعية الصحية والطب الوقائي، تقدم معرفة موثوقة تساعدك أنت وعائلتك على اتخاذ قرارات أذكى لصحة أفضل.","url":"https://preventaplus.online/","inLanguage":"ar","publisher":{"@type":"Organization","name":"Preventa Plus","logo":{"@type":"ImageObject","url":"https://preventaplus.online/6384.png"}}}</script></head>
 <body>
-<div id="loading">
-<div class="spinner"></div>
-</div>
-
-<iframe id="contentIframe" title="Dynamic Content"></iframe>
-
-<script type="module" src="assets/main.js"></script>
-</body>
-</html>
+<div id="maintenance-overlay"><div class="maintenance-box"><div class="icon-container"><div class="gear gear1">⚙️</div><div class="gear gear2">⚙️</div></div><h1 id="maintenance-text">جاري العمل على الموقع الآن...</h1><p class="maintenance-desc">نعمل حالياً على تحديث المنصة لتقديم تجربة أفضل لك. سنعود قريباً جداً!</p><div class="progress-bar"><div class="progress-indicator"></div></div></div></div><div id="loading"><div class="spinner"></div></div><iframe id="contentIframe" title="Dynamic Content"></iframe><script type="module" src="assets/main.js"></script></body></html>
