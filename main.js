@@ -87,7 +87,9 @@ document.addEventListener('DOMContentLoaded', function () {
             snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
                 if (data.isVisible === false) return;
-                const formattedDescription = linkify(data.description);
+                const formattedDescription = linkify(data.description || "");
+                const descriptionText = (data.description || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+                const shouldShowToggle = descriptionText.length > 170;
 
                 const cardHTML = `
                     <div class="swiper-slide">
@@ -95,12 +97,25 @@ document.addEventListener('DOMContentLoaded', function () {
                             <img src="${data.imageUrl}" alt="${data.title}" class="card-img">
                             <div class="card-content">
                                 <h3 class="card-title">${data.title}</h3>
-                                <p class="card-desc">${formattedDescription}</p>
+                                <p class="card-desc ${shouldShowToggle ? "is-collapsed" : "is-expanded"}">${formattedDescription}</p>
+                                ${shouldShowToggle ? `<button class="news-toggle" type="button" aria-expanded="false">عرض المزيد</button>` : ""}
                             </div>
                         </div>
                     </div>
                 `;
                 newsGrid.innerHTML += cardHTML;
+            });
+
+            const toggleButtons = newsGrid.querySelectorAll('.news-toggle');
+            toggleButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    const description = button.previousElementSibling;
+                    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+                    description.classList.toggle('is-expanded', !isExpanded);
+                    description.classList.toggle('is-collapsed', isExpanded);
+                    button.textContent = isExpanded ? 'عرض المزيد' : 'عرض القليل';
+                    button.setAttribute('aria-expanded', String(!isExpanded));
+                });
             });
 
             if (window.newsSwiperInstance) {
