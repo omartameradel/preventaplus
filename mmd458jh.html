@@ -6,40 +6,172 @@
     <title>PreventaPlus</title>
     <link rel="icon" type="image/x-icon" href="6384.png" />
     <style>
+        * { box-sizing: border-box; }
         body {
-            font-family: system-ui, sans-serif;
-            padding: 20px;
+            margin: 0;
+            padding: 24px;
+            font-family: "Tajawal", system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #0b1f3a 30%, #1d4ed8 100%);
+            color: #e5eefb;
+        }
+        .panel {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.45);
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+        h2 {
+            margin: 0 0 18px;
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+        }
+        .status-box {
+            margin-bottom: 20px;
+            padding: 18px 20px;
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            border-radius: 18px;
+            background: rgba(15, 23, 42, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .status-box strong {
+            font-size: 1.1rem;
+        }
+        .switch-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+        .switch-wrap input {
+            display: none;
+        }
+        .slider {
+            position: relative;
+            display: inline-block;
+            width: 64px;
+            height: 34px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.5);
+            transition: 0.25s ease;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+        }
+        .slider::before {
+            content: "";
+            position: absolute;
+            left: 5px;
+            top: 5px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #fff;
+            transition: 0.25s ease;
+            box-shadow: 0 3px 12px rgba(0,0,0,.25);
+        }
+        .switch-wrap input:checked + .slider {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+        .switch-wrap input:checked + .slider::before {
+            transform: translateX(30px);
+        }
+        .status-label {
+            min-width: 130px;
+            text-align: center;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-weight: 800;
+            color: #dbeafe;
+            background: rgba(30, 41, 59, 0.75);
+        }
+        .status-label.on {
+            background: rgba(34, 197, 94, 0.15);
+            color: #bef7d8;
+            border: 1px solid rgba(34, 197, 94, 0.55);
+        }
+        .status-label.off {
+            background: rgba(148, 163, 184, 0.12);
+            color: #dbeafe;
+            border: 1px solid rgba(148, 163, 184, 0.36);
+        }
+        .text-field {
+            display: block;
+            margin-bottom: 16px;
+            font-weight: 700;
+            color: #dbeafe;
+        }
+        .text-field input {
+            width: 100%;
+            margin-top: 8px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background: rgba(15, 23, 42, 0.5);
+            color: #f8fafc;
+            font-size: 1rem;
         }
         #codeEditor {
             width: 100%;
             height: 400px;
-            padding: 10px;
-            font-family: monospace;
+            padding: 14px 16px;
+            font-family: Consolas, monospace;
             direction: ltr;
             box-sizing: border-box;
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background: rgba(2, 6, 23, 0.7);
+            color: #f8fafc;
+            resize: vertical;
+            box-shadow: inset 0 0 18px rgba(59, 130, 246, 0.06);
         }
         #saveBtn {
-            padding: 10px 20px;
-            background: #007bff;
-            color: white;
+            margin-top: 18px;
+            padding: 14px 24px;
             border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #38bdf8, #2563eb);
+            color: white;
             cursor: pointer;
-            margin-top: 10px;
-            font-size: 16px;
+            font-size: 1rem;
+            font-weight: 800;
+            box-shadow: 0 15px 25px rgba(37, 99, 235, 0.35);
+            transition: transform .2s ease, box-shadow .2s ease;
         }
+        #saveBtn:hover { transform: translateY(-1px); }
         #saveBtn:disabled {
-            background: #cccccc;
+            background: #475569;
             cursor: not-allowed;
+            box-shadow: none;
         }
     </style>
 </head>
 <body>
+    <div class="panel">
+        <h2>محرر كود صفحة Index</h2>
 
-    <h2>محرر كود صفحة Index</h2>
-    
-    <textarea id="codeEditor" placeholder="اكتب كود HTML/CSS/JS هنا..."></textarea>
-    <br>
-    <button id="saveBtn">حفظ ونشر الكود</button>
+        <div class="status-box">
+            <strong>تفعيل رسالة “جاري العمل على الموقع الآن”</strong>
+            <label class="switch-wrap" aria-label="تفعيل الرسالة">
+                <input id="liveBannerToggle" type="checkbox">
+                <span class="slider"></span>
+            </label>
+            <span id="statusText" class="status-label off">مغلق</span>
+        </div>
+
+        <label class="text-field" for="bannerText">
+            نص التنبيه الذي سيظهر في الصفحة الرئيسية
+            <input id="bannerText" type="text" value="جاري العمل على الموقع الآن..." maxlength="120" />
+        </label>
+
+        <textarea id="codeEditor" placeholder="اكتب كود HTML/CSS/JS هنا..."></textarea>
+        <br>
+        <button id="saveBtn">حفظ ونشر الكود</button>
+    </div>
 
     <!-- استدعاء Firebase باستخدام نوع module -->
     <script type="module">
@@ -65,15 +197,30 @@ const firebaseConfig = {
         // 4. تعريف عناصر الصفحة
         const codeEditor = document.getElementById('codeEditor');
         const saveBtn = document.getElementById('saveBtn');
+        const liveBannerToggle = document.getElementById('liveBannerToggle');
+        const bannerText = document.getElementById('bannerText');
+        const statusText = document.getElementById('statusText');
+
+        function updateStatusLabel() {
+            const isEnabled = liveBannerToggle.checked;
+            statusText.textContent = isEnabled ? 'مفعل' : 'مغلق';
+            statusText.classList.toggle('on', isEnabled);
+            statusText.classList.toggle('off', !isEnabled);
+        }
 
         // 5. دالة جلب الكود الحالي عند تحميل الصفحة
         async function loadCurrentCode() {
             try {
                 const pageRef = doc(db, "pages", "index_page");
                 const docSnap = await getDoc(pageRef);
-                
+
                 if (docSnap.exists()) {
-                    codeEditor.value = docSnap.data().source_code;
+                    const data = docSnap.data();
+                    codeEditor.value = data.source_code || '';
+                    const bannerConfig = data.live_banner || { enabled: false, text: 'جاري العمل على الموقع الآن...' };
+                    liveBannerToggle.checked = !!bannerConfig.enabled;
+                    bannerText.value = bannerConfig.text || 'جاري العمل على الموقع الآن...';
+                    updateStatusLabel();
                 }
             } catch (error) {
                 console.error("Error loading document:", error);
@@ -87,8 +234,15 @@ const firebaseConfig = {
 
             try {
                 const pageRef = doc(db, "pages", "index_page");
-                await setDoc(pageRef, { source_code: codeEditor.value });
-                alert("تم تحديث الكود بنجاح!");
+                const bannerState = {
+                    enabled: liveBannerToggle.checked,
+                    text: bannerText.value.trim() || 'جاري العمل على الموقع الآن...'
+                };
+                await setDoc(pageRef, {
+                    source_code: codeEditor.value,
+                    live_banner: bannerState
+                });
+                alert("تم تحديث الكود والرسالة بنجاح!");
             } catch (error) {
                 console.error("Error saving document: ", error);
                 alert("حدث خطأ أثناء الحفظ.");
@@ -100,6 +254,7 @@ const firebaseConfig = {
 
         // 7. ربط زر الحفظ بالدالة وتشغيل دالة الجلب عند البداية
         saveBtn.addEventListener('click', handleSave);
+        liveBannerToggle.addEventListener('change', updateStatusLabel);
         window.addEventListener('DOMContentLoaded', loadCurrentCode);
 
     </script>
