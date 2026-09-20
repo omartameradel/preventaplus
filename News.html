@@ -44,7 +44,7 @@
 		<a href="index.html" class="logo" aria-label="Preventa Plus"><img src="Gemini_Generated_Image_sqbqqysqbqqysqbq.png" alt="Preventa Plus" width="100" height="100"></a>
 		<button class="menu-toggle" id="mobile-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
 		<nav class="navbar" id="navbar" aria-label="القائمة الرئيسية">
-			<a href="https://preventaplus.online/"><i class="fa-solid fa-house"></i> الرئيسية</a>
+			<a href="index.html"><i class="fa-solid fa-house"></i> الرئيسية</a>
 			<a href="about.html"><i class="fa-solid fa-circle-info"></i> من نحن</a>
 			<a href="News.html" class="active"><i class="fa-solid fa-newspaper"></i> الأخبار</a>
 			<a href="contact.html"><i class="fa-solid fa-envelope"></i> التواصل</a>
@@ -143,7 +143,27 @@
 			newsDetails.clear();
 			newsCount.textContent = `${visibleNews.length} ${visibleNews.length === 1 ? "خبر منشور" : "أخبار منشورة"}`;
 			if (!visibleNews.length) { newsGrid.innerHTML = '<div class="news-empty"><i class="fa-regular fa-newspaper"></i><h3>لا توجد أخبار منشورة حاليًا</h3><p>تابعنا قريبًا لمعرفة آخر النصائح والتحديثات.</p></div>'; return; }
-			newsGrid.innerHTML = visibleNews.map((documentSnapshot) => { const data = documentSnapshot.data(); const newsId = documentSnapshot.id; newsDetails.set(newsId, data); const date = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" }) : "منشور حديثًا"; return `<article class="news-page-card"><div class="news-page-image-wrap"><img src="${escapeHTML(data.imageUrl || "6384.png")}" alt="${escapeHTML(data.title || "خبر صحي")}" loading="lazy"><span><i class="fa-regular fa-calendar"></i> ${date}</span></div><div class="news-page-card-body"><h3>${escapeHTML(data.title || "خبر صحي")}</h3><p>${formatDescription(data.description || "")}</p><div class="news-page-card-footer"><span><i class="fa-solid fa-shield-heart"></i> Preventa Plus</span><button class="news-details-button" type="button" data-news-id="${escapeHTML(newsId)}" aria-label="عرض تفاصيل الخبر"><i class="fa-solid fa-arrow-left"></i></button></div></div></article>`; }).join("");
+			newsGrid.innerHTML = visibleNews.map((documentSnapshot) => {
+				const data = documentSnapshot.data();
+				const newsId = documentSnapshot.id;
+				newsDetails.set(newsId, data);
+				const date = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" }) : "منشور حديثًا";
+				const rawDescription = data.description || "";
+				const strippedDescription = rawDescription.replace(/\s+/g, " ").trim();
+				const shouldShowToggle = strippedDescription.length > 180;
+				const descriptionMarkup = formatDescription(rawDescription);
+				return `<article class="news-page-card"><div class="news-page-image-wrap"><img src="${escapeHTML(data.imageUrl || "6384.png")}" alt="${escapeHTML(data.title || "خبر صحي")}" loading="lazy"><span><i class="fa-regular fa-calendar"></i> ${date}</span></div><div class="news-page-card-body"><h3>${escapeHTML(data.title || "خبر صحي")}</h3><p class="${shouldShowToggle ? "is-collapsed" : "is-expanded"}">${descriptionMarkup}</p>${shouldShowToggle ? '<button class="news-page-card-toggle" type="button" aria-expanded="false">عرض المزيد</button>' : ""}<div class="news-page-card-footer"><span><i class="fa-solid fa-shield-heart"></i> Preventa Plus</span><button class="news-details-button" type="button" data-news-id="${escapeHTML(newsId)}" aria-label="عرض تفاصيل الخبر"><i class="fa-solid fa-arrow-left"></i></button></div></div></article>`;
+			}).join("");
+			document.querySelectorAll(".news-page-card-toggle").forEach((button) => {
+				button.addEventListener("click", () => {
+					const paragraph = button.previousElementSibling;
+					const isExpanded = button.getAttribute("aria-expanded") === "true";
+					paragraph.classList.toggle("is-expanded", !isExpanded);
+					paragraph.classList.toggle("is-collapsed", isExpanded);
+					button.textContent = isExpanded ? "عرض المزيد" : "عرض القليل";
+					button.setAttribute("aria-expanded", String(!isExpanded));
+				});
+			});
 		}, () => { newsCount.textContent = "تعذر التحميل"; newsGrid.innerHTML = '<div class="news-empty error"><i class="fa-solid fa-triangle-exclamation"></i><h3>تعذر تحميل الأخبار</h3><p>تحقق من الاتصال بالإنترنت وحاول مرة أخرى.</p></div>'; });
 	</script>
 	  <script src="https://code.jivosite.com/widget/dQDbXAAJl4" async></script>
