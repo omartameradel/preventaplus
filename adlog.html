@@ -33,6 +33,12 @@
       font-family: 'Cairo', sans-serif; 
       color: var(--text); 
     }
+    body {
+    user-select: none; 
+    -webkit-user-select: none; /* لمتصفحات سفاري وكروم */
+    -moz-user-select: none; /* لمتصفح فايرفوكس */
+    -ms-user-select: none; /* لمتصفحات إنترنت إكسبلورر وإيدج */
+}
 
     .shell { 
       width: min(100%, 450px); 
