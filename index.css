@@ -576,19 +576,39 @@ body {
 }
 
 .remember-decision {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
+    gap: 10px;
     margin-bottom: 25px;
-    padding: 0 10px;
-    font-size: 0.95rem;
+    padding: 0 4px;
+    font-size: 0.82rem;
     color: #222;
+    white-space: nowrap;
 }
+.remember-decision .checkbox { justify-self: start; margin: 0; }
+.remember-decision .checkbox label { margin: 0; white-space: nowrap; }
+.remember-decision .forget-password { justify-self: end; }
 .forget-password {
     color: #222;
     text-decoration: none;
     font-weight: 600;
+    white-space: nowrap;
 }
+.signup-inline-link {
+    justify-self: center;
+    padding: 4px 0;
+    border: 0;
+    background: transparent;
+    color: #0d6efd;
+    font: inherit;
+    font-size: inherit;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    min-width: 0;
+}
+.signup-inline-link:hover { text-decoration: underline; }
 .form-action {
     display: flex;
     justify-content: flex-start; /* الزر على اليمين كما في الصورة */
@@ -616,6 +636,108 @@ body {
     gap: 10px;
 }
 
+.signup-switch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 18px;
+    padding: 11px 24px;
+    border: 1px solid #0d6efd;
+    border-radius: 999px;
+    background: transparent;
+    color: #0d6efd;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    transition: color .2s ease, background .2s ease, transform .2s ease;
+}
+.signup-switch:hover {
+    color: #fff;
+    background: #0d6efd;
+    transform: translateY(-2px);
+}
+.signup-form {
+    margin-top: 20px;
+    padding: 24px;
+    border: 1px solid rgba(13, 110, 253, .14);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, .76);
+    box-shadow: 0 18px 45px rgba(15, 45, 75, .1);
+}
+.signup-form .signup-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+}
+.signup-form .icon-group {
+    min-width: 0;
+}
+.signup-form .icon-group .form-control {
+    padding-left: 14px;
+    padding-right: 62px;
+    font-size: .95rem;
+}
+.signup-form .form-action,
+.signup-form .signup-verification {
+    grid-column: 1 / -1;
+}
+.signup-form .signup-password .form-control {
+    padding-left: 48px;
+}
+.signup-password-toggle {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    padding: 8px;
+}
+.signup-verification p {
+    line-height: 1.8;
+    color: #475569;
+}
+.signup-form [hidden],
+.signup-fields[hidden],
+.signup-verification[hidden],
+#firebase-login-form[hidden],
+#signup-form[hidden],
+#showLoginBtn[hidden],
+#showSignupBtn[hidden] {
+    display: none !important;
+}
+.auth-message {
+    min-height: 1.5em;
+    margin: 12px 0 0;
+    font-weight: 700;
+}
+.auth-message.is-error { color: #b42318; }
+.auth-message.is-success { color: #16803c; }
+[data-theme="dark"] .signup-form {
+    background: rgba(17, 24, 39, .92);
+    border-color: rgba(239, 35, 60, .28);
+}
+[data-theme="dark"] .signup-verification p { color: #cbd5e1; }
+[data-theme="dark"] .signup-switch {
+    border-color: #ef233c;
+    color: #ff8a99;
+}
+[data-theme="dark"] .signup-inline-link { color: #ff8a99; }
+[data-theme="dark"] .signup-switch:hover {
+    color: #fff;
+    background: #d90429;
+}
+@media (max-width: 600px) {
+    .signup-form { padding: 18px 14px; }
+    .remember-decision {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: clamp(4px, 1.5vw, 8px);
+        padding: 0;
+        font-size: clamp(.62rem, 2.4vw, .64rem);
+    }
+}
 
 /* =========================================
    إعدادات الوضع الليلي [Dark Theme] (مطابق للصورة الثانية)
@@ -2733,8 +2855,11 @@ body {
     }
 
     .remember-decision {
-        gap: 12px;
-        font-size: .9rem;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: clamp(4px, 1.5vw, 8px);
+        padding: 0;
+        font-size: clamp(.62rem, 2.4vw, .64rem);
+        white-space: nowrap;
     }
 
     .author-container {
