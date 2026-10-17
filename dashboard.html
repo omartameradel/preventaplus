@@ -1374,7 +1374,7 @@ body {
 		import { db } from "./assets/firebase-config.js";
 		import { app } from "./assets/firebase-config.js";
 		import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-		import { getAuth, signInAnonymously, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+		import { EmailAuthProvider, getAuth, onAuthStateChanged, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 		import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 		const sessionKey = "loggedInUser";
@@ -1952,11 +1952,14 @@ body {
 		}
 
 		async function ensureChatAuth(user = activeUserData) {
-			if (auth.currentUser) return auth.currentUser;
-			if (user?.email && user?.password) {
-				try { return (await signInWithEmailAndPassword(auth, user.email, user.password)).user; } catch (error) { console.warn("سيتم استخدام Anonymous للدردشة:", error.code); }
-			}
-			return (await signInAnonymously(auth)).user;
+			const currentUser = auth.currentUser || await new Promise((resolve) => {
+				const unsubscribe = onAuthStateChanged(auth, (authenticatedUser) => {
+					unsubscribe();
+					resolve(authenticatedUser);
+				});
+			});
+			if (currentUser?.uid === sessionUser?.uid) return currentUser;
+			throw new Error(`لا توجد جلسة مصادقة صالحة للمستخدم ${user?.email || sessionUser?.email || ""}.`);
 		}
 
 		function firestoreDate(value) {
@@ -3054,7 +3057,7 @@ body {
 				const text = textInput.value.trim();
 				const file = fileInput.files[0];
 				if (!text && !file) return;
-				try { await ensureChatAuth(); } catch (authError) { console.error("Chat authentication failed:", authError); alert("تعذر تشغيل جلسة الدردشة. تأكد من تفعيل Anonymous في Firebase ثم أعد تحميل الصفحة."); return; }
+				try { await ensureChatAuth(); } catch (authError) { console.error("Chat authentication failed:", authError); alert("تعذر تشغيل جلسة الدردشة. هذا الحساب لا يملك صلاحية المستخدم المسجل."); return; }
 				const sendButton = form.querySelector("button[type=submit]");
 				sendButton.disabled = true;
 				try {
@@ -3651,20 +3654,19 @@ body {
 				message.textContent = "جاري التحقق وتحديث كلمة المرور...";
 				message.style.color = "#102f59";
 				try {
-					if (currentPassword !== String(activeUserData?.password || "")) {
-						message.textContent = "كلمة المرور القديمة غير صحيحة.";
-						message.style.color = "#b42318";
-						return;
-					}
-					await updateDoc(doc(db, "users", sessionUser.uid), { password: newPassword });
-					activeUserData.password = newPassword;
+					if (!auth.currentUser?.email) throw new Error("missing-auth-session");
+					const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPassword);
+					await reauthenticateWithCredential(auth.currentUser, credential);
+					await updatePassword(auth.currentUser, newPassword);
 					profilePasswordMessage = { text: "تم تغيير كلمة المرور بنجاح.", color: "#15803d", expiresAt: Date.now() + 5000 };
 					event.target.reset();
 					message.textContent = "تم تغيير كلمة المرور بنجاح.";
 					message.style.color = "#15803d";
 				} catch (error) {
 					console.error("Password update failed:", error);
-					message.textContent = "تعذر حفظ كلمة المرور. حاول مرة أخرى.";
+					message.textContent = error?.code === "auth/invalid-credential" || error?.code === "auth/wrong-password"
+						? "كلمة المرور الحالية غير صحيحة."
+						: "تعذر تحديث كلمة المرور. سجّل الدخول مرة أخرى ثم حاول.";
 					message.style.color = "#b42318";
 				}
 			});
