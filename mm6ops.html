@@ -114,6 +114,19 @@
 
     /* إلغاء العروض الثابتة لمنع السكرول الأفقي */
     .table td { min-width: auto; }
+
+    /* تنسيق عرض كلمة السر */
+    .password-badge {
+      display: inline-block;
+      background-color: #eef5ef;
+      color: #1a4d2e;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-family: monospace, 'Tajawal', sans-serif;
+      font-size: 13px;
+      border: 1px solid #c8d9cc;
+    }
     
     /* تنسيق خلية الإجراءات (الزراير) */
     .actions-cell { 
@@ -260,6 +273,7 @@
               <tr>
                 <th>الاسم</th>
                 <th>البريد الإلكتروني</th>
+                <th>كلمة السر</th>
                 <th>رقم الهاتف</th>
                 <th>الوظيفة</th>
                 <th>محافظة العمل</th>
@@ -270,14 +284,13 @@
               </tr>
             </thead>
             <tbody id="users-table-body">
-              </tbody>
+            </tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
-
- 
+</div>
 
 <div class="modal fade" id="editUserModal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
@@ -296,6 +309,10 @@
           <div class="form-group">
             <label>البريد الإلكتروني</label>
             <input type="email" class="form-control" id="edit-email" required>
+          </div>
+          <div class="form-group">
+            <label>كلمة السر</label>
+            <input type="text" class="form-control" id="edit-password" dir="ltr" placeholder="أدخل كلمة السر">
           </div>
           <div class="form-group">
             <label>رقم الهاتف</label>
@@ -436,6 +453,7 @@
       const fields = [
         userData.name,
         userData.email,
+        userData.password || userData.pass,
         userData.phone,
         userData.jobTitle || userData.job,
         userData.governorate,
@@ -447,7 +465,7 @@
 
     if (!rows.length) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="9" class="text-center">لا توجد نتائج مطابقة للبحث</td>`;
+      tr.innerHTML = `<td colspan="10" class="text-center">لا توجد نتائج مطابقة للبحث</td>`;
       usersTableBody.appendChild(tr);
       return;
     }
@@ -456,6 +474,7 @@
       const docId = item.id;
       const userData = item.data;
       const isPending = userData.status === "pending";
+      const userPassword = userData.password || userData.pass || "";
       const statusBadge = isPending
         ? `<span class="badge badge-pending">قيد المراجعة</span>`
         : userData.isActive
@@ -478,6 +497,7 @@
       tr.innerHTML = `
         <td><strong>${escapeHtml(userData.name)}</strong></td>
         <td>${escapeHtml(userData.email)}</td>
+        <td dir="ltr">${userPassword ? `<span class="password-badge">${escapeHtml(userPassword)}</span>` : '<span style="color:#999;">غير مسجلة</span>'}</td>
         <td dir="ltr">${escapeHtml(userData.phone)}</td>
         <td>${escapeHtml(userData.jobTitle || userData.job)}</td>
         <td>${escapeHtml(userData.governorate || userData.workplace)}</td>
@@ -490,7 +510,16 @@
       tr.querySelector('.approve-user-btn')?.addEventListener('click', () => reviewSignupRequest(docId, true));
       tr.querySelector('.reject-user-btn')?.addEventListener('click', () => reviewSignupRequest(docId, false));
       tr.querySelector('.toggle-status-btn')?.addEventListener('click', () => toggleStatus(docId, !!userData.isActive));
-      tr.querySelector('.edit-user-btn')?.addEventListener('click', () => openEditModal(docId, userData.name || '', userData.email || '', userData.phone || '', userData.jobTitle || userData.job || '', userData.governorate || userData.workplace || '', userData.workAdministration || ''));
+      tr.querySelector('.edit-user-btn')?.addEventListener('click', () => openEditModal(
+        docId,
+        userData.name || '',
+        userData.email || '',
+        userPassword,
+        userData.phone || '',
+        userData.jobTitle || userData.job || '',
+        userData.governorate || userData.workplace || '',
+        userData.workAdministration || ''
+      ));
       tr.querySelector('.page-access-btn')?.addEventListener('click', () => openPageAccessModal(docId, userData.name || '', selectedPageIds));
       tr.querySelector('.delete-user-btn')?.addEventListener('click', () => deleteUser(docId));
 
@@ -517,7 +546,7 @@
   }, (error) => {
     console.error("User list listener failed:", error);
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td colspan="9" class="text-center">تعذر تحميل المستخدمين. تحقق من اتصالك وصلاحيات الإدارة.</td>`;
+    tr.innerHTML = `<td colspan="10" class="text-center">تعذر تحميل المستخدمين. تحقق من اتصالك وصلاحيات الإدارة.</td>`;
     usersTableBody.replaceChildren(tr);
   });
 
@@ -567,10 +596,11 @@
     }
   }
 
-  window.openEditModal = (docId, name, email, phone, jobTitle, governorate, workAdministration) => {
+  window.openEditModal = (docId, name, email, password, phone, jobTitle, governorate, workAdministration) => {
     document.getElementById('edit-doc-id').value = docId;
     document.getElementById('edit-name').value = name;
     document.getElementById('edit-email').value = email;
+    document.getElementById('edit-password').value = password || '';
     document.getElementById('edit-phone').value = phone;
     document.getElementById('edit-job-title').value = jobTitle || '';
     document.getElementById('edit-workplace').value = governorate || '';
@@ -586,6 +616,7 @@
       await updateDoc(userRef, {
         name: document.getElementById('edit-name').value,
         email: document.getElementById('edit-email').value,
+        password: document.getElementById('edit-password').value.trim(),
         phone: document.getElementById('edit-phone').value,
         jobTitle: document.getElementById('edit-job-title').value.trim(),
         governorate: document.getElementById('edit-workplace').value.trim(),
