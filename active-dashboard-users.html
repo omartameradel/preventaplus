@@ -145,9 +145,10 @@
       margin-top: 16px;
     }
 
-    .users-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 16px; }
+    .users-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 16px; }
     
     .user-card {
+      min-width: 0;
       border: 1px solid var(--border-color);
       background: var(--card-bg);
       border-radius: 12px;
@@ -161,7 +162,7 @@
     .user-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
     .user-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .user-info { display: flex; align-items: center; gap: 12px; }
+    .user-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
     
     .avatar {
       width: 48px;
@@ -177,8 +178,9 @@
     }
     body.dark-mode .avatar { color: #121212; }
 
-    .user-details strong { display: flex; align-items: center; gap: 8px; color: var(--text-main); font-size: 1.1rem; }
-    .user-details small { color: var(--text-sub); display: block; margin-top: 4px; }
+    .user-details { min-width: 0; }
+    .user-details strong { display: flex; align-items: center; gap: 8px; color: var(--text-main); font-size: 1.1rem; min-width: 0; overflow-wrap: anywhere; }
+    .user-details small { color: var(--text-sub); display: block; margin-top: 4px; overflow-wrap: anywhere; }
 
     .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
     .status-active { background: var(--success); box-shadow: 0 0 0 3px rgba(16,185,129,.2); }
@@ -187,7 +189,7 @@
 
     .meta-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       font-size: 0.85rem;
       background: var(--hover-bg);
@@ -195,9 +197,9 @@
       border-radius: 8px;
       border: 1px solid var(--border-color);
     }
-    .meta-item { display: flex; flex-direction: column; }
+    .meta-item { display: flex; flex-direction: column; min-width: 0; }
     .meta-label { color: var(--text-sub); font-size: 0.75rem; }
-    .meta-value { color: var(--text-main); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meta-value { color: var(--text-main); font-weight: 500; overflow-wrap: anywhere; }
 
     .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .tag {
@@ -232,7 +234,7 @@
     
     .log-entry { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
     .log-entry:last-child { border-bottom: none; }
-    .log-time { color: var(--text-sub); font-size: 0.8rem; display: block; }
+    .log-time { color: var(--text-sub); font-size: 0.8rem; display: block; margin-top: 4px; }
 
     .toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
     .toast {
@@ -252,6 +254,10 @@
     @media (max-width: 768px) {
       .stats-grid { grid-template-columns: 1fr 1fr; }
     }
+    @media (max-width: 480px) {
+      body { padding: 10px; }
+      .card { padding: 14px; }
+    }
   </style>
 </head>
 <body>
@@ -261,7 +267,7 @@
     <div class="card header-section">
       <div>
         <h1>لوحة التحكم المتقدمة <span id="userCount" style="color: var(--text-sub); font-size: 1.2rem;">(0)</span></h1>
-        <p style="color: var(--text-sub); margin: 5px 0 0 0; font-size: 0.9rem;">مراقبة وإدارة المستخدمين النشطين في الوقت الفعلي</p>
+        <p style="color: var(--text-sub); margin: 5px 0 0 0; font-size: 0.9rem;">متابعة المستخدمين والزوار وآخر ظهور لهم؛ الزائر غير المسجل يظهر بمعرّف مجهول</p>
       </div>
       <div style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button class="btn btn-outline" id="exportBtn">📥 تصدير CSV</button>
@@ -298,7 +304,7 @@
 
     <!-- Toolbar Filters -->
     <div class="toolbar">
-      <input type="text" id="searchInput" class="input-control" style="flex: 2 1 250px;" placeholder="ابحث بالاسم، الإيميل، أو الـ IP..." />
+      <input type="text" id="searchInput" class="input-control" style="flex: 2 1 250px;" placeholder="ابحث بالاسم، الإيميل، المعرّف، أو الـ IP..." />
       
       <select id="filterStatus" class="input-control">
         <option value="all">كل الحالات</option>
@@ -311,6 +317,7 @@
         <option value="all">كل الصلاحيات</option>
         <option value="admin">مدير (Admin)</option>
         <option value="user">مستخدم (User)</option>
+        <option value="guest">زائر</option>
       </select>
 
       <select id="filterDevice" class="input-control">
@@ -376,7 +383,7 @@
     let globalUsers = []; 
     let previousUserKeys = new Set();
     let chartInstance = null;
-    let historyData = { labels: [], activeCounts: [] };
+    let historyData = { labels: [], activeCounts: [], lastUpdate: 0 };
 
     // DOM Elements
     const usersList = document.getElementById("usersList");
@@ -395,14 +402,36 @@
     const statDesktop = document.getElementById("statDesktop");
     const statTopPage = document.getElementById("statTopPage");
 
-    // ==========================================
-    // حل مشكلة الصفحات الحقيقية (قاموس الترجمة)
-    // ==========================================
+    // دالة مساعدة موحدة لاستخراج الوقت بالملي ثانية بأمان
+    function getTimestampMs(value) {
+      if (!value) return 0;
+      if (typeof value.toDate === 'function') return value.toDate().getTime();
+      if (typeof value.seconds === 'number') return value.seconds * 1000;
+      const parsed = new Date(value).getTime();
+      return Number.isNaN(parsed) ? 0 : parsed;
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? "" : value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+      })[character]);
+    }
+
+    function csvField(value) {
+      const text = String(value == null ? "" : value);
+      const safeText = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+      return `"${safeText.replace(/"/g, '""')}"`;
+    }
+
+    // قاموس ترجمة الصفحات
     function getCorrectPageName(pageVal) {
       if (!pageVal) return "الرئيسية";
       let p = String(pageVal).trim();
       
-      // إزالة الامتدادات إذا تم تمريرها بالخطأ
       if (p.includes(".html")) p = p.replace(".html", "");
       
       const dictionary = {
@@ -417,35 +446,32 @@
         "search": "البحث",
         "library": "المكتبة",
         "ministerial": "القرارات الوزارية",
-        "forms": "النماذج ",
+        "forms": "النماذج",
         "prevention-designs": "التصميمات الوقائية"
       };
       
       let lowerP = p.toLowerCase();
-      // بحث مطابق تماماً
       if (dictionary[lowerP]) return dictionary[lowerP];
       
-      // بحث جزئي
       for (const [en, ar] of Object.entries(dictionary)) {
         if (lowerP.includes(en)) return ar;
       }
       
-      // الحالات الخاصة
       if (lowerP === 'لوحة التحكم') return 'الرئيسية';
       
-      return p; // إرجاع الاسم كما هو في حال كان بالعربية بالفعل
+      return p;
     }
 
     document.getElementById("darkModeToggle").addEventListener("click", () => {
       document.body.classList.toggle("dark-mode");
-      if(chartInstance) updateChartColors();
+      if (chartInstance) updateChartColors();
     });
 
     window.showToast = function(message, type = 'info') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       toast.className = `toast ${type === 'warning' ? 'toast-warning' : ''}`;
-      toast.innerHTML = `<span>${type === 'warning' ? '⚠️' : '🔔'}</span> <div>${message}</div>`;
+      toast.innerHTML = `<span>${type === 'warning' ? '⚠️' : '🔔'}</span> <div>${escapeHtml(message)}</div>`;
       container.appendChild(toast);
       setTimeout(() => {
         toast.style.animation = 'fadeOut 0.3s ease forwards';
@@ -459,41 +485,44 @@
 
     window.openLogModal = function(userId) {
       const user = globalUsers.find(u => u.id === userId);
-      if(!user) return;
-      document.getElementById('modalUserName').innerText = `سجل نشاط: ${user.name || 'مجهول'}`;
+      if (!user) return;
+      document.getElementById('modalUserName').textContent = `سجل نشاط: ${user.name || 'مجهول'}`;
       
-      const timeData = analyzeTime(user.lastSeenAt);
+      const timeData = analyzeTime(user.lastSeenAt, user.online);
+      const lastSeenMs = getTimestampMs(user.lastSeenAt) || Date.now();
+      
       let logsHTML = `
         <div class="log-entry">
           <strong>تسجيل الدخول / آخر ظهور</strong>
-          <span class="log-time">${new Date(user.lastSeenAt?.seconds * 1000 || Date.now()).toLocaleString('ar-EG')}</span>
+          <span class="log-time">${new Date(lastSeenMs).toLocaleString('ar-EG')}</span>
         </div>
         <div class="log-entry">
-          <strong>الوصول إلى صفحة:</strong> ${user.currentPage}
+          <strong>الوصول إلى صفحة:</strong> ${escapeHtml(user.currentPage || "الرئيسية")}
           <span class="log-time">${timeData.text}</span>
         </div>
         <div class="log-entry">
-          <strong>آخر إجراء:</strong> ${user.lastAction}
+          <strong>آخر إجراء:</strong> ${escapeHtml(user.lastAction || "زيارة للموقع")}
         </div>
       `;
       document.getElementById('modalLogContent').innerHTML = logsHTML;
       document.getElementById('logModal').classList.add('active');
     };
 
-    function analyzeTime(value) {
+    function analyzeTime(value, online = true) {
       try {
-        const date = value?.toDate ? value.toDate() : (value?.seconds ? new Date(value.seconds * 1000) : new Date(value));
-        if (!date || Number.isNaN(date.getTime())) return { text: "غير معروف", status: "offline", statusClass: "status-offline", diffSeconds: 99999 };
+        const ms = getTimestampMs(value);
+        if (!ms) return { text: "غير معروف", status: "offline", statusClass: "status-offline", diffSeconds: 99999 };
         
-        const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+        const date = new Date(ms);
+        const diffSeconds = Math.max(0, Math.floor((Date.now() - ms) / 1000));
         let status = "active";
         let statusClass = "status-active"; 
         
         if (diffSeconds > 300) { status = "idle"; statusClass = "status-idle"; } 
-        if (diffSeconds > 3600) { status = "offline"; statusClass = "status-offline"; } 
+        if (diffSeconds > 3600 || online === false) { status = "offline"; statusClass = "status-offline"; } 
 
         let text = "";
-        if (diffSeconds < 60) text = `منذ ${diffSeconds} ثواني`;
+        if (diffSeconds < 60) text = `منذ ${diffSeconds} ثانية`;
         else if (diffSeconds < 3600) text = `منذ ${Math.floor(diffSeconds / 60)} دقيقة`;
         else text = `منذ ${Math.floor(diffSeconds / 3600)} ساعة`;
 
@@ -504,16 +533,22 @@
     }
 
     function calculateSessionDuration(user, timeData) {
-      const start = user.sessionStartAt?.seconds ? new Date(user.sessionStartAt.seconds * 1000) : null;
-      if (!start) return timeData.diffSeconds < 3600 ? `${Math.floor(timeData.diffSeconds/60)} دقيقة` : "غير محدد";
+      const startMs = getTimestampMs(user.sessionStartAt);
+      if (!startMs) {
+        if (timeData.status === "offline") return "غير محدد";
+        return timeData.diffSeconds < 3600 ? `${Math.max(1, Math.floor(timeData.diffSeconds / 60))} دقيقة` : "غير محدد";
+      }
       
-      const diffMins = Math.max(0, Math.floor((Date.now() - start.getTime()) / 60000));
-      if(diffMins < 60) return `${diffMins} دقيقة`;
-      return `${Math.floor(diffMins/60)} ساعة و ${diffMins%60} دقيقة`;
+      const endMs = timeData.status === "offline"
+        ? getTimestampMs(user.lastSeenAt) || Date.now()
+        : Date.now();
+      const diffMins = Math.max(0, Math.floor((endMs - startMs) / 60000));
+      if (diffMins < 60) return `${diffMins} دقيقة`;
+      return `${Math.floor(diffMins / 60)} ساعة و ${diffMins % 60} دقيقة`;
     }
 
     window.endSession = async function(userId) {
-      if(!confirm("هل أنت متأكد من إنهاء جلسة هذا المستخدم وحذفه من القائمة؟")) return;
+      if (!confirm("هل أنت متأكد من إنهاء جلسة هذا المستخدم وحذفه من القائمة؟")) return;
       try {
         await deleteDoc(doc(db, "dashboardPresence", userId));
         showToast("تم إنهاء جلسة المستخدم بنجاح.", "success");
@@ -523,10 +558,22 @@
       }
     };
 
+    usersList.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+
+      const userId = button.dataset.userId;
+      if (button.dataset.action === "open-log") {
+        window.openLogModal(userId);
+      } else if (button.dataset.action === "end-session") {
+        window.endSession(userId);
+      }
+    });
+
     document.getElementById("endAllBtn").addEventListener("click", async () => {
-      if(!confirm("تحذير: سيتم إنهاء وحذف جميع الجلسات النشطة! هل أنت متأكد؟")) return;
+      if (!confirm("تحذير: سيتم إنهاء وحذف جميع الجلسات النشطة! هل أنت متأكد؟")) return;
       try {
-        const activeUsers = globalUsers.filter(u => analyzeTime(u.lastSeenAt).status !== 'offline');
+        const activeUsers = globalUsers.filter(u => analyzeTime(u.lastSeenAt, u.online).status !== 'offline');
         for (const user of activeUsers) {
           await deleteDoc(doc(db, "dashboardPresence", user.id));
         }
@@ -538,24 +585,24 @@
 
     document.getElementById("exportBtn").addEventListener("click", () => {
       let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-      csvContent += "الاسم,البريد,الحالة,آخر نشاط,المدة,الصلاحية,الجهاز,نظام التشغيل,المتصفح,الدولة/المدينة,IP,الصفحة الحالية\n";
+      csvContent += "الاسم,البريد/معرّف الزائر,الحالة,آخر نشاط,المدة,الصلاحية,الجهاز,نظام التشغيل,المتصفح,الدولة/المدينة,IP,الصفحة الحالية\n";
       
       getFilteredUsers().forEach(user => {
-        const t = analyzeTime(user.lastSeenAt);
+        const t = analyzeTime(user.lastSeenAt, user.online);
         const duration = calculateSessionDuration(user, t);
         const row = [
-          `"${user.name || 'مجهول'}"`,
-          `"${user.email || ''}"`,
-          `"${t.status}"`,
-          `"${t.text}"`,
-          `"${duration}"`,
-          `"${user.role || 'user'}"`,
-          `"${user.deviceType || 'desktop'}"`,
-          `"${user.os || 'غير محدد'}"`,
-          `"${user.browser || 'غير محدد'}"`,
-          `"${user.location || 'غير محدد'}"`,
-          `"${user.ip || 'مخفي'}"`,
-          `"${user.currentPage || 'الرئيسية'}"`
+          csvField(user.name || 'مجهول'),
+          csvField(user.email || (user.visitor ? user.id : '')),
+          csvField(t.status),
+          csvField(t.text),
+          csvField(duration),
+          csvField(user.role || 'user'),
+          csvField(user.deviceType || 'desktop'),
+          csvField(user.os || 'غير محدد'),
+          csvField(user.browser || 'غير معروف'),
+          csvField(user.location || 'غير محدد'),
+          csvField(user.ip || 'مخفي'),
+          csvField(user.currentPage || 'الرئيسية')
         ];
         csvContent += row.join(",") + "\n";
       });
@@ -581,10 +628,10 @@
       return guestName || guestEmail || guestRole;
     }
 
-    function isValidRegisteredUserRecord(data = {}) {
+    function isValidRegisteredUserRecord(data = {}, docId = "") {
       const name = String(data.name || "").trim();
       const email = String(data.email || "").trim();
-      const userId = String(data.userId || data.uid || data.id || "").trim();
+      const userId = String(data.userId || data.uid || data.id || docId || "").trim();
 
       if (!name || !email || !userId) return false;
       if (isGuestUserRecord(data)) return false;
@@ -593,53 +640,64 @@
       return true;
     }
 
+    function isValidPresenceRecord(data = {}, docId = "") {
+      const isVisitor = data.visitor === true
+        && data.id === docId
+        && data.role === "guest"
+        && String(data.name || "").startsWith("زائر ")
+        && data.email === "";
+
+      return isVisitor || isValidRegisteredUserRecord(data, docId);
+    }
+
     function getFilteredUsers() {
       let filtered = [...globalUsers];
       
       const term = searchInput.value.toLowerCase();
-      if(term) {
+      if (term) {
         filtered = filtered.filter(u => 
           (u.name && u.name.toLowerCase().includes(term)) || 
           (u.email && u.email.toLowerCase().includes(term)) ||
+          (u.id && u.id.toLowerCase().includes(term)) ||
           (u.ip && u.ip.includes(term))
         );
       }
 
       const statusVal = filterStatus.value;
-      if(statusVal !== 'all') {
-        filtered = filtered.filter(u => analyzeTime(u.lastSeenAt).status === statusVal);
+      if (statusVal !== 'all') {
+        filtered = filtered.filter(u => analyzeTime(u.lastSeenAt, u.online).status === statusVal);
       }
 
       const roleVal = filterRole.value;
-      if(roleVal !== 'all') {
+      if (roleVal !== 'all') {
         filtered = filtered.filter(u => (u.role || 'user').toLowerCase() === roleVal);
       }
 
       const devVal = filterDevice.value;
-      if(devVal !== 'all') {
+      if (devVal !== 'all') {
         filtered = filtered.filter(u => {
           const type = (u.deviceType || 'desktop').toLowerCase();
-          if(devVal === 'mobile') return type.includes('mobile') || type.includes('tablet');
+          if (devVal === 'mobile') return type.includes('mobile') || type.includes('tablet');
           return type.includes('desktop') || type.includes('pc') || type.includes('mac');
         });
       }
 
       const startD = dateStart.value ? new Date(dateStart.value).getTime() : 0;
       const endD = dateEnd.value ? new Date(dateEnd.value).getTime() + 86399000 : Infinity; 
-      if(startD > 0 || endD < Infinity) {
+      if (startD > 0 || endD < Infinity) {
         filtered = filtered.filter(u => {
-          const t = analyzeTime(u.lastSeenAt).dateObj?.getTime() || 0;
+          const t = getTimestampMs(u.lastSeenAt);
           return t >= startD && t <= endD;
         });
       }
 
       const sortVal = sortSelect.value;
-      if(sortVal === 'lastActivity') {
-        filtered.sort((a, b) => (b.lastSeenAt?.seconds || 0) - (a.lastSeenAt?.seconds || 0));
+      if (sortVal === 'lastActivity') {
+        filtered.sort((a, b) => getTimestampMs(b.lastSeenAt) - getTimestampMs(a.lastSeenAt));
       } else if (sortVal === 'sessionDuration') {
         filtered.sort((a, b) => {
-          const startA = a.sessionStartAt?.seconds || a.lastSeenAt?.seconds || 0;
-          const startB = b.sessionStartAt?.seconds || b.lastSeenAt?.seconds || 0;
+          const startA = getTimestampMs(a.sessionStartAt) || getTimestampMs(a.lastSeenAt) || Date.now();
+          const startB = getTimestampMs(b.sessionStartAt) || getTimestampMs(b.lastSeenAt) || Date.now();
           return startA - startB; 
         });
       }
@@ -650,7 +708,7 @@
     function renderDashboard() {
       const usersToRender = getFilteredUsers();
       
-      const activeOnly = usersToRender.filter(u => analyzeTime(u.lastSeenAt).status === 'active');
+      const activeOnly = usersToRender.filter(u => analyzeTime(u.lastSeenAt, u.online).status === 'active');
       statTotal.innerText = activeOnly.length;
       countBadge.innerText = `(${usersToRender.length})`;
       
@@ -659,9 +717,9 @@
       
       usersToRender.forEach(u => {
         const d = (u.deviceType || 'desktop').toLowerCase();
-        if(d.includes('mobile') || d.includes('tablet')) mobiles++; else desktops++;
+        if (d.includes('mobile') || d.includes('tablet')) mobiles++; else desktops++;
         
-        const p = u.currentPage; // تم تصحيحها في الدالة العلوية
+        const p = u.currentPage;
         pageCounts[p] = (pageCounts[p] || 0) + 1;
       });
 
@@ -669,20 +727,20 @@
       statDesktop.innerText = desktops;
       
       let topP = "-", max = 0;
-      for(const [p, c] of Object.entries(pageCounts)) {
-        if(c > max) { max = c; topP = p; }
+      for (const [p, c] of Object.entries(pageCounts)) {
+        if (c > max) { max = c; topP = p; }
       }
       statTopPage.innerText = topP;
 
-      if(historyData.labels.length === 0 || Date.now() - historyData.lastUpdate > 60000) {
-         historyData.labels.push(new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}));
-         historyData.activeCounts.push(activeOnly.length);
-         if(historyData.labels.length > 15) { 
-           historyData.labels.shift();
-           historyData.activeCounts.shift();
-         }
-         historyData.lastUpdate = Date.now();
-         updateChart();
+      if (historyData.labels.length === 0 || Date.now() - historyData.lastUpdate > 60000) {
+        historyData.labels.push(new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }));
+        historyData.activeCounts.push(activeOnly.length);
+        if (historyData.labels.length > 15) { 
+          historyData.labels.shift();
+          historyData.activeCounts.shift();
+        }
+        historyData.lastUpdate = Date.now();
+        updateChart();
       }
 
       if (!usersToRender.length) {
@@ -691,17 +749,21 @@
       }
 
       usersList.innerHTML = usersToRender.map((user) => {
-        const timeData = analyzeTime(user.lastSeenAt);
+        const timeData = analyzeTime(user.lastSeenAt, user.online);
         const duration = calculateSessionDuration(user, timeData);
-        const displayName = String(user.name || "").trim() || "حساب غير مصرح";
-        const displayEmail = String(user.email || "").trim() || "لا يوجد بريد إلكتروني";
-        const firstLetter = displayName.charAt(0).toUpperCase();
+        const isVisitor = user.visitor === true;
+        const rawName = String(user.name || "").trim() || "حساب غير مصرح";
+        const displayName = escapeHtml(rawName);
+        const displayEmail = escapeHtml(isVisitor ? `معرّف الزائر: ${user.id}` : String(user.email || "").trim() || "لا يوجد بريد إلكتروني");
+        const firstLetter = escapeHtml(rawName.charAt(0).toUpperCase());
         
-        const os = user.os || "غير محدد";
-        const browser = user.browser || "غير معروف";
-        const location = user.location || "غير متاح";
-        const ip = user.ip || "مخفي";
-        const role = user.role === 'admin' ? 'مدير' : 'مستخدم';
+        const os = escapeHtml(user.os || "غير محدد");
+        const browser = escapeHtml(user.browser || "غير معروف");
+        const location = escapeHtml(user.location || "غير متاح");
+        const ip = escapeHtml(user.ip || "مخفي");
+        const deviceType = escapeHtml(user.deviceType || "Desktop");
+        const currentPage = escapeHtml(user.currentPage || "الرئيسية");
+        const role = user.role === 'admin' ? 'مدير' : isVisitor ? 'زائر' : 'مستخدم';
         
         return `
           <div class="user-card">
@@ -713,14 +775,14 @@
                     <span class="status-dot ${timeData.statusClass}"></span>
                     ${displayName}
                   </strong>
-                  <small>${displayEmail}</small>
+                  <small title="${escapeHtml(isVisitor ? user.id : displayEmail)}">${displayEmail}</small>
                 </div>
               </div>
             </div>
             
             <div class="tags">
               <span class="tag">👑 ${role}</span>
-              <span class="tag">💻 ${user.deviceType || 'Desktop'}</span>
+              <span class="tag">💻 ${deviceType}</span>
               <span class="tag">🌐 ${browser}</span>
               <span class="tag">⚙️ ${os}</span>
             </div>
@@ -728,11 +790,11 @@
             <div class="meta-grid">
               <div class="meta-item">
                 <span class="meta-label">الموقع و IP</span>
-                <span class="meta-value" title="${location} - ${ip}">${location} / ${ip}</span>
+                <span class="meta-value" title="${location} / ${ip}">${location} / ${ip}</span>
               </div>
               <div class="meta-item">
                 <span class="meta-label">الصفحة الحالية</span>
-                <span class="meta-value" title="${user.currentPage}">${user.currentPage}</span>
+                <span class="meta-value" title="${currentPage}">${currentPage}</span>
               </div>
               <div class="meta-item">
                 <span class="meta-label">آخر نشاط</span>
@@ -745,8 +807,8 @@
             </div>
 
             <div class="card-actions">
-              <button class="btn btn-outline" onclick="openLogModal('${user.id}')">📜 السجل</button>
-              <button class="btn btn-danger" onclick="endSession('${user.id}')">🛑 إنهاء الجلسة</button>
+              <button class="btn btn-outline" data-action="open-log" data-user-id="${escapeHtml(user.id)}">📜 السجل</button>
+              <button class="btn btn-danger" data-action="end-session" data-user-id="${escapeHtml(user.id)}">🛑 إنهاء الجلسة</button>
             </div>
           </div>
         `;
@@ -788,7 +850,7 @@
     }
 
     function updateChartColors() {
-      if(!chartInstance) return;
+      if (!chartInstance) return;
       const isDark = document.body.classList.contains('dark-mode');
       const textColor = isDark ? '#a0a0a0' : '#607a8b';
       const gridColor = isDark ? '#333' : '#dbe7ed';
@@ -804,7 +866,7 @@
     }
 
     function updateChart() {
-      if(!chartInstance) { initChart(); return; }
+      if (!chartInstance) { initChart(); return; }
       chartInstance.data.labels = historyData.labels;
       chartInstance.data.datasets[0].data = historyData.activeCounts;
       chartInstance.update();
@@ -822,12 +884,11 @@
             .map((item) => {
               const data = item.data();
 
-              if (!isValidRegisteredUserRecord(data)) {
+              if (!isValidPresenceRecord(data, item.id)) {
                 deleteDoc(doc(db, "dashboardPresence", item.id)).catch(() => {});
                 return null;
               }
 
-              // تطبيق المترجم لاستخراج اسم الصفحة الحقيقي
               const realPage = data.page || data.currentPage || 'home';
               const translatedPage = getCorrectPageName(realPage);
               
@@ -840,13 +901,13 @@
               };
             })
             .filter(Boolean)
-            .filter((item) => item.online !== false && !item.isDeleted);
+            .filter((item) => !item.isDeleted);
 
           const uniqueUsersMap = {};
           rawUsers.forEach(user => {
             const key = user.email || user.id;
-            const currentUserTime = user.lastSeenAt?.seconds || 0;
-            const storedUserTime = uniqueUsersMap[key]?.lastSeenAt?.seconds || 0;
+            const currentUserTime = getTimestampMs(user.lastSeenAt);
+            const storedUserTime = getTimestampMs(uniqueUsersMap[key]?.lastSeenAt);
             
             if (!uniqueUsersMap[key] || currentUserTime > storedUserTime) {
               uniqueUsersMap[key] = user;
@@ -856,9 +917,9 @@
           globalUsers = Object.values(uniqueUsersMap);
 
           const currentKeys = new Set(globalUsers.map(u => u.id));
-          if(previousUserKeys.size > 0) {
+          if (previousUserKeys.size > 0) {
             currentKeys.forEach(id => {
-              if(!previousUserKeys.has(id)) {
+              if (!previousUserKeys.has(id)) {
                 const newUser = globalUsers.find(u => u.id === id);
                 showToast(`تسجيل دخول جديد: ${newUser.name || 'مستخدم جديد'}`, 'info');
               }
@@ -870,11 +931,11 @@
           
         }, (error) => {
           console.error("تعذر تحميل الحضور:", error);
-          usersList.innerHTML = `<div style="grid-column: 1/-1; padding: 20px; text-align: center; color: var(--danger); background: var(--card-bg); border-radius: 12px; border: 1px solid var(--danger);">تعذر تحميل البيانات، تأكد من الصلاحيات أو الاتصال بالإنترنت. <br> <small>${error.message}</small></div>`;
+          usersList.innerHTML = `<div style="grid-column: 1/-1; padding: 20px; text-align: center; color: var(--danger); background: var(--card-bg); border-radius: 12px; border: 1px solid var(--danger);">تعذر تحميل البيانات، تأكد من الصلاحيات أو الاتصال بالإنترنت. <br> <small>${escapeHtml(error.message)}</small></div>`;
         });
       } catch (error) {
         console.error("Error connecting to database:", error);
-        usersList.innerHTML = `<div style="grid-column: 1/-1; padding: 20px; text-align: center; color: var(--danger);">خطأ في الاتصال بقاعدة البيانات: ${error.message}</div>`;
+        usersList.innerHTML = `<div style="grid-column: 1/-1; padding: 20px; text-align: center; color: var(--danger);">خطأ في الاتصال بقاعدة البيانات: ${escapeHtml(error.message)}</div>`;
       }
     }
 
@@ -882,8 +943,11 @@
     window.addEventListener('DOMContentLoaded', () => {
       initChart();
       startListening();
+      // تحديث الواجهة تلقائياً كل 30 ثانية لتحديث العدادات وحالات الخمول
+      setInterval(() => {
+        if (globalUsers.length > 0) renderDashboard();
+      }, 30000);
     });
-
   </script>
 </body>
 </html>
