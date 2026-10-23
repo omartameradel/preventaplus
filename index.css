@@ -677,61 +677,8 @@ body {
     padding-right: 62px;
     font-size: .95rem;
 }
-.signup-form .form-action,
-.signup-form .signup-captcha {
+.signup-form .form-action {
     grid-column: 1 / -1;
-}
-.signup-form .signup-captcha-label {
-    display: block;
-    margin: 0 0 10px;
-    color: #475569;
-    font-weight: 600;
-}
-.signup-form .signup-captcha {
-    margin-bottom: 16px;
-}
-.signup-captcha-answer {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.signup-captcha-answer .form-control {
-    box-sizing: border-box;
-    flex: 1 1 220px;
-    width: 100%;
-    min-width: 0;
-    height: 48px;
-    padding: 12px 16px;
-    border: 1px solid #cbd5e1;
-    border-radius: 12px;
-    background: #fff;
-    color: #1f2937;
-    font: inherit;
-    box-shadow: 0 3px 10px rgba(15, 45, 75, .08);
-}
-.signup-captcha-answer .form-control:focus {
-    border-color: #0d6efd;
-    outline: 3px solid rgba(13, 110, 253, .15);
-}
-.signup-captcha-answer .form-control[aria-invalid="true"] {
-    border-color: #b42318;
-    outline-color: rgba(180, 35, 24, .15);
-}
-.signup-captcha-refresh {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border: 1px solid #cbd5e1;
-    border-radius: 12px;
-    background: transparent;
-    color: #475569;
-    cursor: pointer;
-}
-.signup-captcha-refresh:disabled {
-    cursor: wait;
-    opacity: .6;
 }
 .signup-form .signup-password .form-control {
     padding-left: 48px;
@@ -765,16 +712,6 @@ body {
 [data-theme="dark"] .signup-form {
     background: rgba(17, 24, 39, .92);
     border-color: rgba(239, 35, 60, .28);
-}
-[data-theme="dark"] .signup-captcha-label { color: #cbd5e1; }
-[data-theme="dark"] .signup-captcha-refresh {
-    border-color: #475569;
-    color: #cbd5e1;
-}
-[data-theme="dark"] .signup-captcha-answer .form-control {
-    border-color: #475569;
-    background: #111827;
-    color: #fff;
 }
 [data-theme="dark"] .signup-switch {
     border-color: #ef233c;
