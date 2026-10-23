@@ -8,6 +8,69 @@ service cloud.firestore {
     function isPrimaryAdmin() {
       return isAdmin() && request.auth.token.email == 'tamer.adel.1981@gmail.com';
     }
+    function validUserPresence(presenceId) {
+      return signedIn() &&
+        request.auth.uid == presenceId &&
+        request.resource.data.keys().hasAll([
+          'name', 'email', 'role', 'deviceType', 'os', 'browser',
+          'location', 'ip', 'currentPage', 'online', 'lastSeenAt'
+        ]) &&
+        request.resource.data.keys().hasOnly([
+          'id', 'userId', 'email', 'name', 'role', 'page', 'currentPage',
+          'lastAction', 'deviceType', 'os', 'browser', 'location', 'ip',
+          'online', 'lastSeenAt', 'sessionStartAt', 'openedAt'
+        ]) &&
+        (
+          (request.resource.data.keys().hasAny(['id']) && request.resource.data.id == presenceId) ||
+          (request.resource.data.keys().hasAny(['userId']) && request.resource.data.userId == presenceId)
+        ) &&
+        request.resource.data.name is string &&
+        request.resource.data.email is string &&
+        request.resource.data.role is string &&
+        request.resource.data.deviceType is string &&
+        request.resource.data.os is string &&
+        request.resource.data.browser is string &&
+        request.resource.data.location is string &&
+        request.resource.data.ip is string &&
+        request.resource.data.currentPage is string &&
+        request.resource.data.online is bool &&
+        request.resource.data.lastSeenAt is timestamp &&
+        (request.resource.data.role != 'admin' || isAdmin());
+    }
+    function validGuestPresence(presenceId) {
+      return presenceId.matches('^guest_[A-Za-z0-9_-]{20,64}$') &&
+        request.resource.data.keys().hasAll([
+          'id', 'visitor', 'name', 'email', 'role', 'deviceType', 'os',
+          'browser', 'ip', 'location', 'currentPage', 'lastSeenAt',
+          'sessionStartAt', 'online'
+        ]) &&
+        request.resource.data.keys().hasOnly([
+          'id', 'visitor', 'name', 'email', 'role', 'deviceType', 'os',
+          'browser', 'ip', 'location', 'currentPage', 'lastSeenAt',
+          'sessionStartAt', 'online'
+        ]) &&
+        request.resource.data.id == presenceId &&
+        request.resource.data.visitor == true &&
+        request.resource.data.role == 'guest' &&
+        request.resource.data.email == '' &&
+        request.resource.data.deviceType is string &&
+        request.resource.data.os is string &&
+        request.resource.data.browser is string &&
+        request.resource.data.ip is string &&
+        request.resource.data.location is string &&
+        request.resource.data.currentPage is string &&
+        request.resource.data.name is string &&
+        request.resource.data.online is bool &&
+        request.resource.data.lastSeenAt is timestamp &&
+        request.resource.data.sessionStartAt is timestamp &&
+        request.resource.data.name.size() <= 50 &&
+        request.resource.data.deviceType.size() <= 30 &&
+        request.resource.data.os.size() <= 40 &&
+        request.resource.data.browser.size() <= 50 &&
+        request.resource.data.ip.size() <= 50 &&
+        request.resource.data.location.size() <= 120 &&
+        request.resource.data.currentPage.size() <= 200;
+    }
 
     match /admins/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
@@ -33,6 +96,11 @@ service cloud.firestore {
       );
       allow delete: if isAdmin();
       allow update: if isAdmin() || (signedIn() && request.auth.uid == uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['photoData', 'governorate', 'job', 'jobTitle', 'workplace', 'workAdministration', 'address']));
+    }
+    match /dashboardPresence/{presenceId} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == presenceId);
+      allow create, update: if isAdmin() || validUserPresence(presenceId) || validGuestPresence(presenceId);
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == presenceId);
     }
     match /messages/{messageId} {
       allow read: if signedIn();
