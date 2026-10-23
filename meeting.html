@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>اجتماع بريفنتا</title>
+    <!-- استدعاء مكتبة Jitsi -->
+    <script src="https://meet.jit.si/external_api.js"></script>
+</head>
+<body>
+
+    <!-- المساحة المخصصة لعرض الاجتماع في منصتك -->
+    <div id="meet-container" style="height: 600px; width: 100%;"></div>
+
+    <script>
+        // إعدادات الجلسة
+        const domain = 'meet.jit.si';
+        const options = {
+            // يجب أن يكون اسم الغرفة معقداً وفريداً لكل اجتماع لتجنب دخول غرباء
+            roomName: 'Preventa_Meeting_789456123', 
+            width: '100%',
+            height: '100%',
+            parentNode: document.querySelector('#meet-container'),
+            userInfo: {
+                // يمكنك جلب هذا الاسم ديناميكياً من قاعدة بيانات منصتك
+                displayName: 'اسم المستخدم' 
+            },
+            configOverwrite: {
+                startWithAudioMuted: true, // إجبار دخول المستخدم والمايك مغلق
+                startWithVideoMuted: true, // إجبار دخول المستخدم والكاميرا مغلقة
+                prejoinPageEnabled: false  // تخطي صفحة جيتسي الافتراضية للدخول مباشرة
+            },
+            interfaceConfigOverwrite: {
+                // إخفاء بعض الأزرار التي لا تريد للمستخدم العادي رؤيتها
+                TOOLBAR_BUTTONS: [
+                    'microphone', 'camera', 'desktop', 'fullscreen',
+                    'hangup', 'chat', 'raisehand', 'tileview'
+                ]
+            }
+        };
+
+        // تشغيل نافذة الاجتماع
+        const api = new JitsiMeetExternalAPI(domain, options);
+    </script>
+</body>
+</html>
